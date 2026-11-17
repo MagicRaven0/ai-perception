@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+/*
+  Design tokens. Colours, fonts and z-index come ONLY from here (see CLAUDE.md).
+  Sources: latecheckout.studio (cream, ground green, sky, pill nav),
+  latecheckout.agency (ink, muted, rules, mono labels), ceros.com (night bands, signal blue),
+  bruno-simon.com (pink, lime accents).
+*/
+@theme {
+  /* Paper register (Late Checkout) */
+  --color-paper: #ffffff;
+  --color-cream: #fbfaf6;
+  --color-ink: #121211;
+  --color-muted: #66655f;
+  --color-rule: #d8d2c4;
+
+  /* Late Checkout studio world palette */
+  --color-ground: #267a60;
+  --color-ground-dark: #1d5f4a;
+  --color-leaf: #a8c94a;
+  --color-sun: #fee163;
+  --color-orange: #eea132;
+  --color-plum: #5e489b;
+  --color-sky-top: #9ee3ea;
+  --color-sky-bottom: #e2e2ee;
+
+  /* Dark data register (Ceros) */
+  --color-night: #141414;
+  --color-signal: #33aaff;
+
+  /* Era accents: fills only on light backgrounds; text on them is ink */
+  --color-era1-base: #e8d9b0;
+  --color-era1-accent: #3bd16f;
+  --color-era2-base: #d8d2c4;
+  --color-era2-accent: #ff87a2;
+  --color-era3-base: #141414;
+  --color-era3-accent: #d5ff95;
+
+  /* Insight tags (benefit / risk / danger) */
+  --color-benefit: #3bd16f;
+  --color-risk: #eea132;
+  --color-danger: #e5484d;
+
+  /* Fonts: max 3 families */
+  --font-display: var(--font-fustat), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* Headline tracking (LCA) */
+  --tracking-headline: -0.03em;
+  --tracking-label: 0.1em;
+
+  /* Z-index scale (PLAN.md 7.1) */
+  --z-canvas: 0;
+  --z-world-labels: 10;
+  --z-hud: 20;
+  --z-drawer: 30;
+  --z-chat: 40;
+  --z-audio: 50;
+  --z-modal: 60;
+  --z-skip: 70;
+
+  /* Motion */
+  --ease-calm: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@utility z-canvas { z-index: var(--z-canvas); }
+@utility z-world-labels { z-index: var(--z-world-labels); }
+@utility z-hud { z-index: var(--z-hud); }
+@utility z-drawer { z-index: var(--z-drawer); }
+@utility z-chat { z-index: var(--z-chat); }
+@utility z-audio { z-index: var(--z-audio); }
+@utility z-modal { z-index: var(--z-modal); }
+@utility z-skip { z-index: var(--z-skip); }
+
+/* LCA mono label: column and table headers only, never stacked above every heading */
+@utility mono-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  background: var(--color-cream);
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--color-sun);
+  color: var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

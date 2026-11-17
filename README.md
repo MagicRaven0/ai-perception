@@ -12,9 +12,16 @@ All words, numbers, people and media live in the `content/` folder. Change a fil
 | --- | --- |
 | `content/site.ts` | Title, **thesis**, team names, AI disclosure |
 | `content/eras.ts` | The 3 eras / islands: titles, years, people, summaries |
+| `content/buildings.ts` | Every building (one piece of content each): podcast, interview, documents, research, video, animation, experience |
 | `content/insights.ts` | Benefit / risk / danger quick points for each island |
+| `content/sources.ts` | Works cited (APA 7, with links) |
+| `content/datasets.ts` | Survey numbers for charts (stay "placeholder" until real numbers and a source exist) |
+| `content/comparisons.ts` | "Then vs now" comparisons |
+| `content/episodes.ts` | Podcasts and interviews (MP3s go in `public/audio/`, transcripts in `content/transcripts/`) |
+| `content/credits.ts` | Credits for images, models, music, fonts; image list |
+| `content/about.ts` | Rhetorical situation table for the About page |
 
-More files (buildings, sources, podcasts, datasets, credits) arrive in Phase 1.
+Each file starts with a short comment explaining how to add an entry.
 
 **Placeholders:** anything that isn't final starts with `TODO:`. It shows on the site as a striped box so nobody mistakes it for a real claim. To replace one, overwrite the whole text, including `TODO:`.
 

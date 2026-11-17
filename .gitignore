@@ -44,3 +44,8 @@ next-env.d.ts
 !.env.example
 
 .vercel
+
+# e2e output
+/test-results/
+/playwright-report/
+/screenshots/

@@ -41,6 +41,13 @@
   --color-risk: #eea132;
   --color-danger: #e5484d;
 
+  /* Chart series on the dark data band, in this fixed order (validated: dark surface, CVD-safe) */
+  --color-chart-1: #2f8edb;
+  --color-chart-2: #8a9f2a;
+  --color-chart-3: #d5617f;
+  --color-chart-grid: #2b2b2b;
+  --color-chart-text: #b8b6ae;
+
   /* Fonts: max 3 families */
   --font-display: var(--font-fustat), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;

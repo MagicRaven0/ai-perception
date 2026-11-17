@@ -26,20 +26,60 @@ const pts = (p: [number, number][]) => p.map(([x, y]) => `${x},${y}`).join(" ");
 
 function Island({ s }: { s: IslandStyle }) {
   const { cx } = s;
-  const top = pts([[cx, CY - H], [cx + W, CY], [cx, CY + H], [cx - W, CY]]);
-  const leftSide = pts([[cx - W, CY], [cx, CY + H], [cx, CY + H + DEPTH], [cx - W, CY + DEPTH]]);
-  const rightSide = pts([[cx, CY + H], [cx + W, CY], [cx + W, CY + DEPTH], [cx, CY + H + DEPTH]]);
+  const top = pts([
+    [cx, CY - H],
+    [cx + W, CY],
+    [cx, CY + H],
+    [cx - W, CY],
+  ]);
+  const leftSide = pts([
+    [cx - W, CY],
+    [cx, CY + H],
+    [cx, CY + H + DEPTH],
+    [cx - W, CY + DEPTH],
+  ]);
+  const rightSide = pts([
+    [cx, CY + H],
+    [cx + W, CY],
+    [cx + W, CY + DEPTH],
+    [cx, CY + H + DEPTH],
+  ]);
   // Cream path ring, inset from the edge
   const r = 0.72;
-  const path = pts([[cx, CY - H * r], [cx + W * r, CY], [cx, CY + H * r], [cx - W * r, CY]]);
+  const path = pts([
+    [cx, CY - H * r],
+    [cx + W * r, CY],
+    [cx, CY + H * r],
+    [cx - W * r, CY],
+  ]);
   const inner = 0.6;
-  const lawn = pts([[cx, CY - H * inner], [cx + W * inner, CY], [cx, CY + H * inner], [cx - W * inner, CY]]);
+  const lawn = pts([
+    [cx, CY - H * inner],
+    [cx + W * inner, CY],
+    [cx, CY + H * inner],
+    [cx - W * inner, CY],
+  ]);
 
   const bh = s.buildingHeight;
   const by = CY - 4;
-  const bTop = pts([[cx, by - BH - bh], [cx + BW, by - bh], [cx, by + BH - bh], [cx - BW, by - bh]]);
-  const bLeft = pts([[cx - BW, by - bh], [cx, by + BH - bh], [cx, by + BH], [cx - BW, by]]);
-  const bRight = pts([[cx, by + BH - bh], [cx + BW, by - bh], [cx + BW, by], [cx, by + BH]]);
+  const bTop = pts([
+    [cx, by - BH - bh],
+    [cx + BW, by - bh],
+    [cx, by + BH - bh],
+    [cx - BW, by - bh],
+  ]);
+  const bLeft = pts([
+    [cx - BW, by - bh],
+    [cx, by + BH - bh],
+    [cx, by + BH],
+    [cx - BW, by],
+  ]);
+  const bRight = pts([
+    [cx, by + BH - bh],
+    [cx + BW, by - bh],
+    [cx + BW, by],
+    [cx, by + BH],
+  ]);
 
   const trees: [number, number][] = [
     [cx - W * 0.82, CY + 2],

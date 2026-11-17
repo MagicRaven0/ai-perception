@@ -1,22 +1,44 @@
 /**
  * Validates everything in content/ and lists every remaining "TODO:" placeholder.
  *
- *   npm run check-content            -> lists placeholders, fails only on schema errors
+ *   npm run check-content            -> lists placeholders, fails only on real errors
  *   CONTENT_STRICT=1 npm run build   -> also fails if any placeholder remains (turn on for final launch)
  */
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { z } from "zod";
-import { Era, Insight, PLACEHOLDER_PREFIX, Site } from "../lib/content/schema";
+import {
+  About,
+  Building,
+  Comparison,
+  Credit,
+  Dataset,
+  Episode,
+  Era,
+  Image,
+  Insight,
+  PLACEHOLDER_PREFIX,
+  Site,
+  Source,
+} from "../lib/content/schema";
+import { parseVtt } from "../lib/audio/vtt";
 import { site } from "../content/site";
+import { about } from "../content/about";
 import { eras } from "../content/eras";
+import { buildings } from "../content/buildings";
 import { insights } from "../content/insights";
+import { comparisons } from "../content/comparisons";
+import { datasets } from "../content/datasets";
+import { episodes } from "../content/episodes";
+import { sources } from "../content/sources";
+import { credits, images } from "../content/credits";
 
 const ROOT = join(__dirname, "..");
 const CONTENT_DIR = join(ROOT, "content");
 const strict = process.env.CONTENT_STRICT === "1";
 
 const errors: string[] = [];
+const warnings: string[] = [];
 
 function check<T>(label: string, schema: z.ZodType<T>, value: unknown) {
   const result = schema.safeParse(value);
@@ -29,19 +51,92 @@ function check<T>(label: string, schema: z.ZodType<T>, value: unknown) {
 
 // 1. Schemas
 check("site", Site, site);
+check("about", About, about);
 check("eras", z.array(Era).length(3), eras);
+check("buildings", z.array(Building), buildings);
 check("insights", z.array(Insight), insights);
+check("comparisons", z.array(Comparison), comparisons);
+check("datasets", z.array(Dataset), datasets);
+check("episodes", z.array(Episode), episodes);
+check("sources", z.array(Source), sources);
+check("credits", z.array(Credit), credits);
+check("images", z.array(Image), images);
 
-// 2. Cross-references and uniqueness
-const eraIds = new Set(eras.map((e) => e.id));
-const seen = new Set<string>();
-for (const i of insights) {
-  if (seen.has(i.id)) errors.push(`insights: duplicate id "${i.id}"`);
-  seen.add(i.id);
-  if (!eraIds.has(i.eraId)) errors.push(`insights.${i.id}: unknown eraId "${i.eraId}"`);
+// 2. Unique ids per collection
+function unique(label: string, items: { id: string }[]) {
+  const seen = new Set<string>();
+  for (const { id } of items) {
+    if (seen.has(id)) errors.push(`${label}: duplicate id "${id}"`);
+    seen.add(id);
+  }
+  return seen;
+}
+const eraIds = unique("eras", eras);
+const buildingIds = unique("buildings", buildings);
+unique("insights", insights);
+unique("comparisons", comparisons);
+unique("datasets", datasets);
+const episodeIds = unique("episodes", episodes);
+const sourceIds = unique("sources", sources);
+const creditIds = unique("credits", credits);
+const imageIds = unique("images", images);
+
+// 3. Cross-references
+const ref = (label: string, kind: string, id: string | undefined, set: Set<string>) => {
+  if (id !== undefined && !set.has(id)) errors.push(`${label}: unknown ${kind} "${id}"`);
+};
+
+for (const e of eras) for (const f of e.anchorFigures) ref(`eras.${e.id}`, "imageId", f.imageId, imageIds);
+
+const orders = new Map<string, number>();
+for (const b of buildings) {
+  const label = `buildings.${b.id}`;
+  ref(label, "eraId", b.eraId, eraIds);
+  b.sourceIds.forEach((s) => ref(label, "sourceId", s, sourceIds));
+  ref(label, "episodeId", b.media?.episodeId, episodeIds);
+  ref(label, "imageId", b.media?.imageId, imageIds);
+  const key = `${b.eraId}#${b.order}`;
+  if (orders.has(key)) errors.push(`${label}: order ${b.order} is already used on ${b.eraId}`);
+  orders.set(key, 1);
 }
 
-// 3. Placeholders: scan every file in content/ for the literal prefix
+for (const i of insights) {
+  ref(`insights.${i.id}`, "eraId", i.eraId, eraIds);
+  ref(`insights.${i.id}`, "buildingId", i.buildingId, buildingIds);
+  i.sourceIds.forEach((s) => ref(`insights.${i.id}`, "sourceId", s, sourceIds));
+}
+
+for (const c of comparisons) {
+  ref(`comparisons.${c.id}`, "sourceId", c.left.sourceId, sourceIds);
+  ref(`comparisons.${c.id}`, "sourceId", c.right.sourceId, sourceIds);
+}
+
+for (const d of datasets) ref(`datasets.${d.id}`, "sourceId", d.sourceId, sourceIds);
+
+for (const e of episodes) {
+  const label = `episodes.${e.id}`;
+  if (e.src?.startsWith("/") && !existsSync(join(ROOT, "public", e.src))) {
+    errors.push(`${label}: audio file public${e.src} not found`);
+  }
+  if (e.transcript) {
+    const file = join(CONTENT_DIR, "transcripts", e.transcript);
+    if (!existsSync(file)) errors.push(`${label}: transcript content/transcripts/${e.transcript} not found`);
+    else if (parseVtt(readFileSync(file, "utf8")).length === 0) {
+      errors.push(`${label}: transcript ${e.transcript} has no readable cues`);
+    }
+  }
+  if (e.src && !e.transcript) warnings.push(`${label}: has audio but no transcript yet`);
+  if (e.kind === "interview" && e.speakers.some((s) => !s.consentConfirmed)) {
+    warnings.push(`${label}: waiting for written consent before the audio can be published`);
+  }
+}
+
+for (const img of images) {
+  ref(`images.${img.id}`, "creditId", img.creditId, creditIds);
+  if (!existsSync(join(ROOT, "public", img.src))) errors.push(`images.${img.id}: file public${img.src} not found`);
+}
+
+// 4. Placeholders: scan every file in content/ for the literal prefix
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const full = join(dir, name);
@@ -51,7 +146,7 @@ function walk(dir: string): string[] {
 
 const placeholders: string[] = [];
 for (const file of walk(CONTENT_DIR)) {
-  if (!/\.(ts|json|md|vtt)$/.test(file)) continue;
+  if (!/\.(ts|json|vtt)$/.test(file)) continue;
   readFileSync(file, "utf8")
     .split("\n")
     .forEach((line, n) => {
@@ -72,12 +167,17 @@ if (placeholders.length) {
   console.log("\nNo placeholders left.\n");
 }
 
+const pending = datasets.filter((d) => d.status === "placeholder").length;
+if (pending) warnings.push(`${pending} dataset(s) still marked placeholder`);
+if (sources.length === 0) warnings.push("no sources yet (content/sources.ts)");
+if (warnings.length) console.log(`Notes:\n${warnings.map((w) => "  " + w).join("\n")}\n`);
+
 if (errors.length) {
   console.error(`${errors.length} content error(s):\n${errors.map((e) => "  " + e).join("\n")}\n`);
   process.exit(1);
 }
 
-if (strict && placeholders.length) {
+if (strict && (placeholders.length || pending)) {
   console.error("CONTENT_STRICT=1: placeholders are not allowed in this build.\n");
   process.exit(1);
 }

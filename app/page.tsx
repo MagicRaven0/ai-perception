@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { site } from "@/content/site";
-import { eras } from "@/content/eras";
+import { eras, site } from "@/lib/content";
 import { TopNav } from "@/components/layout/TopNav";
+import { Footer } from "@/components/layout/Footer";
 import { ContentText } from "@/components/content/ContentText";
 import { IslandsPreview } from "@/components/landing/IslandsPreview";
 
@@ -36,24 +36,13 @@ export default function Home() {
           >
             Read the long version
           </Link>
+          <Link href="/listen" className="px-3 py-3 font-semibold underline underline-offset-2">
+            Listen
+          </Link>
         </div>
       </main>
 
-      <footer className="border-t border-rule">
-        <div className="mx-auto flex w-full max-w-[1280px] flex-wrap gap-x-6 gap-y-1 px-6 py-6 text-sm text-muted md:px-12">
-          <span>
-            {site.course} · {site.university}
-          </span>
-          <span>
-            {site.team.map((m, i) => (
-              <span key={i}>
-                {i > 0 && ", "}
-                <ContentText value={m.name} />
-              </span>
-            ))}
-          </span>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

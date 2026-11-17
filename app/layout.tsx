@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fustat, Inter_Tight, JetBrains_Mono } from "next/font/google";
-import { site } from "@/content/site";
+import { site } from "@/lib/content";
+import { AudioDock } from "@/components/audio/AudioDock";
 import "./globals.css";
 
 // Three font families only (class design rule). See CLAUDE.md.
@@ -27,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${fustat.variable} ${interTight.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-full flex-col pb-14 md:pb-[72px]">
         <a
           href="#main"
           className="sr-only z-skip rounded-full bg-paper px-4 py-2 font-semibold focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         {children}
+        <AudioDock />
       </body>
     </html>
   );

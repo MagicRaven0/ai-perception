@@ -1,4 +1,5 @@
-import { PLACEHOLDER_PREFIX } from "./schema";
+/** Literal prefix that marks unfinished content. Kept zod-free so client components can import it. */
+export const PLACEHOLDER_PREFIX = "TODO:";
 
 export function isPlaceholder(value: string | undefined | null): boolean {
   return typeof value === "string" && value.trimStart().startsWith(PLACEHOLDER_PREFIX);

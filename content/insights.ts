@@ -1,3 +1,4 @@
+import type { z } from "zod";
 import type { Insight } from "@/lib/content/schema";
 
 /**
@@ -5,9 +6,9 @@ import type { Insight } from "@/lib/content/schema";
  * They appear as small signposts around each island in 3D, as callouts in 2D, and the chatbot knows them.
  *
  * To add one: copy a block, give it a new id, set eraId and kind, write one short point.
- * Either list sourceIds (from content/sources.ts, added in Phase 1) or set groupCommentary: true.
+ * Either list sourceIds (from content/sources.ts) or set groupCommentary: true.
  */
-export const insights: Insight[] = [
+export const insights: z.input<typeof Insight>[] = [
   {
     id: "era-1-benefit-1",
     eraId: "era-1",

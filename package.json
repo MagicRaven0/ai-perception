@@ -10,7 +10,9 @@
     "typecheck": "next typegen && tsc --noEmit",
     "check-content": "tsx scripts/check-content.ts",
     "prebuild": "tsx scripts/check-content.ts",
-    "verify": "npm run typecheck && npm run lint && npm run check-content"
+    "verify": "npm run typecheck && npm run lint && npm run check-content",
+    "test:e2e": "playwright test",
+    "format": "prettier --write \"app/**/*.tsx\" \"components/**/*.tsx\" \"lib/**/*.ts\" \"content/**/*.ts\" \"scripts/**/*.ts\" \"tests/**/*.ts\""
   },
   "engines": {
     "node": ">=24"
@@ -19,15 +21,19 @@
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "zustand": "5.1.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.65.1",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "prettier": "3.10.1",
     "tailwindcss": "4.3.3",
     "tsx": "4.23.15",
     "typescript": "^5"

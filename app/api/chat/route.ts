@@ -55,6 +55,6 @@ export async function POST(req: Request) {
   });
 
   return createUIMessageStreamResponse({
-    stream: toUIMessageStream({ stream: result.stream }),
+    stream: toUIMessageStream({ stream: result.stream, sendReasoning: false }),
   });
 }

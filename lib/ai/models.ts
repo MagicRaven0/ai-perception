@@ -44,6 +44,9 @@ export const hasAiCredentials = () =>
       ? !!process.env.DEEPSEEK_API_KEY
       : !!(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN || process.env.VERCEL);
 
+/** Qwen 3's switch to answer directly without a thinking phase (faster on a laptop GPU). */
+export const INSTRUCTIONS_SUFFIX = PROVIDER === "local" ? "\n\n/no_think" : "";
+
 /** Thinking models (e.g. Qwen 3 locally) may emit <think>...</think>; never show or store that. */
 export const stripThinking = (text: string) => text.replace(/<think>[\s\S]*?(<\/think>|$)/g, "").trim();
 

@@ -41,3 +41,17 @@ Faceless low-poly figures + photo billboards (licensed, credited). No 3D face li
 - Keep the full **2D reading mode** (phones, grading, accessibility, fallback).
 - Thesis: placeholder until the group finalises it (`content/site.ts`).
 - Team of 3; one member owns every account (GitHub, Vercel, AI Gateway, Upstash).
+
+## Added features (requested 17 Nov 2026, not built yet)
+
+### Dark mode (build at the start of Phase 2)
+- A light/dark toggle in the top nav, defaulting to the visitor's system setting, remembered per browser.
+- Dark palette from the same tokens: night `#141414` background, cream text, era colours kept as fills. Every text/background pair rechecked for WCAG AA, and the chart palette re-validated on the dark surface.
+- Covers 2D pages, the audio dock and the chat panel. The 3D world keeps its own lighting per island, with the HUD panels following the theme.
+- Do it before Phase 2 adds more components, so every new component is built with both themes from the start.
+
+### Custom cursor (build in Phase 4 polish, after the 3D world)
+- A small round cursor in the site's own style (Late Checkout studio feel): it grows over links and buttons, shows a "drag" state on sliders, and a "drive / open" hint over buildings in 3D.
+- Desktop pointer devices only. Phones and tablets keep normal touch.
+- Accessibility: the real system cursor stays available (the custom one follows it, never replaces text selection or input carets), and the effect turns off with `prefers-reduced-motion` and in high-contrast/forced-colours mode.
+- Purely decorative, so it never blocks clicks.

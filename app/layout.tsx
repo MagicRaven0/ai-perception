@@ -2,6 +2,11 @@ import type { Metadata, Viewport } from "next";
 import { Fustat, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { site } from "@/lib/content";
 import { AudioDock } from "@/components/audio/AudioDock";
+import { THEME_SCRIPT } from "@/components/layout/ThemeToggle";
+import { ChatLauncher } from "@/components/ai/ChatLauncher";
+import { corpusForPrompt, getChunkRefs, getCorpus } from "@/lib/ai/corpus";
+import { storedAnswers, textHash } from "@/lib/ai/summaries";
+import { suggestedQuestions } from "@/content/suggested-questions";
 import "./globals.css";
 
 // Three font families only (class design rule). See CLAUDE.md.
@@ -19,7 +24,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#fbfaf6",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbfaf6" },
+    { media: "(prefers-color-scheme: dark)", color: "#121211" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -27,7 +35,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${fustat.variable} ${interTight.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      data-theme="light"
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col pb-14 md:pb-[72px]">
         <a
           href="#main"
@@ -36,6 +49,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         {children}
+        <ChatLauncher
+          refs={getChunkRefs()}
+          questions={suggestedQuestions}
+          answers={storedAnswers(textHash(corpusForPrompt()))}
+          corpusSize={getCorpus().length}
+        />
         <AudioDock />
       </body>
     </html>

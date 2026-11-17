@@ -26,7 +26,7 @@ export default function Home() {
         <div className="mt-12 flex flex-wrap items-center gap-3">
           <Link
             href="/explore"
-            className="rounded-full bg-orange px-6 py-3 font-semibold text-ink transition-transform duration-300 ease-calm hover:-translate-y-0.5"
+            className="rounded-full bg-orange px-6 py-3 font-semibold text-coal transition-transform duration-300 ease-calm hover:-translate-y-0.5"
           >
             Explore in 3D
           </Link>

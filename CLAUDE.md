@@ -15,6 +15,7 @@ Later phases: three 0.187 · @react-three/fiber 9.8 · drei 10.7 · @react-three
 - `npm run verify`: typecheck + lint + check-content. **Run before saying any task is done.**
 - `npm run check-content`: validate `content/` and list every `TODO:` placeholder
 - `npm run test:e2e`: Playwright: axe accessibility on every route, audio across routes, screenshots at 375/1440 into `screenshots/`
+- `npm run gen-ai`: pre-generate summaries + suggested-question answers into `content/generated/` (group reviews, sets `checked: true`)
 - `npm run format`: Prettier (print width 120)
 
 ## Hard rules
@@ -24,6 +25,8 @@ Later phases: three 0.187 · @react-three/fiber 9.8 · drei 10.7 · @react-three
 - Do not subscribe the R3F `<Canvas>` root to the store; player position goes through the transient channel (PLAN.md 5.2).
 - Every chart gets a table twin and a source line. Every image, model and track gets a credit entry. Every insight has a source or `groupCommentary: true`.
 - Real people: faceless low-poly figures + licensed photo billboards only. No 3D face likenesses. No real-person impersonation in chatbot personas. No Apple/Siri logos or UI recreations.
+- AI: answers only from the corpus (`lib/ai/corpus.ts`), cites chunk ids, `[NONE]` when not found. Never send client-provided text to the summarizer (ids only). Interviews enter the corpus only with consent.
+- Dark mode: semantic tokens swap under `[data-theme="dark"]`; text on fixed dark bands uses `snow`, text on bright fills uses `coal`.
 - Match Late Checkout's *style*; never copy its logo, copy, illustrations or code.
 - Content arrives over time: every content slot must render a graceful "coming soon" state, and adding content must never need a code change.
 - Before calling a task done: `npm run verify`, then `npm run test:e2e` (screenshots at 375 px and 1440 px).

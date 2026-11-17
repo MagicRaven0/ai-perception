@@ -36,7 +36,7 @@ export function TranscriptView({ cues, track }: { cues: Cue[]; track: Track }) {
               onClick={() => void play(track, cue.start)}
               aria-current={isActive ? "true" : undefined}
               className={`grid w-full grid-cols-[4rem_1fr] gap-4 py-3 pr-2 text-left transition-colors duration-200 ${
-                isActive ? "bg-sun/60" : "hover:bg-cream"
+                isActive ? "bg-sun/60 dark:bg-sun/20" : "hover:bg-cream"
               }`}
             >
               <span className="pl-2 font-mono text-xs leading-7 text-muted tabular-nums">{formatTime(cue.start)}</span>

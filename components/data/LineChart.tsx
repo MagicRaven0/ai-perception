@@ -24,7 +24,7 @@ export function LineChart({ dataset }: { dataset: Dataset }) {
   return (
     <div>
       {series.length > 1 && (
-        <ul className="mb-3 flex flex-wrap gap-4 text-sm text-paper" aria-label="Legend">
+        <ul className="mb-3 flex flex-wrap gap-4 text-sm text-snow" aria-label="Legend">
           {series.map((s, i) => (
             <li key={s.label} className="flex items-center gap-2">
               <span className="h-0.5 w-4" style={{ background: SERIES[i] }} aria-hidden="true" />
@@ -82,7 +82,7 @@ export function LineChart({ dataset }: { dataset: Dataset }) {
                 strokeLinejoin="round"
               />
               {last && (
-                <text x={last[0] + 8} y={last[1] + 4} fontSize="12" fill="var(--color-paper)">
+                <text x={last[0] + 8} y={last[1] + 4} fontSize="12" fill="var(--color-snow)">
                   {s.label}
                 </text>
               )}
@@ -113,7 +113,7 @@ export function LineChart({ dataset }: { dataset: Dataset }) {
         ))}
       </svg>
       {hoverX !== null && (
-        <p className="mt-2 text-sm text-paper" aria-live="polite">
+        <p className="mt-2 text-sm text-snow" aria-live="polite">
           <span className="font-semibold">{xs[hoverX]}</span>
           {series.map((s) => {
             const y = s.points.find((p) => String(p.x) === xs[hoverX])?.y;

@@ -12,6 +12,9 @@ import { ContentText } from "@/components/content/ContentText";
 import { PlayButton } from "@/components/audio/PlayButton";
 import { ChapterList } from "@/components/audio/ChapterList";
 import { TranscriptView } from "@/components/audio/TranscriptView";
+import { SummarizerChips } from "@/components/ai/SummarizerChips";
+import { itemText } from "@/lib/ai/corpus";
+import { storedSummariesFor } from "@/lib/ai/summaries";
 
 export function generateStaticParams() {
   return episodes.map((e) => ({ episode: e.id }));
@@ -42,6 +45,7 @@ async function EpisodeContent({ params }: { params: PageProps<"/listen/[episode]
   if (!episode) notFound();
 
   const track = toTrack(episode, eras);
+  const summaryText = episode.summarizable ? itemText(episode.id) : null;
   const cues = getTranscript(episode.transcript);
   const eraNames = episode.eraIds.map((id) => eras.find((e) => e.id === id)?.islandName).filter(Boolean);
 
@@ -101,6 +105,11 @@ async function EpisodeContent({ params }: { params: PageProps<"/listen/[episode]
           <h2 id="transcript" className="mb-4 text-2xl font-medium">
             Transcript
           </h2>
+          {summaryText && (
+            <div className="mb-6">
+              <SummarizerChips itemId={episode.id} stored={storedSummariesFor(episode.id, summaryText.text)} />
+            </div>
+          )}
           {track ? (
             <TranscriptView cues={cues} track={track} />
           ) : cues.length > 0 ? (

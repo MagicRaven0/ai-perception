@@ -122,6 +122,13 @@ export function setRate(rate: number) {
 export function restore() {
   const { track, currentTime } = useStore.getState();
   if (track && !audio?.src) {
+    // If the saved episode no longer exists (renamed or removed), forget it instead of showing an error.
+    const forget = () => {
+      useStore.getState().setTrack(null);
+      useStore.getState().setStatus("idle");
+    };
+    el().addEventListener("error", forget, { once: true });
+    el().addEventListener("loadedmetadata", () => el().removeEventListener("error", forget), { once: true });
     load(track, 0);
     seek(currentTime);
     useStore.getState().setStatus("paused");

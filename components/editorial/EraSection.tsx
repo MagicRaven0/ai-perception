@@ -16,6 +16,9 @@ import { Markdown } from "@/components/content/Markdown";
 import { DataBand } from "@/components/data/DataBand";
 import { PlayButton } from "@/components/audio/PlayButton";
 import { YouTubeEmbed } from "./YouTubeEmbed";
+import { SummarizerChips } from "@/components/ai/SummarizerChips";
+import { itemText } from "@/lib/ai/corpus";
+import { storedSummariesFor } from "@/lib/ai/summaries";
 
 /** One era of the long-read (PLAN.md 7.3): header, essay, people, buildings, insights, data, listening. */
 export function EraSection({ era, headingLevel = 2 }: { era: Era; headingLevel?: 1 | 2 }) {
@@ -161,6 +164,7 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
   const episode = b.media.episodeId ? getEpisode(b.media.episodeId) : undefined;
   const track = episode ? toTrack(episode, eras) : null;
   const sources = b.sourceIds.map(getSource).filter((s) => s !== undefined);
+  const summaryText = b.summarizable ? itemText(b.id) : null;
 
   return (
     <article id={b.id} className="grid scroll-mt-4 gap-4 border-b border-ink py-8 md:grid-cols-12 md:gap-8">
@@ -176,6 +180,8 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
             <Markdown value={b.long} />
           </div>
         )}
+
+        {summaryText && <SummarizerChips itemId={b.id} stored={storedSummariesFor(b.id, summaryText.text)} />}
 
         {b.media.youtubeId && <YouTubeEmbed id={b.media.youtubeId} title={b.title} />}
         {b.media.documentUrl && (

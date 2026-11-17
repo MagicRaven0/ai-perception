@@ -19,7 +19,7 @@ export function BarChart({ dataset }: { dataset: Dataset }) {
   return (
     <div>
       {series.length > 1 && (
-        <ul className="mb-4 flex flex-wrap gap-4 text-sm text-paper" aria-label="Legend">
+        <ul className="mb-4 flex flex-wrap gap-4 text-sm text-snow" aria-label="Legend">
           {series.map((s, i) => (
             <li key={s.label} className="flex items-center gap-2">
               <span className="size-3 rounded-[3px]" style={{ background: SERIES[i] }} aria-hidden="true" />
@@ -35,7 +35,7 @@ export function BarChart({ dataset }: { dataset: Dataset }) {
       >
         {xs.map((x) => (
           <div key={x}>
-            <p className="mb-1.5 text-sm text-paper">{x}</p>
+            <p className="mb-1.5 text-sm text-snow">{x}</p>
             <div className="flex flex-col gap-0.5">
               {series.map((s, i) => {
                 const y = s.points.find((p) => String(p.x) === x)?.y;
@@ -58,12 +58,12 @@ export function BarChart({ dataset }: { dataset: Dataset }) {
                         }}
                       />
                     </div>
-                    <span className="w-14 shrink-0 text-right text-sm tabular-nums text-paper">
+                    <span className="w-14 shrink-0 text-right text-sm tabular-nums text-snow">
                       {y}
                       {dataset.unit}
                     </span>
                     {hover === key && (
-                      <span className="pointer-events-none absolute -top-8 left-0 z-hud rounded-[4px] bg-paper px-2 py-1 text-xs whitespace-nowrap text-ink shadow">
+                      <span className="pointer-events-none absolute -top-8 left-0 z-hud rounded-[4px] bg-snow px-2 py-1 text-xs whitespace-nowrap text-coal shadow">
                         {series.length > 1 ? `${s.label} · ` : ""}
                         {x}: {y}
                         {dataset.unit}

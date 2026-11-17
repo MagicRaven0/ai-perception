@@ -12,12 +12,18 @@
     "prebuild": "tsx scripts/check-content.ts",
     "verify": "npm run typecheck && npm run lint && npm run check-content",
     "test:e2e": "playwright test",
-    "format": "prettier --write \"app/**/*.tsx\" \"components/**/*.tsx\" \"lib/**/*.ts\" \"content/**/*.ts\" \"scripts/**/*.ts\" \"tests/**/*.ts\""
+    "format": "prettier --write \"app/**/*.tsx\" \"components/**/*.tsx\" \"lib/**/*.ts\" \"content/**/*.ts\" \"scripts/**/*.ts\" \"tests/**/*.ts\"",
+    "gen-ai": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/gen-ai.ts"
   },
   "engines": {
     "node": ">=24"
   },
   "dependencies": {
+    "@ai-sdk/deepseek": "3.0.87",
+    "@ai-sdk/react": "4.0.177",
+    "@upstash/ratelimit": "2.2.1",
+    "@upstash/redis": "1.41.0",
+    "ai": "7.0.173",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",

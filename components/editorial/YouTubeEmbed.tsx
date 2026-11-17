@@ -22,10 +22,10 @@ export function YouTubeEmbed({ id, title }: { id: string; title: string }) {
         <button
           type="button"
           onClick={() => setOn(true)}
-          className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-paper"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-snow"
         >
           <span
-            className="flex size-16 items-center justify-center rounded-full bg-paper text-xl text-ink"
+            className="flex size-16 items-center justify-center rounded-full bg-snow text-xl text-coal"
             aria-hidden="true"
           >
             ▶

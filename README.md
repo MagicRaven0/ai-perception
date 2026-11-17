@@ -23,6 +23,10 @@ All words, numbers, people and media live in the `content/` folder. Change a fil
 
 Each file starts with a short comment explaining how to add an entry.
 
+**Research notes for the chatbot:** add `.md` files to `content/corpus/` in your own words (see the README there). The chatbot only answers from the site's content plus these notes, and cites them.
+
+**Checking AI output:** after content changes, the repo owner runs `npm run gen-ai`. Then read `content/generated/summaries.json` and `answers.json`, fix anything wrong, and set `"checked": true` on each one you approve. The site labels unchecked AI text as "not yet checked".
+
 **Placeholders:** anything that isn't final starts with `TODO:`. It shows on the site as a striped box so nobody mistakes it for a real claim. To replace one, overwrite the whole text, including `TODO:`.
 
 **On GitHub, without installing anything:**

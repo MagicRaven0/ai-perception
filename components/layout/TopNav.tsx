@@ -1,21 +1,25 @@
 import Link from "next/link";
 import { site } from "@/lib/content";
 import { NavLinks } from "./NavLinks";
+import { ThemeToggle } from "./ThemeToggle";
 
 /** Late Checkout studio style: round mark on the left, white pill links on the right. */
 export function TopNav() {
   return (
-    <header className="z-hud flex items-center justify-between gap-3 px-4 pt-5 md:px-12 md:pt-6">
+    <header className="z-hud flex items-center justify-between gap-2 px-3 pt-5 md:px-12 md:pt-6">
       <Link
         href="/"
         aria-label={`${site.title}, home`}
-        className="flex size-12 shrink-0 items-center justify-center rounded-full bg-paper shadow-[0_6px_20px_rgb(18_18_17/0.08)] transition-transform duration-300 ease-calm hover:-translate-y-0.5"
+        className="flex size-10 shrink-0 items-center md:size-12 justify-center rounded-full bg-paper shadow-[0_6px_20px_rgb(18_18_17/0.08)] transition-transform duration-300 ease-calm hover:-translate-y-0.5"
       >
         <SiteMark />
       </Link>
-      <nav aria-label="Main">
-        <NavLinks />
-      </nav>
+      <div className="flex items-center gap-1.5 md:gap-2">
+        <nav aria-label="Main">
+          <NavLinks />
+        </nav>
+        <ThemeToggle />
+      </div>
     </header>
   );
 }

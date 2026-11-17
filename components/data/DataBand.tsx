@@ -10,7 +10,7 @@ export function DataBand({ datasets, heading }: { datasets: Dataset[]; heading: 
   if (datasets.length === 0) return null;
 
   return (
-    <section aria-label={heading} className="bg-night text-paper">
+    <section aria-label={heading} className="bg-night text-snow">
       <div className="mx-auto flex max-w-[1280px] flex-col gap-16 px-6 py-16 md:px-12 md:py-24">
         <h3 className="font-display text-3xl font-medium tracking-headline md:text-5xl">{heading}</h3>
         {datasets.map((d) => {
@@ -48,7 +48,7 @@ function DataComing({ title }: { title: string }) {
       }}
     >
       <p className="mono-label text-chart-text">Data coming</p>
-      <p className="mt-3 max-w-2xl text-xl text-paper">
+      <p className="mt-3 max-w-2xl text-xl text-snow">
         <ContentText value={title} />
       </p>
       <p className="mt-2 text-sm text-chart-text">

@@ -67,7 +67,7 @@ function Panel({ side, tone }: { side: Side; tone: "then" | "now" }) {
   return (
     <div
       className={`absolute inset-0 flex flex-col justify-end gap-2 p-4 md:gap-3 md:p-10 ${
-        then ? "bg-era1-base text-ink" : "items-end bg-night text-right text-paper"
+        then ? "bg-era1-base text-coal" : "items-end bg-night text-right text-snow"
       }`}
     >
       <div className={`flex w-[44%] flex-col gap-2 md:gap-3 ${then ? "" : "items-end"}`}>

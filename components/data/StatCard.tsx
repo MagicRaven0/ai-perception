@@ -55,7 +55,7 @@ export function StatCard({
           {unit}
         </span>
       </p>
-      <p className="max-w-md text-lg text-paper">{label}</p>
+      <p className="max-w-md text-lg text-snow">{label}</p>
       <SourceLine source={source} />
     </div>
   );

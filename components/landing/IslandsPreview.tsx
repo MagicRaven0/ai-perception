@@ -93,7 +93,7 @@ function Island({ s }: { s: IslandStyle }) {
       <polygon points={leftSide} fill="var(--color-ground-dark)" />
       <polygon points={rightSide} fill="#174c3c" />
       <polygon points={top} fill="var(--color-ground)" />
-      <polygon points={path} fill="var(--color-cream)" />
+      <polygon points={path} fill="var(--color-sand)" />
       <polygon points={lawn} fill="var(--color-ground)" />
       {trees.map(([x, y], i) => (
         <g key={i}>
@@ -126,7 +126,7 @@ export function IslandsPreview({ eras }: { eras: Era[] }) {
           const x2 = ISLANDS[i + 1].cx - W + 6;
           return (
             <g key={i}>
-              <rect x={x1} y={CY - 4} width={x2 - x1} height={8} fill="var(--color-cream)" />
+              <rect x={x1} y={CY - 4} width={x2 - x1} height={8} fill="var(--color-sand)" />
               <rect x={x1} y={CY + 4} width={x2 - x1} height={4} fill="var(--color-rule)" />
             </g>
           );

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Dark mode follows data-theme on <html> (set before paint by the script in app/layout.tsx) */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /*
   Design tokens. Colours, fonts and z-index come ONLY from here (see CLAUDE.md).
   Sources: latecheckout.studio (cream, ground green, sky, pill nav),
@@ -13,6 +16,11 @@
   --color-ink: #121211;
   --color-muted: #66655f;
   --color-rule: #d8d2c4;
+
+  /* Fixed colours: never change with the theme (text on dark bands, text on bright fills) */
+  --color-snow: #ffffff;
+  --color-coal: #121211;
+  --color-sand: #fbfaf6;
 
   /* Late Checkout studio world palette */
   --color-ground: #267a60;
@@ -92,6 +100,22 @@
   color-scheme: light;
 }
 
+/*
+  Dark theme: the semantic tokens swap, so bg-paper / text-ink / border-rule components follow automatically.
+  Fixed tokens (snow, coal, sand, night, era colours, chart colours) stay the same.
+  Pairs checked for WCAG AA: ink on cream 16.8:1, muted on cream 7.6:1, muted on paper 7.0:1.
+*/
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-paper: #1c1c1a;
+  --color-cream: #121211;
+  --color-ink: #f3f1ea;
+  --color-muted: #a9a79f;
+  --color-rule: #34332f;
+  --color-sky-top: #0e2a3a;
+  --color-sky-bottom: #1b1a2b;
+}
+
 html {
   background: var(--color-cream);
 }
@@ -104,7 +128,7 @@ body {
 
 ::selection {
   background: var(--color-sun);
-  color: var(--color-ink);
+  color: var(--color-coal);
 }
 
 @media (prefers-reduced-motion: reduce) {

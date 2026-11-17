@@ -16,7 +16,7 @@ export function ChartFigure({ dataset, source }: { dataset: Dataset; source?: So
     <figure className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <figcaption className="max-w-2xl">
-          <span className="block text-xl font-medium text-paper md:text-2xl">{dataset.title}</span>
+          <span className="block text-xl font-medium text-snow md:text-2xl">{dataset.title}</span>
           <span className="mt-1 block text-sm text-chart-text">
             “{dataset.questionWording}” · {dataset.population}
             {dataset.sampleSize ? ` · n = ${dataset.sampleSize.toLocaleString()}` : ""} · {dataset.fieldDates}
@@ -27,7 +27,7 @@ export function ChartFigure({ dataset, source }: { dataset: Dataset; source?: So
           onClick={() => setView((v) => (v === "chart" ? "table" : "chart"))}
           aria-controls={tableId}
           aria-pressed={view === "table"}
-          className="rounded-full border border-chart-text/40 px-4 py-1.5 text-sm font-semibold text-paper transition-colors hover:bg-paper/10"
+          className="rounded-full border border-chart-text/40 px-4 py-1.5 text-sm font-semibold text-snow transition-colors hover:bg-snow/10"
         >
           {view === "chart" ? "Show table" : "Show chart"}
         </button>

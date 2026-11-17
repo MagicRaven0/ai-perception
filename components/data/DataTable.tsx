@@ -8,10 +8,10 @@ export function DataTable({ dataset }: { dataset: Dataset }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-left text-paper">
+      <table className="w-full border-collapse text-left text-snow">
         <caption className="sr-only">{dataset.title}</caption>
         <thead>
-          <tr className="border-b border-paper">
+          <tr className="border-b border-snow">
             <th scope="col" className="mono-label py-2 pr-4 font-normal text-chart-text">
               {dataset.chartType === "line" ? "Year" : "Answer"}
             </th>

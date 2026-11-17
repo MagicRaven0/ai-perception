@@ -10,7 +10,11 @@ const CITE = /\[(C\d{3})\]/g;
 /** Splits an answer into text and citation chips. Returns the chunk ids it cited (valid ones only). */
 export function parseAnswer(text: string, refs: Record<string, ChunkRef>) {
   const notFound = text.includes(NOT_FOUND);
-  const clean = text.replaceAll(NOT_FOUND, "").trim();
+  // Hide any model "thinking" block (local thinking models) and the not-found marker.
+  const clean = text
+    .replace(/<think>[\s\S]*?(<\/think>|$)/g, "")
+    .replaceAll(NOT_FOUND, "")
+    .trim();
   const cited: string[] = [];
   const invalid: string[] = [];
   for (const m of clean.matchAll(CITE)) {

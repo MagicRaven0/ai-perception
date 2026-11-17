@@ -2,7 +2,7 @@ import { convertToModelMessages, createUIMessageStreamResponse, streamText, toUI
 import { chatInstructions } from "@/lib/ai/prompts";
 import { CHAT_MODEL, chatModel, estimateCost } from "@/lib/ai/models";
 import { PERSONA_IDS, type PersonaId } from "@/lib/ai/personas";
-import { addSpend, checkLimits, getHealth } from "@/lib/ai/limits";
+import { addSpend, checkLimits, getHealth, isHardFailure, tripBreaker } from "@/lib/ai/limits";
 import { cleanInput, clientIp, json, visitorId } from "@/lib/ai/request";
 
 export const maxDuration = 30;
@@ -46,6 +46,9 @@ export async function POST(req: Request) {
     messages: await convertToModelMessages(safeHistory),
     temperature: 0.2,
     maxOutputTokens: 350,
+    onError: async ({ error }) => {
+      if (isHardFailure(error)) await tripBreaker();
+    },
     onEnd: async ({ totalUsage }) => {
       await addSpend(estimateCost(CHAT_MODEL, totalUsage.inputTokens, totalUsage.outputTokens));
     },

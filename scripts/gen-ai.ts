@@ -13,7 +13,7 @@ import { join } from "node:path";
 import { generateText } from "ai";
 import { corpusForPrompt, itemText, summarizableItemIds } from "../lib/ai/corpus";
 import { chatInstructions, summaryInstructions } from "../lib/ai/prompts";
-import { CHAT_MODEL, chatModel, estimateCost, hasAiCredentials } from "../lib/ai/models";
+import { CHAT_MODEL, chatModel, estimateCost, hasAiCredentials, stripThinking } from "../lib/ai/models";
 import { PERSONA_IDS, SUMMARY_MODES } from "../lib/ai/personas";
 import { textHash, type AnswerFile, type SummaryFile } from "../lib/ai/summaries";
 import { suggestedQuestions } from "../content/suggested-questions";
@@ -49,7 +49,13 @@ async function main() {
         maxOutputTokens: 250,
       });
       cost += estimateCost(CHAT_MODEL, totalUsage.inputTokens, totalUsage.outputTokens);
-      (summaries[id] ??= {})[mode] = { text: text.trim(), hash, model: CHAT_MODEL, generatedAt: now, checked: false };
+      (summaries[id] ??= {})[mode] = {
+        text: stripThinking(text),
+        hash,
+        model: CHAT_MODEL,
+        generatedAt: now,
+        checked: false,
+      };
       console.log(`summary  ${id} / ${mode}`);
     }
   }
@@ -76,7 +82,7 @@ async function main() {
         maxOutputTokens: 350,
       });
       cost += estimateCost(CHAT_MODEL, totalUsage.inputTokens, totalUsage.outputTokens);
-      kept[q] = { answer: text.trim(), hash: corpusHash, model: CHAT_MODEL, generatedAt: now, checked: false };
+      kept[q] = { answer: stripThinking(text), hash: corpusHash, model: CHAT_MODEL, generatedAt: now, checked: false };
       console.log(`answer   ${persona}: ${q}`);
     }
     answers[persona] = kept;

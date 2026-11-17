@@ -1,7 +1,7 @@
 import "server-only";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { BUDGET_USD } from "./models";
+import { BUDGET_USD, hasAiCredentials } from "./models";
 
 /**
  * Class-aware abuse protection (PLAN.md 8.5). On campus Wi-Fi the whole class shares one IP, so the main
@@ -87,11 +87,43 @@ export async function getSpend(): Promise<number> {
   return memorySpend.period === period() ? memorySpend.usd : 0;
 }
 
-export type Health = { classMode: boolean; reason?: "budget" | "disabled"; spendUsd: number; budgetUsd: number };
+/* ----------------------------------------------------------- circuit breaker */
+
+// When the AI service refuses us for a reason retrying won't fix (no credit, bad key, billing), pause live AI
+// for 10 minutes so visitors get pre-written answers instead of repeated errors.
+const BREAKER_MS = 10 * 60_000;
+let breakerUntil = 0;
+
+export function isHardFailure(error: unknown): boolean {
+  const e = error as { statusCode?: number; isRetryable?: boolean; cause?: unknown } | undefined;
+  if (!e || typeof e !== "object") return false;
+  if (e.statusCode && [401, 402, 403].includes(e.statusCode)) return true;
+  if (e.isRetryable === false && e.statusCode && e.statusCode < 500) return true;
+  return e.cause ? isHardFailure(e.cause) : false;
+}
+
+export async function tripBreaker() {
+  breakerUntil = Date.now() + BREAKER_MS;
+  if (redis) await redis.set("ai:down", 1, { px: BREAKER_MS });
+}
+
+async function breakerOpen(): Promise<boolean> {
+  if (Date.now() < breakerUntil) return true;
+  return redis ? (await redis.get("ai:down")) !== null : false;
+}
+
+export type Health = {
+  classMode: boolean;
+  reason?: "budget" | "disabled" | "no-ai" | "unavailable";
+  spendUsd: number;
+  budgetUsd: number;
+};
 
 export async function getHealth(): Promise<Health> {
   const spendUsd = await getSpend();
   if (process.env.AI_DISABLED === "1") return { classMode: true, reason: "disabled", spendUsd, budgetUsd: BUDGET_USD };
+  if (!hasAiCredentials()) return { classMode: true, reason: "no-ai", spendUsd, budgetUsd: BUDGET_USD };
+  if (await breakerOpen()) return { classMode: true, reason: "unavailable", spendUsd, budgetUsd: BUDGET_USD };
   const classMode = spendUsd >= BUDGET_USD * 0.8;
   return { classMode, reason: classMode ? "budget" : undefined, spendUsd, budgetUsd: BUDGET_USD };
 }

@@ -1,11 +1,11 @@
 import { generateText } from "ai";
 import { Redis } from "@upstash/redis";
 import { itemText } from "@/lib/ai/corpus";
-import { CHAT_MODEL, chatModel, estimateCost } from "@/lib/ai/models";
+import { CHAT_MODEL, chatModel, estimateCost, stripThinking } from "@/lib/ai/models";
 import { SUMMARY_MODES, type SummaryMode } from "@/lib/ai/personas";
 import { summaryInstructions } from "@/lib/ai/prompts";
 import { storedSummary, textHash } from "@/lib/ai/summaries";
-import { addSpend, checkLimits, getHealth } from "@/lib/ai/limits";
+import { addSpend, checkLimits, getHealth, isHardFailure, tripBreaker } from "@/lib/ai/limits";
 import { clientIp, json, visitorId } from "@/lib/ai/request";
 
 export const maxDuration = 30;
@@ -49,11 +49,12 @@ export async function POST(req: Request) {
       maxOutputTokens: 250,
     });
     await addSpend(estimateCost(CHAT_MODEL, totalUsage.inputTokens, totalUsage.outputTokens));
-    const clean = text.trim();
+    const clean = stripThinking(text);
     if (redis) await redis.set(key, clean, { ex: 30 * 86_400 });
     else memory.set(key, clean);
     return json({ text: clean, checked: false, live: true });
-  } catch {
+  } catch (error) {
+    if (isHardFailure(error)) await tripBreaker();
     return json({ error: "unavailable" }, 502);
   }
 }

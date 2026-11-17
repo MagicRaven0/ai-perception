@@ -50,7 +50,7 @@ export function ChatPanel({
     inputRef.current?.focus();
     fetch("/api/health")
       .then((r) => r.json())
-      .then((h: { classMode?: boolean }) => setHealthPaused(!!h.classMode))
+      .then((h: { classMode?: boolean; reason?: string }) => setHealthPaused(!!h.classMode))
       .catch(() => {});
   }, []);
 

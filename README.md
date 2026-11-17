@@ -2,6 +2,8 @@
 
 WRI-101 adaptation project, American University of Sharjah. An explorable 3D world of three islands, a 2D long-read, podcasts and interviews, and an AI research guide.
 
+**Live site:** https://ai-perception.vercel.app
+
 ## For the group: adding content (no coding needed)
 
 All words, numbers, people and media live in the `content/` folder. Change a file there and the whole site updates.

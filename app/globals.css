@@ -77,16 +77,40 @@
 
   /* Motion */
   --ease-calm: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Soft coal shadows for floating UI over the 3D world (shadow-pill, shadow-card, ...) */
+  --shadow-pill: 0 6px 20px color-mix(in srgb, var(--color-coal) 12%, transparent);
+  --shadow-pill-strong: 0 6px 20px color-mix(in srgb, var(--color-coal) 20%, transparent);
+  --shadow-card: 0 8px 24px color-mix(in srgb, var(--color-coal) 12%, transparent);
+  --shadow-card-strong: 0 8px 24px color-mix(in srgb, var(--color-coal) 18%, transparent);
+  --shadow-panel: 0 12px 40px color-mix(in srgb, var(--color-coal) 20%, transparent);
+  --shadow-sheet: 0 -12px 40px color-mix(in srgb, var(--color-coal) 18%, transparent);
 }
 
-@utility z-canvas { z-index: var(--z-canvas); }
-@utility z-world-labels { z-index: var(--z-world-labels); }
-@utility z-hud { z-index: var(--z-hud); }
-@utility z-drawer { z-index: var(--z-drawer); }
-@utility z-chat { z-index: var(--z-chat); }
-@utility z-audio { z-index: var(--z-audio); }
-@utility z-modal { z-index: var(--z-modal); }
-@utility z-skip { z-index: var(--z-skip); }
+@utility z-canvas {
+  z-index: var(--z-canvas);
+}
+@utility z-world-labels {
+  z-index: var(--z-world-labels);
+}
+@utility z-hud {
+  z-index: var(--z-hud);
+}
+@utility z-drawer {
+  z-index: var(--z-drawer);
+}
+@utility z-chat {
+  z-index: var(--z-chat);
+}
+@utility z-audio {
+  z-index: var(--z-audio);
+}
+@utility z-modal {
+  z-index: var(--z-modal);
+}
+@utility z-skip {
+  z-index: var(--z-skip);
+}
 
 /* LCA mono label: column and table headers only, never stacked above every heading */
 @utility mono-label {

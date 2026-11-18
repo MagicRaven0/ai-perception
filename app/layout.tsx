@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Fustat, Inter_Tight, JetBrains_Mono } from "next/font/google";
-import { site } from "@/lib/content";
+import { eras, site } from "@/lib/content";
+import type { EraId } from "@/lib/content/schema";
 import { AudioDock } from "@/components/audio/AudioDock";
 import { THEME_SCRIPT } from "@/components/layout/ThemeToggle";
 import { ChatLauncher } from "@/components/ai/ChatLauncher";
+import { SkipLink } from "@/components/layout/SkipLink";
+import { Toaster } from "@/components/layout/Toaster";
 import { corpusForPrompt, getChunkRefs, getCorpus } from "@/lib/ai/corpus";
 import { storedAnswers, textHash } from "@/lib/ai/summaries";
 import { suggestedQuestions } from "@/content/suggested-questions";
@@ -42,12 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col pb-14 md:pb-[72px]">
-        <a
-          href="#main"
-          className="sr-only z-skip rounded-full bg-paper px-4 py-2 font-semibold focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
-        >
-          Skip to content
-        </a>
+        <SkipLink eraSlugs={Object.fromEntries(eras.map((e) => [e.id, e.slug])) as Record<EraId, string>} />
         {children}
         <ChatLauncher
           refs={getChunkRefs()}
@@ -56,6 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           corpusSize={getCorpus().length}
         />
         <AudioDock />
+        <Toaster />
       </body>
     </html>
   );

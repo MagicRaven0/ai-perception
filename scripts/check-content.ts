@@ -32,6 +32,8 @@ import { datasets } from "../content/datasets";
 import { episodes } from "../content/episodes";
 import { sources } from "../content/sources";
 import { credits, images } from "../content/credits";
+import { ambience } from "../content/ambience";
+import { ERA_ORDER, islandCapacity } from "../lib/three/layout";
 
 const ROOT = join(__dirname, "..");
 const CONTENT_DIR = join(ROOT, "content");
@@ -134,6 +136,25 @@ for (const e of episodes) {
 for (const img of images) {
   ref(`images.${img.id}`, "creditId", img.creditId, creditIds);
   if (!existsSync(join(ROOT, "public", img.src))) errors.push(`images.${img.id}: file public${img.src} not found`);
+}
+
+// World ambience (3D): optional files; once a file exists it needs a credit.
+for (const [era, layers] of Object.entries(ambience)) {
+  for (const layer of Object.values(layers)) {
+    if (!existsSync(join(ROOT, "public", layer.src))) continue;
+    if (!creditIds.has(layer.creditId)) {
+      errors.push(`ambience.${era}: public${layer.src} needs a credit "${layer.creditId}" in content/credits.ts`);
+    }
+  }
+}
+
+// 3D islands: buildings are auto-placed; past an island's capacity the plots start to overlap.
+for (const era of ERA_ORDER) {
+  const count = buildings.filter((b) => b.eraId === era).length;
+  const capacity = islandCapacity(era);
+  if (count > capacity) {
+    warnings.push(`${era}: ${count} buildings, but the island fits ${capacity} without overlapping plots`);
+  }
 }
 
 // 4. Placeholders: scan every file in content/ for the literal prefix

@@ -1,0 +1,123 @@
+"use client";
+
+import { useRef, useState, type KeyboardEvent } from "react";
+import { useDialog } from "./useDialog";
+import { CloseButton } from "./OptionsPanel";
+
+const TABS = [
+  {
+    id: "keyboard",
+    label: "Keyboard",
+    rows: [
+      ["W A S D or arrow keys", "Drive and steer"],
+      ["Shift", "Boost"],
+      ["Space", "Brake"],
+      ["E", "Open a building / talk to the guide"],
+      ["R", "I’m stuck: back to this island’s start"],
+      ["Esc", "Close a panel"],
+      ["Tab", "Move between buttons (the world never traps focus)"],
+    ],
+  },
+  {
+    id: "touch",
+    label: "Touch",
+    rows: [
+      ["Joystick (bottom left)", "Drive and steer"],
+      ["Boost (bottom right)", "Hold to go faster"],
+      ["Open (bottom right)", "Open a building / talk to the guide"],
+      ["Island buttons (top)", "Fast travel between islands"],
+    ],
+  },
+] as const;
+
+/** Controls help (PLAN 7.5) with keyboard / touch tabs (ARIA tabs, arrow keys move between them). */
+export function ControlsPanel({ onClose }: { onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { onKeyDown } = useDialog(ref, true, onClose);
+  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>(() =>
+    typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches ? "touch" : "keyboard",
+  );
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const onTabKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    e.preventDefault();
+    const next = (i + (e.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length;
+    setTab(TABS[next]!.id);
+    tabRefs.current[next]?.focus();
+  };
+
+  const current = TABS.find((t) => t.id === tab) ?? TABS[0];
+
+  return (
+    <div
+      ref={ref}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="controls-title"
+      onKeyDown={onKeyDown}
+      className="fixed top-20 left-4 z-modal flex max-h-[calc(100dvh-10rem)] w-[min(24rem,calc(100vw-2rem))] flex-col gap-4 overflow-y-auto rounded-[20px] bg-paper p-5 text-ink shadow-panel"
+    >
+      <div className="flex items-center justify-between">
+        <h2 id="controls-title" className="font-display text-2xl font-medium tracking-headline">
+          Controls
+        </h2>
+        <CloseButton onClose={onClose} />
+      </div>
+      <div role="tablist" aria-label="Control type" className="flex gap-1 rounded-full bg-cream p-1">
+        {TABS.map((t, i) => (
+          <button
+            key={t.id}
+            ref={(el) => {
+              tabRefs.current[i] = el;
+            }}
+            type="button"
+            role="tab"
+            id={`controls-tab-${t.id}`}
+            aria-selected={tab === t.id}
+            aria-controls={`controls-panel-${t.id}`}
+            tabIndex={tab === t.id ? 0 : -1}
+            onClick={() => setTab(t.id)}
+            onKeyDown={(e) => onTabKey(e, i)}
+            className={`flex-1 rounded-full px-4 py-2 font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+              tab === t.id ? "bg-ink text-paper" : ""
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {/* Both panels stay in the DOM (the inactive one hidden), so every tab's aria-controls resolves. */}
+      {TABS.map((t) => (
+        <div
+          key={t.id}
+          role="tabpanel"
+          id={`controls-panel-${t.id}`}
+          aria-labelledby={`controls-tab-${t.id}`}
+          hidden={t.id !== current.id}
+        >
+          <table className="w-full text-left">
+            <thead>
+              <tr>
+                <th scope="col" className="mono-label pb-2 font-normal text-muted">
+                  Input
+                </th>
+                <th scope="col" className="mono-label pb-2 font-normal text-muted">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {t.rows.map(([key, action]) => (
+                <tr key={key} className="border-t border-rule">
+                  <td className="py-2 pr-3 font-semibold">{key}</td>
+                  <td className="py-2 text-muted">{action}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+    </div>
+  );
+}

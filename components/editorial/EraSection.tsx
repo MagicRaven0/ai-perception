@@ -17,6 +17,9 @@ import { Markdown } from "@/components/content/Markdown";
 import { DataBand } from "@/components/data/DataBand";
 import { PlayButton } from "@/components/audio/PlayButton";
 import { YouTubeEmbed } from "./YouTubeEmbed";
+import { SpeakerList } from "@/components/audio/SpeakerList";
+import { Arcade } from "@/components/arcade/Arcade";
+import { arcadeFor } from "@/lib/content/arcades";
 import { SummarizerChips } from "@/components/ai/SummarizerChips";
 import { itemText } from "@/lib/ai/corpus";
 import { storedSummariesFor } from "@/lib/ai/summaries";
@@ -166,6 +169,7 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
   const track = episode ? toTrack(episode, eras) : null;
   const sources = b.sourceIds.map(getSource).filter((s) => s !== undefined);
   const summaryText = b.summarizable ? itemText(b.id) : null;
+  const arcade = arcadeFor(b.id);
 
   return (
     <article id={b.id} className="grid scroll-mt-4 gap-4 border-b border-ink py-8 md:grid-cols-12 md:gap-8">
@@ -174,8 +178,29 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
         <h4 className="text-2xl leading-snug font-medium tracking-headline md:text-[1.75rem]">
           <ContentText value={b.title} />
         </h4>
+        {/* Interactive first: the text below gives the answer away. */}
+        {arcade && (
+          <div className="max-w-[68ch]">
+            <Arcade config={arcade} showSources={false} />
+          </div>
+        )}
         {comingSoon ? (
-          <p className="text-muted">Coming soon. This part of the story is still being written.</p>
+          <>
+            {/* A finished teaser stays readable; only the missing long text is "coming soon". */}
+            {!isPlaceholder(b.short) && (
+              <p className="max-w-[68ch] text-lg leading-[1.6] text-muted">
+                <ContentText value={b.short} />
+              </p>
+            )}
+            <p
+              className="max-w-[68ch] rounded-[12px] border border-dashed border-rule px-4 py-3 text-muted"
+              data-placeholder="true"
+            >
+              {episode
+                ? "Coming soon: this recording has not been made yet."
+                : "Coming soon: this part is still being written."}
+            </p>
+          </>
         ) : (
           <div className="flex max-w-[68ch] flex-col gap-4 text-lg leading-[1.6] text-muted">
             <Markdown value={b.long} citations={citations} />
@@ -195,6 +220,7 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
             Open the document
           </a>
         )}
+        {episode && episode.speakers.length > 0 && <SpeakerList speakers={episode.speakers} />}
         {track && <PlayButton track={track} startAt={b.media.startAt} />}
 
         {insights.length > 0 && (

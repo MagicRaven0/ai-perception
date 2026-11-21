@@ -1,3 +1,4 @@
+import type { ArcadeConfig } from "@/lib/content/arcades";
 import type { BuildingKind, EraId } from "@/lib/content/schema";
 import type { Track } from "@/lib/store";
 import type { WorldLayout } from "./layout";
@@ -32,8 +33,12 @@ export type ExploreBuilding = {
   /** Episode id even when it cannot play yet (drawer shows "Episode coming"). */
   episodeId?: string;
   startAt?: number;
+  /** The episode's speakers (names and roles), so a fictional guest's "not a real person" role is visible. */
+  speakers: { name: string; role: string }[];
   hasVideo: boolean;
   documentUrl?: string;
+  /** Interactive "experience" (arcade) shown inside the drawer. */
+  arcade: ArcadeConfig | null;
 };
 
 export type ExploreSign = {

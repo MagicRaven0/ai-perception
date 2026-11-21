@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Dataset } from "@/lib/content/schema";
+import { formatValue } from "@/lib/content/format";
 
 const SERIES = ["var(--color-chart-1)", "var(--color-chart-2)", "var(--color-chart-3)"];
 
@@ -29,7 +30,7 @@ export function BarChart({ dataset }: { dataset: Dataset }) {
         </ul>
       )}
       <div
-        className="flex flex-col gap-5"
+        className="flex max-w-3xl flex-col gap-5"
         role="img"
         aria-label={`${dataset.title}. Use "Show table" for the numbers.`}
       >
@@ -48,25 +49,29 @@ export function BarChart({ dataset }: { dataset: Dataset }) {
                     onPointerEnter={() => setHover(key)}
                     onPointerLeave={() => setHover(null)}
                   >
-                    <div className="h-3 flex-1">
-                      <div
-                        className="h-full rounded-r-[4px] transition-opacity"
-                        style={{
-                          width: `${(y / scaleMax) * 100}%`,
-                          background: SERIES[i],
-                          opacity: hover && hover !== key ? 0.45 : 1,
-                        }}
-                      />
+                    {/* The value sits right at the bar's end; pr-20 keeps room for it beside a full-width bar. */}
+                    <div className="relative h-4 flex-1 pr-20">
+                      <div className="relative h-full">
+                        <div
+                          className="absolute inset-y-0.5 left-0 rounded-r-[4px] transition-opacity"
+                          style={{
+                            width: `${(y / scaleMax) * 100}%`,
+                            background: SERIES[i],
+                            opacity: hover && hover !== key ? 0.45 : 1,
+                          }}
+                        />
+                        <span
+                          className="absolute top-1/2 -translate-y-1/2 pl-2 text-sm leading-none whitespace-nowrap tabular-nums text-snow"
+                          style={{ left: `${(y / scaleMax) * 100}%` }}
+                        >
+                          {formatValue(y, dataset.unit)}
+                        </span>
+                      </div>
                     </div>
-                    <span className="w-14 shrink-0 text-right text-sm tabular-nums text-snow">
-                      {y}
-                      {dataset.unit}
-                    </span>
                     {hover === key && (
-                      <span className="pointer-events-none absolute -top-8 left-0 z-hud rounded-[4px] bg-snow px-2 py-1 text-xs whitespace-nowrap text-coal shadow">
+                      <span className="pointer-events-none absolute bottom-full left-0 z-hud mb-1 max-w-[min(24rem,100%)] rounded-[4px] bg-snow px-2 py-1 text-xs text-coal shadow">
                         {series.length > 1 ? `${s.label} · ` : ""}
-                        {x}: {y}
-                        {dataset.unit}
+                        {x}: {formatValue(y, dataset.unit)}
                       </span>
                     )}
                   </div>

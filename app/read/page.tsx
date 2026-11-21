@@ -8,7 +8,6 @@ import { ContentText } from "@/components/content/ContentText";
 import { EraSection } from "@/components/editorial/EraSection";
 import { EraObserver } from "@/components/editorial/EraObserver";
 import { ComparisonSlider } from "@/components/data/ComparisonSlider";
-import { SentimentSlider } from "@/components/data/SentimentSlider";
 
 export const metadata: Metadata = {
   title: "Read",
@@ -71,7 +70,6 @@ export default function ReadPage() {
                 />
               );
             })}
-            <SentimentSlider />
           </div>
         </section>
 

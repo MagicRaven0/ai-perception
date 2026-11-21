@@ -1,4 +1,5 @@
 import "server-only";
+import { arcadeFor } from "./arcades";
 import { buildings, eras, getEpisode, getImage, insights } from "./index";
 import { BUILDING_LABEL, eraYears, INSIGHT_LABEL } from "./labels";
 import { isPlaceholder } from "./placeholder";
@@ -58,8 +59,10 @@ export function buildExploreData(): ExploreData {
       track: episode ? toTrack(episode, eras) : null,
       episodeId: b.media.episodeId,
       startAt: b.media.startAt,
+      speakers: episode ? episode.speakers.map((s) => ({ name: s.name, role: s.role })) : [],
       hasVideo: Boolean(b.media.youtubeId),
       documentUrl: b.media.documentUrl,
+      arcade: arcadeFor(b.id),
     };
   }
   for (const i of insights) {

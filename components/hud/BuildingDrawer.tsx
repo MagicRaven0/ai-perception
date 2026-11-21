@@ -9,6 +9,8 @@ import { PlayButton } from "@/components/audio/PlayButton";
 import { isPlaceholder } from "@/lib/content/placeholder";
 import { buildingName } from "./InteractPrompt";
 import { useDialog } from "./useDialog";
+import { SpeakerList } from "@/components/audio/SpeakerList";
+import { Arcade } from "@/components/arcade/Arcade";
 
 /**
  * Building drawer (PLAN 7.1 z-drawer): right panel 420px on desktop, bottom sheet at 70% height on phones.
@@ -77,13 +79,19 @@ function Drawer({ b, era }: { b: ExploreBuilding; era?: ExploreEra }) {
 
         {b.comingSoon && (
           <p className="rounded-[12px] border border-dashed border-rule px-4 py-3 text-muted" data-placeholder="true">
-            Coming soon: the group is still writing this part. The building is here so you can find it later.
+            {b.episodeId
+              ? "Coming soon: this recording has not been made yet."
+              : "Coming soon: the group is still writing this part. The building is here so you can find it later."}
           </p>
         )}
 
+        {b.arcade && <Arcade config={b.arcade} />}
+
+        {b.speakers.length > 0 && <SpeakerList speakers={b.speakers} />}
+
         {b.track ? (
           <PlayButton track={b.track} startAt={b.startAt} label={b.startAt ? undefined : "Play episode"} />
-        ) : b.episodeId ? (
+        ) : b.episodeId && !b.comingSoon ? (
           <p className="text-sm text-muted">Episode coming soon.</p>
         ) : null}
 

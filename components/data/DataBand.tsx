@@ -4,6 +4,7 @@ import { ContentText } from "@/components/content/ContentText";
 import { Reveal } from "@/components/ui/Reveal";
 import { ChartFigure } from "./ChartFigure";
 import { StatCard } from "./StatCard";
+import { datasetContext } from "@/lib/content/format";
 
 /** Ceros-style dark band holding an era's statistics. Placeholder data never shows fake numbers. */
 export function DataBand({ datasets, heading }: { datasets: Dataset[]; heading: string }) {
@@ -23,7 +24,7 @@ export function DataBand({ datasets, heading }: { datasets: Dataset[]; heading: 
             const y = d.series[0]?.points[0]?.y ?? 0;
             return (
               <Reveal key={d.id}>
-                <StatCard value={y} unit={d.unit} label={d.title} source={source} />
+                <StatCard value={y} unit={d.unit} label={d.title} context={statContext(d)} source={source} />
               </Reveal>
             );
           }
@@ -36,6 +37,12 @@ export function DataBand({ datasets, heading }: { datasets: Dataset[]; heading: 
       </div>
     </section>
   );
+}
+
+function statContext(d: Dataset): string {
+  const c = datasetContext(d.questionWording);
+  const lead = c.kind === "note" ? `Note: ${c.text}` : `Question: “${c.text}”`;
+  return `${lead} ${d.population}${d.sampleSize ? `, n = ${d.sampleSize.toLocaleString()}` : ""}, ${d.fieldDates}.`;
 }
 
 function DataComing({ title }: { title: string }) {

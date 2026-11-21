@@ -16,7 +16,9 @@ Later phases: three 0.187 · @react-three/fiber 9.8 · drei 10.7 · @react-three
 - `npm run check-content`: validate `content/` and list every `TODO:` placeholder
 - `npm run test:e2e`: Playwright: axe accessibility on every route, audio across routes, screenshots at 375/1440 into `screenshots/`
 - `npm run gen-ai`: pre-generate summaries + suggested-question answers into `content/generated/` (group reviews, sets `checked: true`)
+- `npm run qr`: class QR codes into `docs/qr/`
 - `npm run format`: Prettier (print width 120)
+- Launch steps: `docs/LAUNCH.md`
 
 ## Hard rules
 - All copy, numbers, people, dates and quotes come from `content/`. Never invent facts, statistics or quotes. Missing content → a `TODO:` placeholder, rendered with `<ContentText>` (hatched box).

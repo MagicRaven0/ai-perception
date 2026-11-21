@@ -13,7 +13,8 @@
     "verify": "npm run typecheck && npm run lint && npm run check-content",
     "test:e2e": "playwright test",
     "format": "prettier --write \"app/**/*.tsx\" \"components/**/*.tsx\" \"lib/**/*.ts\" \"content/**/*.ts\" \"scripts/**/*.ts\" \"tests/**/*.ts\"",
-    "gen-ai": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/gen-ai.ts"
+    "gen-ai": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/gen-ai.ts",
+    "qr": "tsx scripts/make-qr.ts"
   },
   "engines": {
     "node": ">=24"
@@ -27,6 +28,7 @@
     "@react-three/rapier": "2.2.0",
     "@upstash/ratelimit": "2.2.1",
     "@upstash/redis": "1.41.0",
+    "@vercel/analytics": "2.0.1",
     "ai": "7.0.173",
     "ecctrl": "2.0.2",
     "leva": "0.10.1",
@@ -42,12 +44,14 @@
     "@playwright/test": "1.65.1",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",
+    "@types/qrcode": "1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "0.187.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "prettier": "3.10.1",
+    "qrcode": "1.5.4",
     "tailwindcss": "4.3.3",
     "tsx": "4.23.15",
     "typescript": "^5"

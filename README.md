@@ -34,6 +34,8 @@ Each file starts with a short comment explaining how to add an entry.
 2. Edit the text between the quotes, keeping the quotes and commas.
 3. Click **Commit changes**, choose **Create a new branch**, and open a pull request. Vercel builds a preview link so you can check it before it goes live.
 
+**Launch checklist:** `docs/LAUNCH.md` (content, AI, final build, device check, class day). QR codes for class are in `docs/qr/`.
+
 ## For developers
 
 ```bash

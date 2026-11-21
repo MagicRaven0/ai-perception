@@ -3,6 +3,8 @@ import { Fustat, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { eras, site } from "@/lib/content";
 import type { EraId } from "@/lib/content/schema";
 import { AudioDock } from "@/components/audio/AudioDock";
+import { CustomCursor } from "@/components/ui/CustomCursor";
+import { Analytics } from "@vercel/analytics/next";
 import { THEME_SCRIPT } from "@/components/layout/ThemeToggle";
 import { ChatLauncher } from "@/components/ai/ChatLauncher";
 import { SkipLink } from "@/components/layout/SkipLink";
@@ -54,6 +56,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           corpusSize={getCorpus().length}
         />
         <AudioDock />
+        <CustomCursor />
+        <Analytics />
         <Toaster />
       </body>
     </html>

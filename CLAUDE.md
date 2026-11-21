@@ -7,7 +7,7 @@ WRI-101 adaptation project (American University of Sharjah): an explorable 3D wo
 
 ## Stack (pinned, checked 17 Nov 2026)
 Next 16.4.6 (App Router, Turbopack, Cache Components) · React 19.3 · Tailwind 4.3 (`@theme` tokens in `app/globals.css`) · Zod 4.6.7 · tsx.
-Later phases: three 0.187 · @react-three/fiber 9.8 · drei 10.7 · @react-three/rapier 2.2 · ecctrl 2.0 · ai 7 + @ai-sdk/react 4 · zustand 5.1 · motion 14 · @upstash/ratelimit 2.2 + @upstash/redis 1.41. Verify with `npm view` before installing.
+Later phases: three 0.187 · @react-three/fiber 9.8 · drei 10.7 · @react-three/rapier 2.2· ai 7 + @ai-sdk/react 4 · zustand 5.1 · motion 14 · @upstash/ratelimit 2.2 + @upstash/redis 1.41. Verify with `npm view` before installing.
 
 ## Commands
 - `npm run dev`: local dev server

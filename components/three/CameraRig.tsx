@@ -5,9 +5,9 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 import { useStore } from "@/lib/store";
-import { findBuilding, type Pose, type WorldLayout } from "@/lib/three/layout";
+import { ERA_ORDER, findBuilding, nearestEra, type Pose, type WorldLayout } from "@/lib/three/layout";
 import { motion } from "@/lib/three/motion";
-import { orbit, player } from "@/lib/three/transient";
+import { orbit, player, setAutoDrive } from "@/lib/three/transient";
 import { CAMERA_AZIMUTH, CAMERA_DISTANCE, CAMERA_ELEVATION_DEG, CAMERA_SPAN } from "@/lib/three/camera";
 
 /**
@@ -36,6 +36,11 @@ const offset = new THREE.Vector3();
 const screenRight = new THREE.Vector3();
 
 const desired = new THREE.Vector3();
+// Tap-to-drive picking (scratch objects; picking runs only on a tap, not per frame).
+const raycaster = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.2);
+const hit = new THREE.Vector3();
 const look = new THREE.Vector3();
 const seat = new THREE.Vector3();
 
@@ -60,6 +65,7 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
   const driverCam = useRef<THREE.PerspectiveCamera>(null);
   const mode = useStore((s) => s.cameraMode);
   const gl = useThree((s) => s.gl);
+  const getThree = useThree((s) => s.get);
   // Driver's view: smoothed heading and the drag-to-look offset.
   const drive = useRef({ heading: start.heading, yaw: 0, pitch: 0, dragging: false, lastX: 0, lastY: 0 });
 
@@ -77,7 +83,13 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
     let dragging = false;
     let lastX = 0;
     let lastY = 0;
+    let startX = 0;
+    let startY = 0;
+    let startT = 0;
     const down = (e: PointerEvent) => {
+      startX = e.clientX;
+      startY = e.clientY;
+      startT = performance.now();
       dragging = true;
       d.dragging = true;
       orbit.dragging = modeRef.current === "iso";
@@ -102,18 +114,43 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
       d.dragging = false;
       orbit.dragging = false;
     };
+    // A short tap or click (not a drag) on the ground: drive there by itself (tap-to-drive).
+    const tap = (e: PointerEvent) => {
+      const wasTap = Math.hypot(e.clientX - startX, e.clientY - startY) < 10 && performance.now() - startT < 400;
+      up();
+      if (!wasTap || e.button > 0) return;
+      const { camera: cam } = getThree();
+      const rect = el.getBoundingClientRect();
+      ndc.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+      raycaster.setFromCamera(ndc, cam);
+      if (!raycaster.ray.intersectPlane(ground, hit)) return;
+      // Only spots on the island the car is on (driving straight to another island would miss the bridge).
+      const here = nearestEra(world, player.x, player.z);
+      const there = ERA_ORDER.find((id) => {
+        const g = world.islands[id].geometry;
+        return Math.hypot(hit.x - g.center[0], hit.z - g.center[1]) < g.radius - 3;
+      });
+      if (!there) return;
+      if (there !== here) {
+        useStore.getState().showToast("Tap a spot on this island, or use the island buttons to travel.");
+        return;
+      }
+      setAutoDrive(hit.x, hit.z);
+    };
     el.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", tap);
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
     return () => {
       el.removeEventListener("pointerdown", down);
+      el.removeEventListener("pointerup", tap);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
       up();
     };
-  }, [gl]);
+  }, [gl, getThree, world]);
 
   // Drawer framing, without re-rendering this component.
   useEffect(() => {

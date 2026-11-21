@@ -21,7 +21,7 @@ export function buildingName(b: Pick<ExploreBuilding, "title" | "kindLabel">) {
 }
 
 /**
- * Bottom-centre prompt above the audio dock (and above the touch joystick / Boost row on coarse pointers; its
+ * Bottom-centre prompt above the audio dock (and above the touch arrow pad / Boost row on coarse pointers; its
  * "Tap to open / Tap to talk" button is the touch interact button): "Press E / Tap to open" near a building, "Talk to the guide"
  * near the guide, or the insight / person text near a signpost or figure. Polite live region, so screen
  * readers hear where they are. Also owns the E key.
@@ -103,9 +103,9 @@ export function InteractPrompt({
     <div
       aria-live="polite"
       data-interact-prompt=""
-      // Touch layouts (any width, tablets too) lift the prompt above the joystick and Boost row (MobileControls).
+      // Touch layouts (any width, tablets too) lift the prompt above the arrow pad and Boost row (MobileControls).
       // Short landscape phones have no room above that row (it would cover the island buttons): there the prompt
-      // stays low, between the joystick and Boost (side padding wider than the joystick).
+      // stays low, between the arrow pad and Boost (side padding wider than the pad).
       className="pointer-events-none fixed inset-x-0 bottom-[8.5rem] z-hud flex justify-center px-4 md:bottom-[6.5rem] [@media(pointer:coarse)_and_(max-height:30rem)]:bottom-[9rem]! [@media(pointer:coarse)_and_(max-height:30rem)]:px-[10.5rem]! [@media(pointer:coarse)_and_(min-height:30.01rem)]:bottom-[14.5rem]!"
     >
       {content}

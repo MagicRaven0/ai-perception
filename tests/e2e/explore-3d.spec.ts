@@ -113,6 +113,39 @@ test.describe("explore in 3D", () => {
     await expect(page.locator("[data-explore-state]")).toHaveAttribute("data-explore-state", "ready");
   });
 
+  test("click a spot on the island and the car drives there by itself", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore?era=era-1");
+    type Dbg = {
+      __explore: { autoDrive: { active: boolean; x: number; z: number }; player: { x: number; z: number } };
+    };
+    const state = () =>
+      page.evaluate(() => {
+        const e = (window as unknown as Dbg).__explore;
+        return { active: e.autoDrive.active, tx: e.autoDrive.x, tz: e.autoDrive.z, x: e.player.x, z: e.player.z };
+      });
+    // Click a little way from the screen centre (the car is near the centre, on the island).
+    const box = (await page.locator("canvas").first().boundingBox())!;
+    await page.mouse.click(box.x + box.width / 2 + 140, box.y + box.height / 2 + 60);
+    const s0 = await state();
+    expect(s0.active).toBe(true);
+    const d0 = Math.hypot(s0.tx - s0.x, s0.tz - s0.z);
+    await expect
+      .poll(
+        async () => {
+          const s = await state();
+          return !s.active || Math.hypot(s.tx - s.x, s.tz - s.z) < d0 - 2;
+        },
+        { timeout: 20_000 },
+      )
+      .toBe(true);
+    // Any driving key takes over.
+    await page.mouse.click(box.x + box.width / 2 - 140, box.y + box.height / 2 + 60);
+    await page.keyboard.down("KeyW");
+    await page.keyboard.up("KeyW");
+    expect((await state()).active).toBe(false);
+  });
+
   test("?b= deep link drives to the building and opens its drawer", async ({ page }) => {
     const target = [...buildings].sort((a, b) => a.eraId.localeCompare(b.eraId) || a.order - b.order)[0];
     test.skip(!target, "no buildings in content yet");
@@ -508,6 +541,7 @@ test.describe("explore on a phone", () => {
     await expect(skip).toBeFocused();
     await expect(skip).toHaveCSS("position", "absolute");
     await expect(page.getByRole("button", { name: "Boost", exact: true })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Drive" }).getByRole("button")).toHaveCount(4);
     // No separate round "Open" button: the prompt's own "Tap to open / Tap to talk" is the interact button.
     await expect(page.getByRole("button", { name: "Open", exact: true })).toHaveCount(0);
     await expect(page.locator("[class*='leva']")).toHaveCount(0);
@@ -521,14 +555,14 @@ test.describe("explore on a phone", () => {
     await page.getByRole("button", { name: "Explore in 3D" }).click();
     await expectReady(page);
     // Put the visitor "near" things through the dev-only store hook (driving there on a phone is slow and
-    // the joystick is a DOM widget): the prompt is the same either way.
+    // the arrow pad is DOM): the prompt is the same either way.
     type Near = { getState: () => { setNearGuide: (n: boolean) => void; enterBuilding: (id: string) => void } };
     type Box = { x: number; y: number; width: number; height: number };
 
     const card = page.locator("[data-interact-prompt] > div");
     const tap = page.locator("#interact-prompt-button");
     const others = {
-      joystick: page.locator("[data-touch-joystick] > div").first(),
+      "arrow pad": page.locator("[data-touch-pad]"),
       Boost: page.getByRole("button", { name: "Boost", exact: true }),
       "chat button": page.getByRole("button", { name: "Ask the guide" }),
       "audio dock": page.getByRole("region", { name: "Audio player" }),

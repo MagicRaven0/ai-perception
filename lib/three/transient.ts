@@ -5,7 +5,7 @@ import type { Pose } from "./layout";
  * never in React state or the Zustand store:
  * - the vehicle writes `player` every frame;
  * - the minimap and the camera read it in their own loops;
- * - keyboard / joystick / touch buttons write `input`; the vehicle reads it every frame;
+ * - keyboard / touch arrow pad write `input`; tap-to-drive writes `autoDrive`; the vehicle reads both every frame;
  * - anyone may `requestTeleport()`; the vehicle applies it on its next physics frame and bumps `teleports`
  *   so the camera can snap instead of easing across the map.
  *
@@ -33,7 +33,7 @@ export const input = {
   right: false,
   brake: false,
   boost: false,
-  /** Touch joystick, -1..1 (x right, y up). */
+  /** Analog steering/throttle, -1..1 (x right, y up); unused since the touch joystick became an arrow pad. */
   joyX: 0,
   joyY: 0,
 };
@@ -49,10 +49,38 @@ export function rotateView(step: number) {
   orbit.target += step;
 }
 
+/**
+ * Tap-to-drive: tap (or click) a spot on the island and the car drives there by itself.
+ * Set by CameraRig, followed by the vehicle, cancelled by any manual driving, a teleport, arrival or getting stuck.
+ */
+export const autoDrive = { active: false, x: 0, z: 0 };
+
+export function setAutoDrive(x: number, z: number) {
+  autoDrive.x = x;
+  autoDrive.z = z;
+  autoDrive.active = true;
+}
+
+export function cancelAutoDrive() {
+  autoDrive.active = false;
+}
+
+/** Lift every touch button (when the touch controls unmount). */
+export function releaseInputs() {
+  input.forward = input.backward = input.left = input.right = input.boost = false;
+}
+
+/** Touch arrow pad / Boost: press or release one input (manual steering cancels tap-to-drive). */
+export function setInput(key: "forward" | "backward" | "left" | "right" | "boost", down: boolean) {
+  if (down && key !== "boost") autoDrive.active = false;
+  input[key] = down;
+}
+
 let pendingTeleport: Pose | null = null;
 
 /** Ask the vehicle to move to a pose (fast travel, deep links, respawn). Applied on the next frame. */
 export function requestTeleport(pose: Pose) {
+  autoDrive.active = false;
   pendingTeleport = { ...pose };
 }
 
@@ -150,6 +178,8 @@ export function attachKeyboard(): () => void {
     if (key === "brake" && e.target instanceof HTMLElement && e.target.closest("button, a")) return;
     // Arrows and Space would scroll the page or press a focused button.
     if (down) e.preventDefault();
+    // Manual driving takes over from tap-to-drive.
+    if (down && key !== "boost") autoDrive.active = false;
     (input as Record<string, boolean | number>)[key] = down;
   };
   const down = onKey(true);
@@ -169,5 +199,5 @@ export function attachKeyboard(): () => void {
 
 // Development only: lets DevTools and the e2e tests inspect the car (window.__explore.player).
 if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
-  (window as unknown as { __explore?: unknown }).__explore = { player, input, requestTeleport, orbit };
+  (window as unknown as { __explore?: unknown }).__explore = { player, input, requestTeleport, orbit, autoDrive };
 }

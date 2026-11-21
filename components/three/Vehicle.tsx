@@ -9,12 +9,20 @@ import { motion } from "@/lib/three/motion";
 import { useStore } from "@/lib/store";
 import type { EraId } from "@/lib/content/schema";
 import { CAR_HANDLING, EraCar } from "./car/EraCar";
-import { attachKeyboard, input, player, requestTeleport, savePosition, takeTeleport } from "@/lib/three/transient";
+import {
+  attachKeyboard,
+  autoDrive,
+  input,
+  player,
+  requestTeleport,
+  savePosition,
+  takeTeleport,
+} from "@/lib/three/transient";
 
 /**
  * SHARED. The player's car: a small custom arcade car on a Rapier dynamic body (Bruno-style feel).
  *
- * Why not ecctrl's EcctrlVehicle: it was tried first (ecctrl 2.0.2 is installed). Its torque-driven wheels
+ * Why not ecctrl's EcctrlVehicle: it was tried first (ecctrl 2.0.2 was installed; removed 21 Nov 2026 with the touch joystick). Its torque-driven wheels
  * hopped under throttle, flipped under hard braking, and kept their wheel spin across teleports (the car
  * lurched after fast travel). This controller is predictable and calm, which suits a class audience:
  * - the body only rotates about Y (it can never flip); gravity still applies and colliders still block;
@@ -51,7 +59,16 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
   const visual = useRef<THREE.Group>(null);
   const [initialEra] = useState<EraId>(() => nearestEra(world, start.x, start.z));
   const era = useRef<EraId>(initialEra);
-  const state = useRef({ speed: 0, heading: start.heading, steer: 0, pitch: 0, roll: 0, lastSave: 0, prevSpeed: 0 });
+  const state = useRef({
+    speed: 0,
+    heading: start.heading,
+    steer: 0,
+    pitch: 0,
+    roll: 0,
+    lastSave: 0,
+    prevSpeed: 0,
+    stuckFor: 0,
+  });
 
   useEffect(() => attachKeyboard(), []);
   // The era decides the car's look (EraCar) and a slightly different top speed; read without re-rendering.
@@ -87,14 +104,31 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
       player.teleports++;
     }
 
-    // 2. Input.
+    // 2. Input: keyboard / arrow pad, or tap-to-drive when nothing is pressed.
     const joyThrottle = Math.abs(input.joyY) > 0.2 ? input.joyY : 0;
-    const throttle = input.forward ? 1 : input.backward ? -1 : joyThrottle;
-    const steerIn = THREE.MathUtils.clamp(
+    let throttle = input.forward ? 1 : input.backward ? -1 : joyThrottle;
+    let steerIn = THREE.MathUtils.clamp(
       (input.left ? 1 : 0) - (input.right ? 1 : 0) - (Math.abs(input.joyX) > 0.12 ? input.joyX : 0),
       -1,
       1,
     );
+    if (autoDrive.active && throttle === 0 && steerIn === 0) {
+      const dx = autoDrive.x - player.x;
+      const dz = autoDrive.z - player.z;
+      const dist = Math.hypot(dx, dz);
+      // Stuck (blocked by a building or wall) for 2.5 s: give up rather than push forever.
+      s.stuckFor = Math.abs(s.speed) < 1.2 ? s.stuckFor + dt : 0;
+      if (dist < 2.5 || s.stuckFor > 2.5) {
+        autoDrive.active = false;
+        s.stuckFor = 0;
+      } else {
+        let diff = Math.atan2(dx, dz) - s.heading;
+        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+        steerIn = THREE.MathUtils.clamp(diff * 2.2, -1, 1);
+        // Calm pace: slower in sharp turns and when arriving.
+        throttle = Math.abs(diff) > 1.6 ? 0.45 : dist < 10 ? 0.5 : 0.85;
+      }
+    }
     const boosting = input.boost && throttle > 0;
     const top = (boosting ? BOOST_SPEED : MAX_SPEED) * CAR_HANDLING[era.current];
 

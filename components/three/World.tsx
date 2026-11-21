@@ -10,6 +10,7 @@ import { Atmosphere } from "./Atmosphere";
 import { CameraRig } from "./CameraRig";
 import { IslandSensor } from "./IslandSensor";
 import { Vehicle } from "./Vehicle";
+import { TapMarker } from "./TapMarker";
 import { StaticMerge } from "./kit/StaticMerge";
 import type { IslandProps } from "./islands/types";
 
@@ -63,6 +64,7 @@ function World({ world, start, onFirstFrame }: { world: WorldLayout; start: Pose
         </Suspense>
       </Physics>
       <CameraRig world={world} start={start} />
+      <TapMarker />
     </>
   );
 }

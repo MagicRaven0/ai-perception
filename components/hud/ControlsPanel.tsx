@@ -16,6 +16,7 @@ const TABS = [
       ["R", "I’m stuck: back to this island’s start"],
       ["V", "Driver’s view on / off (drag to look around)"],
       ["Q / Z, or drag", "Turn the view all the way around (360°)"],
+      ["Click a spot on the island", "The car drives there by itself (any key takes over)"],
       ["Esc", "Close a panel"],
       ["Tab", "Move between buttons (the world never traps focus)"],
     ],
@@ -24,7 +25,8 @@ const TABS = [
     id: "touch",
     label: "Touch",
     rows: [
-      ["Joystick (bottom left)", "Drive and steer"],
+      ["Arrow buttons (bottom left)", "Hold ▲ to drive, ▼ to brake or reverse, ◀ ▶ to steer"],
+      ["Tap a spot on the island", "The car drives there by itself"],
       ["Boost (bottom right)", "Hold to go faster"],
       ["Tap to open / Tap to talk (on the prompt)", "Open a building / talk to the guide"],
       ["Island buttons (top)", "Fast travel between islands"],

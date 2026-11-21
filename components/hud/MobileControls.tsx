@@ -1,79 +1,106 @@
 "use client";
 
-import { useEffect, type KeyboardEvent } from "react";
-import { Joystick, useJoystickStore } from "ecctrl/input";
-import { input } from "@/lib/three/transient";
+import { useEffect, type KeyboardEvent, type ReactNode } from "react";
+import { releaseInputs, setInput } from "@/lib/three/transient";
 
 /**
- * Touch controls (PLAN 6.5), shown on coarse pointers only: ecctrl's DOM joystick bottom-left and a real
- * hold-to-Boost button bottom-right, both placed above the audio mini-bar and the chat button.
- * The interact button is the prompt's own "Tap to open / Tap to talk" (InteractPrompt), which appears only when
- * there is something to open; on touch layouts the prompt sits ABOVE this row (the joystick reaches 214px from
- * the bottom, Boost 192px; the prompt starts at 14.5rem = 232px), so neither ever covers it. The joystick store is read outside React and copied into the transient
- * `input` (no re-renders). Keyboard users have the same actions on keys (see the Controls panel).
+ * Touch controls (PLAN 6.5, revised 21 Nov 2026), shown on coarse pointers only:
+ * - an arrow pad bottom-left (hold Up to drive, Down to brake / reverse, Left / Right to steer);
+ * - a hold-to-Boost button bottom-right;
+ * - or simply tap a spot on the ground and the car drives there by itself (CameraRig + Vehicle).
+ * All sit above the audio mini-bar and the chat button. The interact button is the prompt's own
+ * "Tap to open / Tap to talk" (InteractPrompt), which sits ABOVE this row on touch layouts (the pad reaches
+ * about 184px from the bottom, Boost 192px; the prompt starts at 14.5rem = 232px). Buttons write the transient
+ * `input` directly (no re-renders). Keyboard users have the same actions on keys (see the Controls panel).
  */
-export function MobileControls() {
-  useEffect(() => {
-    const unsub = useJoystickStore.subscribe((s) => {
-      const j = s.joysticks.default;
-      input.joyX = j?.x ?? 0;
-      input.joyY = j?.y ?? 0;
-    });
-    return () => {
-      unsub();
-      input.joyX = input.joyY = 0;
-      input.boost = false;
-    };
-  }, []);
 
-  const hold = (down: boolean) => () => {
-    input.boost = down;
-  };
-  // Keyboard (e.g. a switch device or a tablet keyboard): Enter / Space held = boost.
-  const key = (down: boolean) => (e: KeyboardEvent) => {
-    if (e.key !== "Enter" && e.key !== " ") return;
-    e.preventDefault();
-    input.boost = down;
-  };
+type Dir = "forward" | "backward" | "left" | "right";
+
+export function MobileControls() {
+  useEffect(() => releaseInputs, []);
+
   const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
   return (
     <div className="hidden [@media(pointer:coarse)]:block">
-      <div aria-hidden="true" data-touch-joystick="">
-        <Joystick
-          joystickWrapperStyle={{
-            left: "max(0.5rem, env(safe-area-inset-left))",
-            bottom: "4rem",
-            zIndex: "var(--z-hud)",
-            width: "150px",
-            height: "150px",
-          }}
-          joystickBaseStyle={{
-            width: "104px",
-            height: "104px",
-            background: "color-mix(in srgb, var(--color-paper) 55%, transparent)",
-            border: "2px solid var(--color-paper)",
-            boxShadow: "var(--shadow-pill)",
-          }}
-          joystickKnobStyle={{ width: "52px", height: "52px", background: "var(--color-paper)" }}
-        />
+      <div
+        data-touch-pad=""
+        role="group"
+        aria-label="Drive"
+        className="fixed bottom-16 left-[max(0.75rem,env(safe-area-inset-left))] z-hud grid grid-cols-3 grid-rows-2 gap-1.5"
+      >
+        <span />
+        <HoldButton dir="forward" label="Forward" className="col-start-2" focusRing={focusRing}>
+          <path d="M12 6 5 15h14z" />
+        </HoldButton>
+        <span />
+        <HoldButton dir="left" label="Steer left" focusRing={focusRing}>
+          <path d="M6 12 15 5v14z" />
+        </HoldButton>
+        <HoldButton dir="backward" label="Brake or reverse" focusRing={focusRing}>
+          <path d="M12 18 5 9h14z" />
+        </HoldButton>
+        <HoldButton dir="right" label="Steer right" focusRing={focusRing}>
+          <path d="M18 12 9 5v14z" />
+        </HoldButton>
       </div>
       <div className="fixed right-4 bottom-[8.5rem] z-hud">
-        <button
-          type="button"
-          onPointerDown={hold(true)}
-          onPointerUp={hold(false)}
-          onPointerCancel={hold(false)}
-          onPointerLeave={hold(false)}
-          onKeyDown={key(true)}
-          onKeyUp={key(false)}
-          onBlur={hold(false)}
-          onContextMenu={(e) => e.preventDefault()}
-          className={`flex size-14 touch-none items-center justify-center rounded-full bg-paper text-sm font-semibold text-ink shadow-pill-strong select-none ${focusRing}`}
-        >
+        <HoldButton dir="boost" label="Boost" focusRing={focusRing} text>
           Boost
-        </button>
+        </HoldButton>
       </div>
     </div>
+  );
+}
+
+/** A press-and-hold button that sets one transient input while held (touch, mouse, Enter / Space). */
+function HoldButton({
+  dir,
+  label,
+  className,
+  focusRing,
+  text,
+  children,
+}: {
+  dir: Dir | "boost";
+  label: string;
+  className?: string;
+  focusRing: string;
+  text?: boolean;
+  children: ReactNode;
+}) {
+  const set = (down: boolean) => setInput(dir, down);
+  const key = (down: boolean) => (e: KeyboardEvent) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    set(down);
+  };
+  return (
+    <button
+      type="button"
+      aria-label={text ? undefined : label}
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+        set(true);
+      }}
+      onPointerUp={() => set(false)}
+      onPointerCancel={() => set(false)}
+      onLostPointerCapture={() => set(false)}
+      onKeyDown={key(true)}
+      onKeyUp={key(false)}
+      onBlur={() => set(false)}
+      onContextMenu={(e) => e.preventDefault()}
+      className={`flex touch-none items-center justify-center rounded-full bg-paper font-semibold text-ink shadow-pill-strong select-none active:bg-ink active:text-paper ${
+        text ? "size-14 text-sm" : "size-[3.25rem]"
+      } ${focusRing} ${className ?? ""}`}
+    >
+      {text ? (
+        children
+      ) : (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          {children}
+        </svg>
+      )}
+    </button>
   );
 }

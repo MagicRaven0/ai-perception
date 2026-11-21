@@ -18,7 +18,7 @@ export function buildExploreData(): ExploreData {
       id: e.id,
       anchorFigures: e.anchorFigures.map((f) => {
         const img = f.imageId ? getImage(f.imageId) : undefined;
-        return { name: f.name, role: f.role, imageSrc: img?.src, imageAlt: img?.alt };
+        return { name: f.name, role: f.role, imageSrc: img?.src, imageAlt: img?.alt, look: f.look };
       }),
     })),
     buildings: buildings.map((b) => ({

@@ -47,6 +47,17 @@ export type About = z.infer<typeof About>;
 
 /* ------------------------------------------------------------------ eras */
 
+/**
+ * How a faceless low-poly figure is dressed in 3D (never a face or likeness): outfit colours and one prop.
+ * Used for era anchor figures (and stored for episode speakers).
+ */
+export const FigureLook = z.object({
+  top: Hex,
+  bottom: Hex,
+  prop: z.enum(["none", "microphone", "laptop", "book", "chalk", "headphones", "clipboard", "phone"]).default("none"),
+});
+export type FigureLook = z.infer<typeof FigureLook>;
+
 export const Era = z.object({
   id: EraId,
   slug: Id,
@@ -65,6 +76,7 @@ export const Era = z.object({
       /** What they expected or argued about AI (shown in the people table). */
       view: z.string().min(1).optional(),
       imageId: Id.optional(),
+      look: FigureLook.optional(),
     }),
   ),
   /** 2-3 real paragraphs from the essay (markdown, paragraphs separated by a blank line). */
@@ -210,6 +222,7 @@ export const Episode = z
         role: z.string().min(1),
         /** Interviews cannot be published until the speaker has agreed in writing. */
         consentConfirmed: z.boolean(),
+        look: FigureLook.optional(),
       }),
     ),
     /** MP3 path under /public (e.g. "/audio/ep-1.mp3") or a full URL. Null until recorded. */

@@ -37,11 +37,14 @@ type IslandSpec = {
   reserveCentre: boolean;
 };
 
-/** Island sizes follow the vision: The Past is big and old, The Jobs Era human-scale, The Future widest. */
+/**
+ * Island sizes follow the vision: The Past is big and old, The Jobs Era human-scale, The Future widest.
+ * Enlarged ~30% on 21 Nov 2026 (more room to drive, more plots); bridges stay about 38 m long.
+ */
 const SPECS: Record<EraId, IslandSpec> = {
   "era-1": {
-    center: [-128, 6],
-    radius: 50,
+    center: [-154, 6],
+    radius: 64,
     roadFactor: 0.56,
     roadWidth: 7,
     plot: { width: 14, depth: 13 },
@@ -49,15 +52,15 @@ const SPECS: Record<EraId, IslandSpec> = {
   },
   "era-2": {
     center: [0, -6],
-    radius: 40,
+    radius: 52,
     roadFactor: 0.56,
     roadWidth: 7,
     plot: { width: 10, depth: 10 },
     reserveCentre: false,
   },
   "era-3": {
-    center: [134, 6],
-    radius: 56,
+    center: [162, 6],
+    radius: 72,
     roadFactor: 0.56,
     roadWidth: 7,
     plot: { width: 12, depth: 12 },
@@ -142,10 +145,14 @@ export type PlacedFigure = {
   /** Photo billboard (path under /public, from content/credits.ts images). Missing -> "photo coming" frame. */
   imageSrc?: string;
   imageAlt?: string;
+  /** Outfit colours and prop from content (faceless; no likeness). Missing -> neutral figure. */
+  look?: FigureLookInput;
   position: Vec3;
   rotationY: number;
   sensorRadius: number;
 };
+
+export type FigureLookInput = { top: string; bottom: string; prop: string };
 
 export type EdgeWall = { position: Vec3; rotationY: number; length: number };
 
@@ -172,7 +179,10 @@ export type WorldLayout = {
 
 /** Minimal content shapes the layout needs (subset of the zod types, so the client can pass plain data too). */
 export type LayoutInput = {
-  eras: { id: EraId; anchorFigures: { name: string; role: string; imageSrc?: string; imageAlt?: string }[] }[];
+  eras: {
+    id: EraId;
+    anchorFigures: { name: string; role: string; imageSrc?: string; imageAlt?: string; look?: FigureLookInput }[];
+  }[];
   buildings: { id: string; eraId: EraId; order: number; kind: BuildingKind; comingSoon: boolean }[];
   insights: { id: string; eraId: EraId; kind: "benefit" | "risk" | "danger"; buildingId?: string }[];
 };
@@ -375,6 +385,7 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
       role: f.role,
       imageSrc: f.imageSrc,
       imageAlt: f.imageAlt,
+      look: f.look,
       position,
       rotationY: headingOf(Math.cos(angle), Math.sin(angle)),
       // Reaches the middle of the road, so driving past is enough.

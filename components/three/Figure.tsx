@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import type { PlacedFigure } from "@/lib/three/layout";
+import type { FigureLookInput, PlacedFigure } from "@/lib/three/layout";
 import { SHARED } from "@/lib/three/palette";
 import { SignSensor } from "./BuildingSensor";
 import { StaticMerge } from "./kit/StaticMerge";
@@ -19,7 +19,7 @@ export function Figure({ placed, tint }: { placed: PlacedFigure; tint?: string }
     <>
       <group position={placed.position} rotation-y={placed.rotationY}>
         <StaticMerge>
-          <FacelessFigure position={[-1.2, 0, 0.4]} tint={tint} />
+          <FacelessFigure position={[-1.2, 0, 0.4]} tint={tint} look={placed.look} />
           <BillboardFrame position={[0.9, 0, 0]} />
           {/* No photo yet: the blank "photo coming" panels are plain Lambert, so they bake into this merge too
               (the whole figure is one draw call; small props cast no shadow, so there is no shadow-pass call). */}
@@ -43,25 +43,104 @@ export function Figure({ placed, tint }: { placed: PlacedFigure; tint?: string }
   );
 }
 
-/** Low-poly faceless person: no eyes, nose or mouth on purpose. */
-export function FacelessFigure({ position, tint }: { position: [number, number, number]; tint?: string }) {
-  const body = tint ?? SHARED.figure;
+/**
+ * Low-poly faceless person: no eyes, nose or mouth on purpose. An optional `look` from content dresses it
+ * (top / bottom colours and one prop); the head always stays the neutral figure colour, so nobody is a likeness.
+ */
+export function FacelessFigure({
+  position,
+  tint,
+  look,
+}: {
+  position: [number, number, number];
+  tint?: string;
+  look?: FigureLookInput;
+}) {
+  const head = tint ?? SHARED.figure;
+  const top = look?.top ?? head;
+  const bottom = look?.bottom ?? SHARED.figureDark;
   return (
     <group position={position}>
       <mesh position={[0, 0.85, 0]}>
         <cylinderGeometry args={[0.32, 0.42, 1.3, 7]} />
-        <meshLambertMaterial color={body} flatShading />
+        <meshLambertMaterial color={top} flatShading />
       </mesh>
       <mesh position={[0, 1.8, 0]}>
         <icosahedronGeometry args={[0.36, 0]} />
-        <meshLambertMaterial color={body} flatShading />
+        <meshLambertMaterial color={head} flatShading />
       </mesh>
       <mesh position={[0, 0.12, 0]}>
         <cylinderGeometry args={[0.3, 0.3, 0.24, 7]} />
-        <meshLambertMaterial color={SHARED.figureDark} />
+        <meshLambertMaterial color={bottom} />
       </mesh>
+      {look && look.prop !== "none" && <Prop kind={look.prop} />}
     </group>
   );
+}
+
+/** One small hand-held prop in front of the figure, in neutral dark/cream so it reads at isometric distance. */
+function Prop({ kind }: { kind: string }) {
+  const dark = SHARED.figureDark;
+  const light = SHARED.cream;
+  switch (kind) {
+    case "microphone":
+      return (
+        <group position={[0.38, 1.25, 0.25]}>
+          <mesh position={[0, -0.2, 0]}>
+            <cylinderGeometry args={[0.035, 0.035, 0.4, 5]} />
+            <meshLambertMaterial color={dark} />
+          </mesh>
+          <mesh>
+            <icosahedronGeometry args={[0.1, 0]} />
+            <meshLambertMaterial color={dark} flatShading />
+          </mesh>
+        </group>
+      );
+    case "headphones":
+      return (
+        <mesh position={[0, 1.95, 0]} rotation-z={Math.PI / 2}>
+          <torusGeometry args={[0.36, 0.05, 4, 10, Math.PI]} />
+          <meshLambertMaterial color={dark} />
+        </mesh>
+      );
+    case "laptop":
+      return (
+        <group position={[0, 1.05, 0.42]}>
+          <mesh>
+            <boxGeometry args={[0.55, 0.04, 0.38]} />
+            <meshLambertMaterial color={dark} />
+          </mesh>
+          <mesh position={[0, 0.17, -0.17]} rotation-x={-0.35}>
+            <boxGeometry args={[0.55, 0.36, 0.03]} />
+            <meshLambertMaterial color={dark} />
+          </mesh>
+        </group>
+      );
+    case "book":
+    case "clipboard":
+      return (
+        <mesh position={[0.2, 1.05, 0.4]} rotation-x={-0.5}>
+          <boxGeometry args={[0.36, 0.46, 0.06]} />
+          <meshLambertMaterial color={kind === "book" ? dark : light} />
+        </mesh>
+      );
+    case "chalk":
+      return (
+        <mesh position={[0.42, 1.35, 0.2]}>
+          <boxGeometry args={[0.05, 0.05, 0.16]} />
+          <meshLambertMaterial color={light} />
+        </mesh>
+      );
+    case "phone":
+      return (
+        <mesh position={[0.3, 1.3, 0.3]}>
+          <boxGeometry args={[0.12, 0.22, 0.03]} />
+          <meshLambertMaterial color={dark} />
+        </mesh>
+      );
+    default:
+      return null;
+  }
 }
 
 const BOARD = { w: 2.2, h: 2.8, y: 1.2 + 1.4 };

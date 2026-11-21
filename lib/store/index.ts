@@ -55,6 +55,8 @@ type State = {
   renderer: string | null;
   /** World ambience (lo-fi music + ambient loops). Off until the visitor turns it on. Persisted. */
   ambienceOn: boolean;
+  /** True while the car is a plane (set on take-off / landing; the HUD shows Land). Not persisted. */
+  flying: boolean;
   /** Time of day in the 3D world (HUD button). Persisted. */
   timeOfDay: "day" | "sunset" | "night";
   /** Camera: high isometric overview (default) or the driver's seat. Not persisted. */
@@ -88,6 +90,7 @@ type Actions = {
   setAmbienceOn: (on: boolean) => void;
   toggleCameraMode: () => void;
   cycleTimeOfDay: () => void;
+  setFlying: (flying: boolean) => void;
   showToast: (message: string) => void;
   clearToast: (id: number) => void;
 };
@@ -113,6 +116,7 @@ export const useStore = create<State & Actions>()(
       ambienceOn: false,
       cameraMode: "iso",
       timeOfDay: "day",
+      flying: false,
       toast: null,
 
       setViewMode: (viewMode) => set({ viewMode }),
@@ -145,6 +149,7 @@ export const useStore = create<State & Actions>()(
       setAutoTier: (autoTier) => set((s) => (s.autoTier === autoTier ? s : { autoTier })),
       setRenderer: (renderer) => set({ renderer }),
       setAmbienceOn: (ambienceOn) => set({ ambienceOn }),
+      setFlying: (flying) => set((s) => (s.flying === flying ? s : { flying })),
       cycleTimeOfDay: () =>
         set((s) => ({ timeOfDay: s.timeOfDay === "day" ? "sunset" : s.timeOfDay === "sunset" ? "night" : "day" })),
       toggleCameraMode: () => set((s) => ({ cameraMode: s.cameraMode === "iso" ? "driver" : "iso" })),

@@ -24,7 +24,16 @@ export const player = {
   ready: false,
   /** Increments after every applied teleport (camera snaps when it changes). */
   teleports: 0,
+  /** True while the car has taken off from a runway and is a plane. */
+  flying: false,
 };
+
+/** Flight requests from the HUD / keys (the vehicle applies them on its next frame). */
+export const flight = { landRequested: false };
+
+export function requestLanding() {
+  flight.landRequested = true;
+}
 
 export const input = {
   forward: false,
@@ -199,5 +208,12 @@ export function attachKeyboard(): () => void {
 
 // Development only: lets DevTools and the e2e tests inspect the car (window.__explore.player).
 if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
-  (window as unknown as { __explore?: unknown }).__explore = { player, input, requestTeleport, orbit, autoDrive };
+  (window as unknown as { __explore?: unknown }).__explore = {
+    player,
+    input,
+    requestTeleport,
+    orbit,
+    autoDrive,
+    flight,
+  };
 }

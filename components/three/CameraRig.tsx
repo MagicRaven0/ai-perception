@@ -214,7 +214,12 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
     } else {
       // Look a little ahead of the car along its heading, more at speed.
       const ahead = Math.min(player.speed * 0.35, 6);
-      desired.set(player.x + Math.sin(player.heading) * ahead, 0, player.z + Math.cos(player.heading) * ahead);
+      // In the air the camera rises with the plane, so it stays in the middle of the view.
+      desired.set(
+        player.x + Math.sin(player.heading) * ahead,
+        player.flying ? Math.max(0, player.y - 1) : 0,
+        player.z + Math.cos(player.heading) * ahead,
+      );
     }
 
     const snapped = seenTeleports.current !== player.teleports;

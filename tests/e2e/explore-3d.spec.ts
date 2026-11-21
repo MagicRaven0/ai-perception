@@ -52,6 +52,12 @@ const playerPose = (page: Page) =>
     return { x: p.x, z: p.z, heading: p.heading };
   });
 
+/** The extra HUD buttons fold behind "More controls"; open it if needed. */
+async function expandHud(page: Page) {
+  const more = page.getByRole("button", { name: "More controls" });
+  if (await more.isVisible()) await more.click();
+}
+
 /** Visible dialogs only (the hidden /explore page stays in the DOM after leaving). */
 const visibleDialogs = (page: Page) => page.getByRole("dialog");
 
@@ -83,6 +89,7 @@ test.describe("explore in 3D", () => {
           (window as unknown as { __store: { getState: () => { cameraMode: string } } }).__store.getState().cameraMode,
       );
 
+    await expandHud(page);
     const eye = page.getByRole("button", { name: /Driver's view/ });
     await expect(eye).toHaveAttribute("aria-pressed", "false");
     await eye.click();
@@ -144,6 +151,35 @@ test.describe("explore in 3D", () => {
     await page.keyboard.down("KeyW");
     await page.keyboard.up("KeyW");
     expect((await state()).active).toBe(false);
+  });
+
+  test("drive off a runway to fly as the era's plane, then L lands back on a runway", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore?era=era-1");
+    type Dbg = {
+      __explore: {
+        player: { flying: boolean; y: number };
+        requestTeleport: (p: { x: number; y: number; z: number; heading: number }) => void;
+      };
+      __store: { getState: () => { flying: boolean } };
+    };
+    // Put the car near the open end of The Past's runway (it points west, -x), facing off the end.
+    await page.evaluate(() => {
+      const d = window as unknown as Dbg;
+      // The Past: centre (-154, 6), radius 64, runway west: rim at x = -218, open end ~46 m further.
+      d.__explore.requestTeleport({ x: -250, y: 1.2, z: 6, heading: -Math.PI / 2 });
+    });
+    await page.keyboard.down("KeyW");
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as Dbg).__store.getState().flying), { timeout: 20_000 })
+      .toBe(true);
+    await page.keyboard.up("KeyW");
+    await expect(page.getByRole("button", { name: /Land/ })).toBeVisible();
+    await page.keyboard.press("KeyL");
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as Dbg).__store.getState().flying), { timeout: 10_000 })
+      .toBe(false);
+    await expect(page.getByRole("button", { name: /Land/ })).toHaveCount(0);
   });
 
   test("?b= deep link drives to the building and opens its drawer", async ({ page }) => {
@@ -282,6 +318,7 @@ test.describe("explore in 3D", () => {
       expect(await scan()).toEqual([]);
 
       await page.keyboard.press("Escape");
+      await expandHud(page);
       await page.getByRole("button", { name: "Options" }).click();
       await expect(page.getByRole("dialog", { name: "Options" })).toBeVisible();
       expect(await scan()).toEqual([]);
@@ -323,6 +360,7 @@ test.describe("explore in 3D", () => {
     await expect(visibleDialogs(page)).toHaveCount(1, { timeout: 15_000 });
 
     // Mouse click on Options with the drawer open: the drawer closes, Options is the only dialog.
+    await expandHud(page);
     const options = page.getByRole("button", { name: "Options" });
     await options.click();
     await expect(page.getByRole("dialog", { name: "Options" })).toBeVisible();

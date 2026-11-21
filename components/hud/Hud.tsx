@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import type { EraId } from "@/lib/content/schema";
 import type { ExploreData } from "@/lib/three/explore-data";
-import { isTypingTarget, rotateView } from "@/lib/three/transient";
+import { isTypingTarget, requestLanding, rotateView } from "@/lib/three/transient";
 import { Ambience } from "@/components/three/Ambience";
 import { BuildingDrawer } from "./BuildingDrawer";
 import { ControlsPanel } from "./ControlsPanel";
@@ -33,6 +33,25 @@ export function Hud({ data }: { data: ExploreData }) {
   const drawerOpen = useStore((s) => s.openBuildingId !== null);
   const driverView = useStore((s) => s.cameraMode === "driver");
   const timeOfDay = useStore((s) => s.timeOfDay);
+  const flying = useStore((s) => s.flying);
+  // The extra buttons fold away so the top bar stays calm; the choice is remembered in this browser.
+  // (The HUD only renders in the browser once the world is ready, so reading storage here is safe.)
+  const [expanded, setExpanded] = useState(() => {
+    try {
+      return localStorage.getItem("hud-expanded") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleExpanded = () =>
+    setExpanded((v) => {
+      try {
+        localStorage.setItem("hud-expanded", v ? "0" : "1");
+      } catch {
+        // ignore
+      }
+      return !v;
+    });
   const ids = useMemo(() => Object.keys(data.buildings), [data.buildings]);
   const eraNames = useMemo(
     () => Object.fromEntries(data.eras.map((e) => [e.id, e.islandName])) as Record<EraId, string>,
@@ -58,6 +77,7 @@ export function Hud({ data }: { data: ExploreData }) {
       if (e.code === "KeyR") respawn(data.world);
       if (e.code === "KeyV") useStore.getState().toggleCameraMode();
       if (e.code === "KeyT") useStore.getState().cycleTimeOfDay();
+      if (e.code === "KeyL" && useStore.getState().flying) requestLanding();
       if (e.code === "KeyQ") rotateView(Math.PI / 4);
       if (e.code === "KeyZ") rotateView(-Math.PI / 4);
     };
@@ -86,54 +106,77 @@ export function Hud({ data }: { data: ExploreData }) {
             >
               Read
             </Link>
-            <IconButton label="Map" pressed={mapOpen} onClick={() => setMapOpen((v) => !v)}>
-              <path d="M4 6.5 9 4l6 2.5L20 4v13.5L15 20l-6-2.5L4 20z M9 4v13.5 M15 6.5V20" />
-            </IconButton>
+            {flying && (
+              <button
+                type="button"
+                onClick={requestLanding}
+                className="flex h-11 items-center gap-2 rounded-full bg-orange px-4 font-semibold text-coal shadow-pill transition-transform duration-300 ease-calm hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Land <span className="text-xs opacity-70">L</span>
+              </button>
+            )}
             <IconButton
-              label="Driver's view (V)"
-              pressed={driverView}
-              onClick={() => useStore.getState().toggleCameraMode()}
+              label={expanded ? "Fewer controls" : "More controls"}
+              expanded={expanded}
+              controls="hud-more"
+              onClick={toggleExpanded}
             >
-              <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z" />
+              <path d={expanded ? "M15 6l-6 6 6 6" : "M5 12h.01 M12 12h.01 M19 12h.01"} />
             </IconButton>
-            <IconButton
-              label={`Time of day: ${timeOfDay} (T to change)`}
-              onClick={() => useStore.getState().cycleTimeOfDay()}
+            <div
+              id="hud-more"
+              hidden={!expanded}
+              className="flex flex-wrap items-center gap-2 motion-safe:animate-[hud-in_200ms_ease-out]"
             >
-              {/* Clock face (distinct from the Options gear); the hands point to morning, evening or midnight. */}
-              <path
-                d={
-                  timeOfDay === "day"
-                    ? "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z M12 7.5V12l-3 2"
-                    : timeOfDay === "sunset"
-                      ? "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z M12 7.5V12l3.5 1.5"
-                      : "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z M12 6.5V12"
-                }
-              />
-            </IconButton>
-            <IconButton label="Options" pressed={panel === "options"} onClick={() => togglePanel("options")}>
-              <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z M12 3v2.5 M12 18.5V21 M3 12h2.5 M18.5 12H21 M5.6 5.6l1.8 1.8 M16.6 16.6l1.8 1.8 M5.6 18.4l1.8-1.8 M16.6 7.4l1.8-1.8" />
-            </IconButton>
-            <IconButton
-              label="Controls"
-              pressed={panel === "controls"}
-              onClick={() => togglePanel("controls")}
-              className="hidden sm:flex"
-            >
-              <path d="M3 8h18v9H3z M7 11v3 M5.5 12.5h3 M15 11.5h.01 M17.5 13.5h.01" />
-            </IconButton>
-            <IconButton
-              label="World sound"
-              pressed={ambienceOn}
-              onClick={() => useStore.getState().setAmbienceOn(!ambienceOn)}
-              className="hidden sm:flex"
-            >
-              {ambienceOn ? (
-                <path d="M4 9.5h4L13 5v14l-5-4.5H4z M16 9a4 4 0 0 1 0 6 M18.5 6.5a7.5 7.5 0 0 1 0 11" />
-              ) : (
-                <path d="M4 9.5h4L13 5v14l-5-4.5H4z M16.5 9.5l5 5 M21.5 9.5l-5 5" />
-              )}
-            </IconButton>
+              <IconButton label="Map" pressed={mapOpen} onClick={() => setMapOpen((v) => !v)}>
+                <path d="M4 6.5 9 4l6 2.5L20 4v13.5L15 20l-6-2.5L4 20z M9 4v13.5 M15 6.5V20" />
+              </IconButton>
+              <IconButton
+                label="Driver's view (V)"
+                pressed={driverView}
+                onClick={() => useStore.getState().toggleCameraMode()}
+              >
+                <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z" />
+              </IconButton>
+              <IconButton
+                label={`Time of day: ${timeOfDay} (T to change)`}
+                onClick={() => useStore.getState().cycleTimeOfDay()}
+              >
+                {/* Clock face (distinct from the Options gear); the hands point to morning, evening or midnight. */}
+                <path
+                  d={
+                    timeOfDay === "day"
+                      ? "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z M12 7.5V12l-3 2"
+                      : timeOfDay === "sunset"
+                        ? "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z M12 7.5V12l3.5 1.5"
+                        : "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z M12 6.5V12"
+                  }
+                />
+              </IconButton>
+              <IconButton label="Options" pressed={panel === "options"} onClick={() => togglePanel("options")}>
+                <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z M12 3v2.5 M12 18.5V21 M3 12h2.5 M18.5 12H21 M5.6 5.6l1.8 1.8 M16.6 16.6l1.8 1.8 M5.6 18.4l1.8-1.8 M16.6 7.4l1.8-1.8" />
+              </IconButton>
+              <IconButton
+                label="Controls"
+                pressed={panel === "controls"}
+                onClick={() => togglePanel("controls")}
+                className="hidden sm:flex"
+              >
+                <path d="M3 8h18v9H3z M7 11v3 M5.5 12.5h3 M15 11.5h.01 M17.5 13.5h.01" />
+              </IconButton>
+              <IconButton
+                label="World sound"
+                pressed={ambienceOn}
+                onClick={() => useStore.getState().setAmbienceOn(!ambienceOn)}
+                className="hidden sm:flex"
+              >
+                {ambienceOn ? (
+                  <path d="M4 9.5h4L13 5v14l-5-4.5H4z M16 9a4 4 0 0 1 0 6 M18.5 6.5a7.5 7.5 0 0 1 0 11" />
+                ) : (
+                  <path d="M4 9.5h4L13 5v14l-5-4.5H4z M16.5 9.5l5 5 M21.5 9.5l-5 5" />
+                )}
+              </IconButton>
+            </div>
           </div>
           <div className="lg:hidden">
             <FastTravelBar world={data.world} eras={data.eras} fade={fade} />
@@ -184,12 +227,16 @@ function Icon({ children }: { children: ReactNode }) {
 function IconButton({
   label,
   pressed,
+  expanded,
+  controls,
   onClick,
   className,
   children,
 }: {
   label: string;
   pressed?: boolean;
+  expanded?: boolean;
+  controls?: string;
   onClick: () => void;
   className?: string;
   children: ReactNode;
@@ -199,6 +246,8 @@ function IconButton({
       type="button"
       aria-label={label}
       aria-pressed={pressed}
+      aria-expanded={expanded}
+      aria-controls={controls}
       title={label}
       onClick={onClick}
       className={`${iconClass} ${className ?? "flex"}`}

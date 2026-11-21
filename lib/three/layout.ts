@@ -35,6 +35,8 @@ type IslandSpec = {
   plot: { width: number; depth: number };
   /** Reserve the centre (AUS campus on The Future). */
   reserveCentre: boolean;
+  /** Angle (from the island centre) of the runway that juts off the edge; drive off its end to fly. */
+  runwayAngle: number;
 };
 
 /**
@@ -49,6 +51,7 @@ const SPECS: Record<EraId, IslandSpec> = {
     roadWidth: 7,
     plot: { width: 14, depth: 13 },
     reserveCentre: false,
+    runwayAngle: Math.PI,
   },
   "era-2": {
     center: [0, -6],
@@ -57,6 +60,7 @@ const SPECS: Record<EraId, IslandSpec> = {
     roadWidth: 7,
     plot: { width: 10, depth: 10 },
     reserveCentre: false,
+    runwayAngle: Math.PI / 2,
   },
   "era-3": {
     center: [162, 6],
@@ -65,11 +69,14 @@ const SPECS: Record<EraId, IslandSpec> = {
     roadWidth: 7,
     plot: { width: 12, depth: 12 },
     reserveCentre: true,
+    runwayAngle: 0,
   },
 };
 
 /** Bridge deck width (m). Widened from 9 to 12 on 21 Nov 2026 so the drive between islands feels easier. */
 export const BRIDGE_WIDTH = 12;
+/** Runway jutting off each island (length beyond the rim, width). Drive off the end and the car becomes a plane. */
+export const RUNWAY = { length: 46, width: 11 };
 const BRIDGE_PAIRS: [EraId, EraId][] = [
   ["era-1", "era-2"],
   ["era-2", "era-3"],
@@ -89,6 +96,8 @@ export type IslandGeometry = {
   bridgeAngles: number[];
   /** Angle you arrive at (first bridge from the previous island; for The Past, its only bridge). */
   entryAngle: number;
+  /** The runway's angle (also listed in bridgeAngles, so it gets a connector road, an edge opening and clear plots). */
+  runwayAngle: number;
   plot: { width: number; depth: number };
 };
 
@@ -102,6 +111,20 @@ export type BridgeGeometry = {
   length: number;
   width: number;
   /** Rotation about Y so the bridge's local +Z runs from start to end. */
+  rotationY: number;
+};
+
+export type RunwayGeometry = {
+  eraId: EraId;
+  /** On the island, 3 m inside the rim (the deck overlaps the lawn like a bridge). */
+  start: Vec2;
+  /** The open end in the air: drive past it to take off. */
+  end: Vec2;
+  center: Vec2;
+  /** Unit direction from start to end. */
+  dir: Vec2;
+  length: number;
+  width: number;
   rotationY: number;
 };
 
@@ -175,6 +198,7 @@ export type IslandLayout = {
 export type WorldLayout = {
   islands: Record<EraId, IslandLayout>;
   bridges: BridgeGeometry[];
+  runways: Record<EraId, RunwayGeometry>;
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
 };
 
@@ -239,8 +263,10 @@ function islandGeometry(eraId: EraId): IslandGeometry {
     roadRadius: s.radius * s.roadFactor,
     roadWidth: s.roadWidth,
     slabDepth: 7,
-    bridgeAngles,
+    // The runway is treated like a bridge end: connector road, gap in the edge wall, plots kept clear.
+    bridgeAngles: [...bridgeAngles, wrapAngle(s.runwayAngle)],
     entryAngle: entryAngle ?? 0,
+    runwayAngle: wrapAngle(s.runwayAngle),
     plot: s.plot,
   };
 }
@@ -266,6 +292,25 @@ function bridgeGeometry(from: EraId, to: EraId): BridgeGeometry {
     length: Math.hypot(end[0] - start[0], end[1] - start[1]),
     width: BRIDGE_WIDTH,
     rotationY: headingOf(ux, uz),
+  };
+}
+
+function runwayGeometry(eraId: EraId): RunwayGeometry {
+  const s = SPECS[eraId];
+  const a = wrapAngle(s.runwayAngle);
+  const dir: Vec2 = [Math.cos(a), Math.sin(a)];
+  const start: Vec2 = [s.center[0] + dir[0] * (s.radius - 3), s.center[1] + dir[1] * (s.radius - 3)];
+  const length = RUNWAY.length + 3;
+  const end: Vec2 = [start[0] + dir[0] * length, start[1] + dir[1] * length];
+  return {
+    eraId,
+    start,
+    end,
+    center: [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2],
+    dir,
+    length,
+    width: RUNWAY.width,
+    rotationY: headingOf(dir[0], dir[1]),
   };
 }
 
@@ -479,6 +524,7 @@ export function layoutWorld(input: LayoutInput): WorldLayout {
     IslandLayout
   >;
   const bridges = BRIDGE_PAIRS.map(([a, b]) => bridgeGeometry(a, b));
+  const runways = Object.fromEntries(ERA_ORDER.map((id) => [id, runwayGeometry(id)])) as Record<EraId, RunwayGeometry>;
   const xs = ERA_ORDER.flatMap((id) => [
     SPECS[id].center[0] - SPECS[id].radius,
     SPECS[id].center[0] + SPECS[id].radius,
@@ -487,10 +533,12 @@ export function layoutWorld(input: LayoutInput): WorldLayout {
     SPECS[id].center[1] - SPECS[id].radius,
     SPECS[id].center[1] + SPECS[id].radius,
   ]);
-  const margin = 40;
+  // Room for the runways (they jut out past the rims) plus a little air around them.
+  const margin = RUNWAY.length + 44;
   return {
     islands,
     bridges,
+    runways,
     bounds: {
       minX: Math.min(...xs) - margin,
       maxX: Math.max(...xs) + margin,

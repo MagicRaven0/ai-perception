@@ -4,14 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { CuboidCollider, RigidBody, type RapierRigidBody } from "@react-three/rapier";
 import * as THREE from "three";
-import { FALL_Y, nearestEra, type Pose, type WorldLayout } from "@/lib/three/layout";
+import type { RigidBodyType } from "@dimforge/rapier3d-compat";
+import { FALL_Y, headingOf, nearestEra, type Pose, type WorldLayout } from "@/lib/three/layout";
 import { motion } from "@/lib/three/motion";
 import { useStore } from "@/lib/store";
 import type { EraId } from "@/lib/content/schema";
 import { CAR_HANDLING, EraCar } from "./car/EraCar";
+import { EraPlane } from "./car/EraPlane";
 import {
   attachKeyboard,
   autoDrive,
+  flight,
   input,
   player,
   requestTeleport,
@@ -32,7 +35,16 @@ import {
  * - IN:  lib/three/transient `input` (keyboard, joystick, touch buttons) and `takeTeleport()`;
  * - OUT: writes `player` (position, heading, speed, ready, teleports) every frame, never React state;
  * - respawns at the nearest island's spawn when it falls below FALL_Y or leaves the world bounds.
+ *
+ * Flight (21 Nov 2026): drive off the open end of an island's runway and the car becomes that era's plane
+ * (EraPlane). The body turns kinematic and follows a calm arcade flight model: W / up climbs, S / down dives,
+ * A D / left right turn, Shift boosts; it never flies below a safe height over the islands or out of the world.
+ * L or the HUD "Land" button lands on the nearest island's runway as a car again.
  */
+
+const DYNAMIC = 0 as RigidBodyType;
+const KINEMATIC = 2 as RigidBodyType;
+const FLY = { cruise: 17, boost: 28, turnRate: 1.0, minAlt: 9, maxAlt: 60, maxPitch: 0.45 };
 
 const MAX_SPEED = 13;
 const BOOST_SPEED = 20;
@@ -59,6 +71,9 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
   const visual = useRef<THREE.Group>(null);
   const [initialEra] = useState<EraId>(() => nearestEra(world, start.x, start.z));
   const era = useRef<EraId>(initialEra);
+  const carGroup = useRef<THREE.Group>(null);
+  const planeGroup = useRef<THREE.Group>(null);
+  const fly = useRef({ speed: 0, pitch: 0, bank: 0, swap: 1 });
   const state = useRef({
     speed: 0,
     heading: start.heading,
@@ -102,6 +117,75 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
       s.speed = 0;
       s.heading = t.heading;
       player.teleports++;
+    }
+
+    // Car <-> plane swap: a quick shrink-and-grow "pop" (instant with reduced motion).
+    const f = fly.current;
+    f.swap = motion.reduced ? 1 : Math.min(1, f.swap + dt / 0.5);
+    const pop = Math.max(0.05, Math.abs(Math.cos(Math.PI * f.swap)));
+    if (carGroup.current) {
+      carGroup.current.visible = !player.flying ? f.swap > 0.5 || f.swap === 1 : f.swap < 0.5;
+      carGroup.current.scale.setScalar(pop);
+    }
+    if (planeGroup.current) {
+      planeGroup.current.visible = player.flying ? f.swap > 0.5 || f.swap === 1 : f.swap < 0.5 && f.swap !== 1;
+      planeGroup.current.scale.setScalar(pop);
+    }
+
+    if (player.flying) {
+      // Land: back to a car on the nearest island's runway, facing the island.
+      if (flight.landRequested) {
+        flight.landRequested = false;
+        const era = nearestEra(world, player.x, player.z);
+        const r = world.runways[era];
+        b.setBodyType(DYNAMIC, true);
+        player.flying = false;
+        f.swap = 0;
+        useStore.getState().setFlying(false);
+        requestTeleport({
+          x: r.start[0] + r.dir[0] * 4,
+          y: 1.2,
+          z: r.start[1] + r.dir[1] * 4,
+          heading: headingOf(-r.dir[0], -r.dir[1]),
+        });
+        return;
+      }
+      const climb = (input.forward ? 1 : 0) - (input.backward ? 1 : 0);
+      const turn = (input.left ? 1 : 0) - (input.right ? 1 : 0);
+      // Soft limits: climb back up when low, level off when high, and turn back toward the islands at the edge.
+      let pitchGoal = climb * FLY.maxPitch;
+      if (player.y < FLY.minAlt) pitchGoal = Math.max(pitchGoal, 0.3);
+      if (player.y > FLY.maxAlt) pitchGoal = Math.min(pitchGoal, 0);
+      let turnIn = turn;
+      const bnd = world.bounds;
+      if (player.x < bnd.minX || player.x > bnd.maxX || player.z < bnd.minZ || player.z > bnd.maxZ) {
+        let back = Math.atan2(-player.x, -player.z) - s.heading;
+        back = Math.atan2(Math.sin(back), Math.cos(back));
+        turnIn = THREE.MathUtils.clamp(back * 2, -1, 1);
+      }
+      f.pitch += (pitchGoal - f.pitch) * (1 - Math.exp(-dt * 3));
+      f.bank += (turnIn * 0.6 - f.bank) * (1 - Math.exp(-dt * 4));
+      s.heading += turnIn * FLY.turnRate * dt;
+      f.speed += ((input.boost ? FLY.boost : FLY.cruise) - f.speed) * (1 - Math.exp(-dt * 1.5));
+      pos.x = player.x + Math.sin(s.heading) * Math.cos(f.pitch) * f.speed * dt;
+      pos.z = player.z + Math.cos(s.heading) * Math.cos(f.pitch) * f.speed * dt;
+      pos.y = Math.max(1.5, player.y + Math.sin(f.pitch) * f.speed * dt);
+      b.setNextKinematicTranslation(pos);
+      b.setNextKinematicRotation(quat.setFromAxisAngle(up, s.heading));
+      const v = visual.current;
+      if (v) {
+        v.rotation.set(-f.pitch, 0, -f.bank);
+        v.position.y = 0.1;
+      }
+      player.x = pos.x;
+      player.y = pos.y;
+      player.z = pos.z;
+      player.heading = s.heading;
+      player.speed = f.speed;
+      // The island below decides the plane's era (island sensors are on the ground).
+      const below = nearestEra(world, pos.x, pos.z);
+      if (below !== useStore.getState().activeEra) useStore.getState().setActiveEra(below);
+      return;
     }
 
     // 2. Input: keyboard / arrow pad, or tap-to-drive when nothing is pressed.
@@ -188,13 +272,35 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
     if (!player.ready) player.teleports++;
     player.ready = true;
 
-    // 7. Safety: fell off or left the world -> nearest island's spawn.
+    // 7. Take-off: past the open end of this island's runway, the car becomes a plane.
+    const rw = world.runways[nearestEra(world, p.x, p.z)];
+    const rx = p.x - rw.start[0];
+    const rz = p.z - rw.start[1];
+    const along = rx * rw.dir[0] + rz * rw.dir[1];
+    const lateral = Math.abs(rx * rw.dir[1] - rz * rw.dir[0]);
+    if (along > rw.length - 0.5 && lateral < rw.width / 2 + 3) {
+      b.setBodyType(KINEMATIC, true);
+      player.flying = true;
+      autoDrive.active = false;
+      fly.current.speed = Math.max(Math.abs(s.speed), 14);
+      fly.current.pitch = 0.3;
+      fly.current.swap = 0;
+      useStore.getState().setFlying(true);
+      useStore
+        .getState()
+        .showToast(
+          "You're flying! Climb with W or ▲, dive with S or ▼, turn with A D or ◀ ▶. Press L or Land to come down.",
+        );
+      return;
+    }
+
+    // 8. Safety: fell off or left the world -> nearest island's spawn.
     const bounds = world.bounds;
     if (p.y < FALL_Y || p.x < bounds.minX || p.x > bounds.maxX || p.z < bounds.minZ || p.z > bounds.maxZ) {
       requestTeleport(world.islands[nearestEra(world, p.x, p.z)].spawn);
     }
 
-    // 8. Remember the position every 2 s (sessionStorage) so a reload resumes here.
+    // 9. Remember the position every 2 s (sessionStorage) so a reload resumes here.
     if (frame.clock.elapsedTime - s.lastSave > 2) {
       s.lastSave = frame.clock.elapsedTime;
       savePosition();
@@ -218,7 +324,12 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
       {/* One box from just above the ground; friction 0 so the car slides along walls instead of sticking */}
       <CuboidCollider args={[BODY.halfW, 0.45, BODY.halfL]} position={[0, 0.05, 0]} friction={0} restitution={0} />
       <group ref={visual} position-y={0.1}>
-        <EraCar initialEra={initialEra} speedRef={state} />
+        <group ref={carGroup}>
+          <EraCar initialEra={initialEra} speedRef={state} />
+        </group>
+        <group ref={planeGroup} visible={false}>
+          <EraPlane />
+        </group>
       </group>
     </RigidBody>
   );

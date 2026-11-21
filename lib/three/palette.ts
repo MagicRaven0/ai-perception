@@ -81,6 +81,8 @@ export const SHARED = {
   /** Soft sandy curb band along both bridge edges (reads against the cream deck in golden-hour light). */
   bridgeCurb: "#eadfc4",
   bridgeRail: "#d8d2c4",
+  /** Runway asphalt (soft dark grey, not black, to stay calm next to the cream roads). */
+  runway: "#4a4d50",
 } as const;
 
 /**
@@ -119,6 +121,13 @@ export const CAR_COLOURS: Record<
     glow: "#d5ff95",
     wheel: "#141414",
   },
+};
+
+/** Planes after take-off (components/three/car/EraPlane.tsx): 1940s prop plane, jet fighter, flying car. */
+export const PLANE_COLOURS: Record<EraId, { body: string; trim: string; glass: string; dark: string; glow: string }> = {
+  "era-1": { body: "#6b7d4e", trim: "#e8d9b0", glass: "#9ee3ea", dark: "#2b2b2b", glow: "#fee163" },
+  "era-2": { body: "#9aa1a8", trim: "#ff87a2", glass: "#3a3a36", dark: "#2b2b2b", glow: "#eea132" },
+  "era-3": { body: "#1f2421", trim: "#d5ff95", glass: "#5ee0d0", dark: "#141414", glow: "#d5ff95" },
 };
 
 /**

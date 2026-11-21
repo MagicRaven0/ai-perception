@@ -83,6 +83,44 @@ export const SHARED = {
   bridgeRail: "#d8d2c4",
 } as const;
 
+/**
+ * The car changes with the era it is on (it morphs when you cross onto an island):
+ * The Past = rounded 1950s sedan, The Jobs Era = boxy hatchback with a pink stripe, The Future = low electric pod
+ * with a lime glow strip. Body/cabin/stripe/glow colours per era; the shapes live in components/three/car/.
+ */
+export const CAR_COLOURS: Record<
+  EraId,
+  { body: string; cabin: string; glass: string; trim: string; light: string; glow: string; wheel: string }
+> = {
+  "era-1": {
+    body: "#c8553d",
+    cabin: "#fbfaf6",
+    glass: "#9ee3ea",
+    trim: "#d8d2c4",
+    light: "#fee163",
+    glow: "#c8553d",
+    wheel: "#2b2b2b",
+  },
+  "era-2": {
+    body: "#e7e2d6",
+    cabin: "#d8d2c4",
+    glass: "#3a3a36",
+    trim: "#ff87a2",
+    light: "#fbfaf6",
+    glow: "#e7e2d6",
+    wheel: "#2b2b2b",
+  },
+  "era-3": {
+    body: "#1f2421",
+    cabin: "#2b2b2b",
+    glass: "#5ee0d0",
+    trim: "#d5ff95",
+    light: "#d5ff95",
+    glow: "#d5ff95",
+    wheel: "#141414",
+  },
+};
+
 /** Insight signpost tags (same hexes as --color-benefit / --color-risk / --color-danger). */
 export const INSIGHT_COLOUR = {
   benefit: "#3bd16f",

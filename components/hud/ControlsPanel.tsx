@@ -14,6 +14,7 @@ const TABS = [
       ["Space", "Brake"],
       ["E", "Open a building / talk to the guide"],
       ["R", "I’m stuck: back to this island’s start"],
+      ["V", "Driver’s view on / off (drag to look around)"],
       ["Esc", "Close a panel"],
       ["Tab", "Move between buttons (the world never traps focus)"],
     ],

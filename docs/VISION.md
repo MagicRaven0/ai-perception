@@ -57,3 +57,7 @@ Faceless low-poly figures + photo billboards (licensed, credited). No 3D face li
 - Desktop pointer devices only. Phones and tablets keep normal touch.
 - Accessibility: the real system cursor stays available (the custom one follows it, never replaces text selection or input carets), and the effect turns off with `prefers-reduced-motion` and in high-contrast/forced-colours mode.
 - Purely decorative, so it never blocks clicks.
+
+## Built after Phase 3 (21 Nov 2026)
+- **Era car:** the car morphs (~1.2 s) when you cross onto an island: 1950s sedan with chrome bumpers and fins (The Past), boxy hatchback with a pink bonnet stripe (The Jobs Era), low electric pod with a lime glow strip and thin wheels (The Future). Same collider in every era; top speed x0.85 / x1 / x1.15. Reduced motion: instant swap. Code: `components/three/car/EraCar.tsx`, colours in `lib/three/palette.ts` (`CAR_COLOURS`).
+- **Driver's view:** HUD eye button or V. Perspective camera in the driver's seat; drag to look around, eases back to straight ahead; closer fog in this view. Not remembered between visits.

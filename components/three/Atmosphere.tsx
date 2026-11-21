@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { motion } from "@/lib/three/motion";
 import { useStore } from "@/lib/store";
 import { player } from "@/lib/three/transient";
 import { ERA_PALETTE } from "@/lib/three/palette";
@@ -106,7 +107,17 @@ export function Atmosphere() {
     const u = sky.uniforms as { top: { value: THREE.Color }; bottom: { value: THREE.Color } };
     u.top.value.lerp(target.top, k);
     u.bottom.value.lerp(target.bottom, k);
-    fog.current?.color.lerp(target.fog, k);
+    const f = fog.current;
+    if (f) {
+      f.color.lerp(target.fog, k);
+      // Driver's view sees along the ground: closer haze, fully fogged before the camera's far plane (260 m).
+      const driver = useStore.getState().cameraMode === "driver";
+      const near = driver ? 70 : 185;
+      const far = driver ? 240 : 440;
+      const kf = motion.reduced ? 1 : 1 - Math.exp(-dt * 4);
+      f.near += (near - f.near) * kf;
+      f.far += (far - f.far) * kf;
+    }
     const s = sun.current;
     if (s) {
       s.color.lerp(target.sun, k);

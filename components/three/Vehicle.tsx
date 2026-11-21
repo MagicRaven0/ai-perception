@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { CuboidCollider, RigidBody, type RapierRigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import { FALL_Y, nearestEra, type Pose, type WorldLayout } from "@/lib/three/layout";
 import { motion } from "@/lib/three/motion";
-import { SHARED } from "@/lib/three/palette";
-import { StaticMerge } from "./kit/StaticMerge";
+import { useStore } from "@/lib/store";
+import type { EraId } from "@/lib/content/schema";
+import { CAR_HANDLING, EraCar } from "./car/EraCar";
 import { attachKeyboard, input, player, requestTeleport, savePosition, takeTeleport } from "@/lib/three/transient";
 
 /**
@@ -35,14 +36,7 @@ const COAST = 5;
 /** Yaw rate at full lock (rad/s), reached from 4 m/s. */
 const STEER_RATE = 2.1;
 
-const WHEEL_R = 0.42;
-const BODY = { halfW: 0.85, halfH: 0.32, halfL: 1.45 };
-const WHEELS: [number, number][] = [
-  [0.92, 0.95],
-  [-0.92, 0.95],
-  [0.92, -0.95],
-  [-0.92, -0.95],
-];
+const BODY = { halfW: 0.85, halfL: 1.45 };
 
 const up = new THREE.Vector3(0, 1, 0);
 const quat = new THREE.Quaternion();
@@ -55,10 +49,18 @@ const pos = { x: 0, y: 0, z: 0 };
 export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
   const body = useRef<RapierRigidBody>(null);
   const visual = useRef<THREE.Group>(null);
-  const wheels = useRef<(THREE.Mesh | null)[]>([]);
+  const [initialEra] = useState<EraId>(() => nearestEra(world, start.x, start.z));
+  const era = useRef<EraId>(initialEra);
   const state = useRef({ speed: 0, heading: start.heading, steer: 0, pitch: 0, roll: 0, lastSave: 0, prevSpeed: 0 });
 
   useEffect(() => attachKeyboard(), []);
+  // The era decides the car's look (EraCar) and a slightly different top speed; read without re-rendering.
+  useEffect(() => {
+    era.current = useStore.getState().activeEra;
+    return useStore.subscribe((st) => {
+      era.current = st.activeEra;
+    });
+  }, []);
   useEffect(
     () => () => {
       player.ready = false;
@@ -94,7 +96,7 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
       1,
     );
     const boosting = input.boost && throttle > 0;
-    const top = boosting ? BOOST_SPEED : MAX_SPEED;
+    const top = (boosting ? BOOST_SPEED : MAX_SPEED) * CAR_HANDLING[era.current];
 
     // 3. Speed: accelerate, brake, reverse, coast. If something blocks the car, its speed follows reality.
     const lv = b.linvel();
@@ -140,7 +142,6 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
         ? 0.1
         : 0.1 + Math.sin(frame.clock.elapsedTime * 9) * 0.012 * Math.min(Math.abs(s.speed), 8);
     }
-    for (const w of wheels.current) if (w) w.rotation.x += (s.speed * dt) / WHEEL_R;
 
     // 6. Publish to the transient channel.
     const p = b.translation();
@@ -183,23 +184,7 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
       {/* One box from just above the ground; friction 0 so the car slides along walls instead of sticking */}
       <CuboidCollider args={[BODY.halfW, 0.45, BODY.halfL]} position={[0, 0.05, 0]} friction={0} restitution={0} />
       <group ref={visual} position-y={0.1}>
-        <StaticMerge>
-          <CarBody />
-        </StaticMerge>
-        {WHEELS.map(([x, z], i) => (
-          <mesh
-            key={i}
-            ref={(m) => {
-              wheels.current[i] = m;
-            }}
-            position={[x, -0.08, z]}
-            rotation-z={Math.PI / 2}
-            castShadow
-          >
-            <cylinderGeometry args={[WHEEL_R, WHEEL_R, 0.3, 12]} />
-            <meshLambertMaterial color={SHARED.carDark} />
-          </mesh>
-        ))}
+        <EraCar initialEra={initialEra} speedRef={state} />
       </group>
     </RigidBody>
   );
@@ -207,30 +192,4 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
 
 function approach(value: number, target: number, step: number) {
   return value < target ? Math.min(value + step, target) : Math.max(value - step, target);
-}
-
-/** Rounded little car in Late Checkout colours (pink body, cream roof, sky-blue glass, sun headlights). */
-function CarBody() {
-  return (
-    <group>
-      <mesh position={[0, 0.12, 0]} castShadow>
-        <boxGeometry args={[BODY.halfW * 2, BODY.halfH * 2, BODY.halfL * 2]} />
-        <meshLambertMaterial color={SHARED.car} />
-      </mesh>
-      <mesh position={[0, 0.66, -0.25]} castShadow>
-        <boxGeometry args={[1.4, 0.5, 1.5]} />
-        <meshLambertMaterial color={SHARED.cream} />
-      </mesh>
-      <mesh position={[0, 0.66, 0.52]}>
-        <boxGeometry args={[1.3, 0.36, 0.06]} />
-        <meshLambertMaterial color={SHARED.carGlass} />
-      </mesh>
-      {[-0.55, 0.55].map((x) => (
-        <mesh key={x} position={[x, 0.18, BODY.halfL + 0.01]}>
-          <boxGeometry args={[0.32, 0.16, 0.04]} />
-          <meshLambertMaterial color={SHARED.sun} emissive={SHARED.sun} emissiveIntensity={0.8} />
-        </mesh>
-      ))}
-    </group>
-  );
 }

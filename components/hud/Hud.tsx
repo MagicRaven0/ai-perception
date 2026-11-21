@@ -31,6 +31,7 @@ export function Hud({ data }: { data: ExploreData }) {
   const activeEra = useStore((s) => s.activeEra);
   const ambienceOn = useStore((s) => s.ambienceOn);
   const drawerOpen = useStore((s) => s.openBuildingId !== null);
+  const driverView = useStore((s) => s.cameraMode === "driver");
   const ids = useMemo(() => Object.keys(data.buildings), [data.buildings]);
   const eraNames = useMemo(
     () => Object.fromEntries(data.eras.map((e) => [e.id, e.islandName])) as Record<EraId, string>,
@@ -49,11 +50,12 @@ export function Hud({ data }: { data: ExploreData }) {
     setPanel((p) => (p === which ? null : which));
   };
 
-  // R = "I'm stuck". (E lives in InteractPrompt, driving keys in lib/three/transient.)
+  // R = "I'm stuck", V = driver's view. (E lives in InteractPrompt, driving keys in lib/three/transient.)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== "KeyR" || e.repeat || e.metaKey || e.ctrlKey || e.altKey || isTypingTarget(e.target)) return;
-      respawn(data.world);
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || isTypingTarget(e.target)) return;
+      if (e.code === "KeyR") respawn(data.world);
+      if (e.code === "KeyV") useStore.getState().toggleCameraMode();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -82,6 +84,13 @@ export function Hud({ data }: { data: ExploreData }) {
             </Link>
             <IconButton label="Map" pressed={mapOpen} onClick={() => setMapOpen((v) => !v)}>
               <path d="M4 6.5 9 4l6 2.5L20 4v13.5L15 20l-6-2.5L4 20z M9 4v13.5 M15 6.5V20" />
+            </IconButton>
+            <IconButton
+              label="Driver's view (V)"
+              pressed={driverView}
+              onClick={() => useStore.getState().toggleCameraMode()}
+            >
+              <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z" />
             </IconButton>
             <IconButton label="Options" pressed={panel === "options"} onClick={() => togglePanel("options")}>
               <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z M12 3v2.5 M12 18.5V21 M3 12h2.5 M18.5 12H21 M5.6 5.6l1.8 1.8 M16.6 16.6l1.8 1.8 M5.6 18.4l1.8-1.8 M16.6 7.4l1.8-1.8" />

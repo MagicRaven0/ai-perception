@@ -74,6 +74,37 @@ test.describe("explore in 3D", () => {
     await relaxLoadWatchdog(page);
   });
 
+  test("driver's view: the eye button and V switch cameras, and the car changes with the era", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore?era=era-1");
+    const cameraMode = () =>
+      page.evaluate(
+        () =>
+          (window as unknown as { __store: { getState: () => { cameraMode: string } } }).__store.getState().cameraMode,
+      );
+
+    const eye = page.getByRole("button", { name: /Driver's view/ });
+    await expect(eye).toHaveAttribute("aria-pressed", "false");
+    await eye.click();
+    await expect(eye).toHaveAttribute("aria-pressed", "true");
+    expect(await cameraMode()).toBe("driver");
+    await page.locator("body").press("v");
+    await expect(eye).toHaveAttribute("aria-pressed", "false");
+    expect(await cameraMode()).toBe("iso");
+
+    // Fast travel to The Future: the era follows (the car's look is driven by it) and the world keeps rendering.
+    await page.getByRole("button", { name: "The Future" }).first().click();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            (window as unknown as { __store: { getState: () => { activeEra: string } } }).__store.getState().activeEra,
+        ),
+      )
+      .toBe("era-3");
+    await expect(page.locator("[data-explore-state]")).toHaveAttribute("data-explore-state", "ready");
+  });
+
   test("?b= deep link drives to the building and opens its drawer", async ({ page }) => {
     const target = [...buildings].sort((a, b) => a.eraId.localeCompare(b.eraId) || a.order - b.order)[0];
     test.skip(!target, "no buildings in content yet");

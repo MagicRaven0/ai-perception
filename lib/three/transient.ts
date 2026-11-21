@@ -38,6 +38,17 @@ export const input = {
   joyY: 0,
 };
 
+/**
+ * Overview camera orbit (360° view). `target` is where the visitor wants to look from (radians added to the
+ * default azimuth); the camera eases `yaw` toward it. Drag on the world, or Q / Z, change it.
+ */
+export const orbit = { yaw: 0, target: 0, dragging: false };
+
+/** Rotate the overview by a step (Q / Z keys). */
+export function rotateView(step: number) {
+  orbit.target += step;
+}
+
 let pendingTeleport: Pose | null = null;
 
 /** Ask the vehicle to move to a pose (fast travel, deep links, respawn). Applied on the next frame. */
@@ -158,5 +169,5 @@ export function attachKeyboard(): () => void {
 
 // Development only: lets DevTools and the e2e tests inspect the car (window.__explore.player).
 if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
-  (window as unknown as { __explore?: unknown }).__explore = { player, input, requestTeleport };
+  (window as unknown as { __explore?: unknown }).__explore = { player, input, requestTeleport, orbit };
 }

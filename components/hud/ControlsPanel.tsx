@@ -15,6 +15,7 @@ const TABS = [
       ["E", "Open a building / talk to the guide"],
       ["R", "I’m stuck: back to this island’s start"],
       ["V", "Driver’s view on / off (drag to look around)"],
+      ["Q / Z, or drag", "Turn the view all the way around (360°)"],
       ["Esc", "Close a panel"],
       ["Tab", "Move between buttons (the world never traps focus)"],
     ],
@@ -27,6 +28,8 @@ const TABS = [
       ["Boost (bottom right)", "Hold to go faster"],
       ["Tap to open / Tap to talk (on the prompt)", "Open a building / talk to the guide"],
       ["Island buttons (top)", "Fast travel between islands"],
+      ["Drag on the world", "Turn the view all the way around (360°)"],
+      ["Eye button (top)", "Driver’s view on / off"],
     ],
   },
 ] as const;

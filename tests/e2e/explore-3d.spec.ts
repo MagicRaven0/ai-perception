@@ -92,6 +92,14 @@ test.describe("explore in 3D", () => {
     await expect(eye).toHaveAttribute("aria-pressed", "false");
     expect(await cameraMode()).toBe("iso");
 
+    // 360° overview: Q turns the view 45° each press (orbit target lives on the dev-only __explore hook).
+    const orbitTarget = () =>
+      page.evaluate(() => (window as unknown as { __explore: { orbit: { target: number } } }).__explore.orbit.target);
+    const before = await orbitTarget();
+    await page.locator("body").press("q");
+    await page.locator("body").press("q");
+    expect(await orbitTarget()).toBeCloseTo(before + Math.PI / 2, 5);
+
     // Fast travel to The Future: the era follows (the car's look is driven by it) and the world keeps rendering.
     await page.getByRole("button", { name: "The Future" }).first().click();
     await expect

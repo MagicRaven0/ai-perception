@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import type { EraId } from "@/lib/content/schema";
 import type { ExploreData } from "@/lib/three/explore-data";
-import { isTypingTarget } from "@/lib/three/transient";
+import { isTypingTarget, rotateView } from "@/lib/three/transient";
 import { Ambience } from "@/components/three/Ambience";
 import { BuildingDrawer } from "./BuildingDrawer";
 import { ControlsPanel } from "./ControlsPanel";
@@ -50,12 +50,14 @@ export function Hud({ data }: { data: ExploreData }) {
     setPanel((p) => (p === which ? null : which));
   };
 
-  // R = "I'm stuck", V = driver's view. (E lives in InteractPrompt, driving keys in lib/three/transient.)
+  // R = "I'm stuck", V = driver's view, Q / Z = turn the overview 45°. (E lives in InteractPrompt, driving keys in lib/three/transient.)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || isTypingTarget(e.target)) return;
       if (e.code === "KeyR") respawn(data.world);
       if (e.code === "KeyV") useStore.getState().toggleCameraMode();
+      if (e.code === "KeyQ") rotateView(Math.PI / 4);
+      if (e.code === "KeyZ") rotateView(-Math.PI / 4);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

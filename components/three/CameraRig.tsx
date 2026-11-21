@@ -7,14 +7,15 @@ import * as THREE from "three";
 import { useStore } from "@/lib/store";
 import { findBuilding, type Pose, type WorldLayout } from "@/lib/three/layout";
 import { motion } from "@/lib/three/motion";
-import { player } from "@/lib/three/transient";
+import { orbit, player } from "@/lib/three/transient";
 import { CAMERA_AZIMUTH, CAMERA_DISTANCE, CAMERA_ELEVATION_DEG, CAMERA_SPAN } from "@/lib/three/camera";
 
 /**
  * SHARED. High-angle isometric camera (latecheckout.studio look) that follows the car with a slow, floaty
  * ease and a little look-ahead. Snaps on teleports. With prefers-reduced-motion it follows without easing.
  * While a building drawer is open it frames the building beside the car, nudged left of the drawer.
- * Driver's view (HUD eye button or V): a perspective camera in the driver's seat looking down the road; drag to
+ * 360° overview: drag on the world (mouse or one finger) or press Q / Z to orbit around the car; it stays where
+ * you leave it. Driver's view (HUD eye button or V): a perspective camera in the driver's seat looking down the road; drag to
  * look around, released view eases back to straight ahead. Reduced motion: no easing, no look-ahead sway.
  * Reads the transient channel every frame; re-renders only when the camera mode changes.
  */
@@ -22,13 +23,17 @@ import { CAMERA_AZIMUTH, CAMERA_DISTANCE, CAMERA_ELEVATION_DEG, CAMERA_SPAN } fr
 const AZIMUTH = CAMERA_AZIMUTH;
 const ELEVATION = THREE.MathUtils.degToRad(CAMERA_ELEVATION_DEG);
 const DISTANCE = CAMERA_DISTANCE;
-const OFFSET = new THREE.Vector3(
-  Math.cos(ELEVATION) * Math.sin(AZIMUTH),
-  Math.sin(ELEVATION),
-  Math.cos(ELEVATION) * Math.cos(AZIMUTH),
-).multiplyScalar(DISTANCE);
-/** Screen-right in world space for this camera (used to keep a framed building clear of the drawer). */
-const SCREEN_RIGHT = new THREE.Vector3(Math.cos(AZIMUTH), 0, -Math.sin(AZIMUTH));
+/** Camera offset from its target for a given orbit (written into `out`, no allocation). */
+function offsetFor(yaw: number, out: THREE.Vector3) {
+  const a = AZIMUTH + yaw;
+  return out
+    .set(Math.cos(ELEVATION) * Math.sin(a), Math.sin(ELEVATION), Math.cos(ELEVATION) * Math.cos(a))
+    .multiplyScalar(DISTANCE);
+}
+const OFFSET = offsetFor(0, new THREE.Vector3());
+const offset = new THREE.Vector3();
+/** Screen-right in world space for the current orbit (keeps a framed building clear of the drawer). */
+const screenRight = new THREE.Vector3();
 
 const desired = new THREE.Vector3();
 const look = new THREE.Vector3();
@@ -58,40 +63,57 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
   // Driver's view: smoothed heading and the drag-to-look offset.
   const drive = useRef({ heading: start.heading, yaw: 0, pitch: 0, dragging: false, lastX: 0, lastY: 0 });
 
-  // Drag to look around (mouse or one finger on the canvas). Only while in the driver's seat.
+  // Drag on the world (mouse or one finger): orbits the overview 360°, or looks around in the driver's seat.
+  const modeRef = useRef(mode);
   useEffect(() => {
-    if (mode !== "driver") return;
+    modeRef.current = mode;
+    const d = drive.current;
+    d.heading = player.heading;
+    d.yaw = d.pitch = 0;
+  }, [mode]);
+  useEffect(() => {
     const el = gl.domElement;
     const d = drive.current;
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
     const down = (e: PointerEvent) => {
+      dragging = true;
       d.dragging = true;
-      d.lastX = e.clientX;
-      d.lastY = e.clientY;
+      orbit.dragging = modeRef.current === "iso";
+      lastX = e.clientX;
+      lastY = e.clientY;
     };
     const move = (e: PointerEvent) => {
-      if (!d.dragging) return;
-      d.yaw = THREE.MathUtils.clamp(d.yaw - (e.clientX - d.lastX) * 0.005, -LOOK_LIMIT.yaw, LOOK_LIMIT.yaw);
-      d.pitch = THREE.MathUtils.clamp(d.pitch - (e.clientY - d.lastY) * 0.004, -LOOK_LIMIT.pitch, LOOK_LIMIT.pitch);
-      d.lastX = e.clientX;
-      d.lastY = e.clientY;
+      if (!dragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      if (modeRef.current === "driver") {
+        d.yaw = THREE.MathUtils.clamp(d.yaw - dx * 0.005, -LOOK_LIMIT.yaw, LOOK_LIMIT.yaw);
+        d.pitch = THREE.MathUtils.clamp(d.pitch - dy * 0.004, -LOOK_LIMIT.pitch, LOOK_LIMIT.pitch);
+      } else {
+        orbit.target -= dx * 0.006;
+      }
     };
     const up = () => {
+      dragging = false;
       d.dragging = false;
+      orbit.dragging = false;
     };
     el.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
-    d.heading = player.heading;
     return () => {
       el.removeEventListener("pointerdown", down);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
-      d.dragging = false;
-      d.yaw = d.pitch = 0;
+      up();
     };
-  }, [mode, gl]);
+  }, [gl]);
 
   // Drawer framing, without re-rendering this component.
   useEffect(() => {
@@ -139,10 +161,19 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
     if (!cam) return;
     const zoomBase = baseZoom(size.width, size.height);
 
+    // Orbit: follow the drag directly, ease toward key steps (instant with reduced motion).
+    orbit.yaw =
+      orbit.dragging || motion.reduced
+        ? orbit.target
+        : orbit.yaw + (orbit.target - orbit.yaw) * (1 - Math.exp(-dt * 6));
+    offsetFor(orbit.yaw, offset);
+    const a = AZIMUTH + orbit.yaw;
+    screenRight.set(Math.cos(a), 0, -Math.sin(a));
+
     if (framing.current) {
       // Midpoint of car and building, pushed right in world space so it sits left of a 420px drawer.
       const drawerShift = size.width >= 768 ? 210 / (zoomBase * 1.15) : 0;
-      desired.set(player.x, 0, player.z).lerp(framing.current, 0.5).addScaledVector(SCREEN_RIGHT, drawerShift);
+      desired.set(player.x, 0, player.z).lerp(framing.current, 0.5).addScaledVector(screenRight, drawerShift);
     } else {
       // Look a little ahead of the car along its heading, more at speed.
       const ahead = Math.min(player.speed * 0.35, 6);
@@ -154,7 +185,7 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
     if (snapped || motion.reduced) target.current.copy(desired);
     else target.current.lerp(desired, 1 - Math.exp(-dt * 2.2));
 
-    cam.position.copy(target.current).add(OFFSET);
+    cam.position.copy(target.current).add(offset);
     cam.lookAt(look.copy(target.current));
 
     const zoomGoal = zoomBase * (framing.current ? 1.15 : 1);

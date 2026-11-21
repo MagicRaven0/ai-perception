@@ -3,15 +3,16 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useStore } from "@/lib/store";
 import { ERA_ORDER, allBuildings, type WorldLayout } from "@/lib/three/layout";
-import { MINIMAP_ROTATION_DEG } from "@/lib/three/camera";
-import { player } from "@/lib/three/transient";
+import { CAMERA_AZIMUTH, MINIMAP_ROTATION_DEG } from "@/lib/three/camera";
+import { orbit, player } from "@/lib/three/transient";
 import type { EraId } from "@/lib/content/schema";
 
 /**
  * Minimap (top-right, Bruno-style round map). Island outlines, bridges, building dots (filled = found,
  * ring = not yet). Rotated to match the camera, so "up" on the map is "up" on screen.
  * The player marker moves in its own requestAnimationFrame loop, reading the transient channel and
- * setting the SVG transform directly: no React state per frame (PLAN 5.2).
+ * setting the SVG transform directly: no React state per frame (PLAN 5.2). A soft cone shows which way the
+ * camera looks (it turns with free look) from the point it is centred on.
  */
 
 const ERA_FILL: Record<EraId, string> = {
@@ -22,6 +23,7 @@ const ERA_FILL: Record<EraId, string> = {
 
 export function Minimap({ world, eraNames }: { world: WorldLayout; eraNames: Record<EraId, string> }) {
   const marker = useRef<SVGGElement>(null);
+  const cone = useRef<SVGGElement>(null);
   const buildings = useMemo(() => allBuildings(world), [world]);
   const idSet = useMemo(() => new Set(buildings.map((b) => b.id)), [buildings]);
   // One primitive (PLAN 5.2): how many of this world's buildings are found. Each dot selects its own boolean.
@@ -55,6 +57,17 @@ export function Minimap({ world, eraNames }: { world: WorldLayout; eraNames: Rec
           `translate(${player.x.toFixed(2)} ${player.z.toFixed(2)}) rotate(${deg.toFixed(1)})`,
         );
         g.style.opacity = player.ready ? "1" : "0";
+      }
+      const c = cone.current;
+      if (c) {
+        // The camera looks along -(sin a, cos a) on the ground, a = azimuth + orbit.
+        const a = CAMERA_AZIMUTH + orbit.yaw;
+        const deg = (Math.atan2(-Math.cos(a), -Math.sin(a)) * 180) / Math.PI;
+        c.setAttribute(
+          "transform",
+          `translate(${(player.x + orbit.panX).toFixed(2)} ${(player.z + orbit.panZ).toFixed(2)}) rotate(${deg.toFixed(1)})`,
+        );
+        c.style.opacity = player.ready ? "1" : "0";
       }
       raf = requestAnimationFrame(tick);
     };
@@ -111,6 +124,9 @@ export function Minimap({ world, eraNames }: { world: WorldLayout; eraNames: Rec
           {buildings.map((b) => (
             <MapDot key={b.id} id={b.id} x={b.position[0]} y={b.position[2]} />
           ))}
+          <g ref={cone} style={{ opacity: 0 }} aria-hidden="true">
+            <path d="M 0 0 L 46 -26 A 52 52 0 0 1 46 26 Z" fill="var(--color-ink)" fillOpacity={0.14} />
+          </g>
           <g ref={marker} style={{ opacity: 0 }}>
             <path
               d="M 22 0 L -14 15 L -7 0 L -14 -15 Z"

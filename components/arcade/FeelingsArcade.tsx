@@ -27,7 +27,10 @@ export function FeelingsArcade({
   const short = ["More concerned", "Equally both", "More excited"];
 
   return (
-    <div className="flex flex-col gap-5 rounded-[12px] border border-ink bg-paper p-5 text-ink md:p-6">
+    <div
+      data-arcade="feelings"
+      className="flex flex-col gap-5 rounded-[12px] border border-ink bg-paper p-5 text-ink md:p-6"
+    >
       <label htmlFor={id} className="text-lg leading-snug font-medium">
         Does the increased use of AI in daily life make you feel more concerned than excited, more excited than
         concerned, or both equally?

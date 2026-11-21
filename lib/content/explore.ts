@@ -1,5 +1,6 @@
 import "server-only";
 import { arcadeFor } from "./arcades";
+import { referencesBuildingId, referencesForEra } from "./references";
 import { buildings, eras, getEpisode, getImage, insights } from "./index";
 import { BUILDING_LABEL, eraYears, INSIGHT_LABEL } from "./labels";
 import { isPlaceholder } from "./placeholder";
@@ -28,7 +29,16 @@ export function buildExploreData(): ExploreData {
       order: b.order,
       kind: b.kind,
       comingSoon: isPlaceholder(b.long),
-    })),
+    })).concat(
+      // One generated References building per island, after the content buildings (docs/VISION.md).
+      eras.map((e) => ({
+        id: referencesBuildingId(e.id),
+        eraId: e.id,
+        order: Math.max(0, ...buildings.filter((b) => b.eraId === e.id).map((b) => b.order)) + 1,
+        kind: "documents" as const,
+        comingSoon: false,
+      })),
+    ),
     insights: insights.map((i) => ({ id: i.id, eraId: i.eraId, kind: i.kind, buildingId: i.buildingId })),
   });
 
@@ -63,6 +73,24 @@ export function buildExploreData(): ExploreData {
       hasVideo: Boolean(b.media.youtubeId),
       documentUrl: b.media.documentUrl,
       arcade: arcadeFor(b.id),
+    };
+  }
+  for (const e of eras) {
+    const id = referencesBuildingId(e.id);
+    data.buildings[id] = {
+      id,
+      eraId: e.id,
+      eraSlug: e.slug,
+      kind: "documents",
+      kindLabel: "Library",
+      title: `References: ${e.islandName}`,
+      short: "Every source this island draws on, in APA 7, with a link to each.",
+      comingSoon: false,
+      track: null,
+      speakers: [],
+      hasVideo: false,
+      arcade: null,
+      references: referencesForEra(e.id).map((s) => ({ id: s.id, apa: s.apa, url: s.url })),
     };
   }
   for (const i of insights) {

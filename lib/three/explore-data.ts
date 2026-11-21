@@ -39,6 +39,8 @@ export type ExploreBuilding = {
   documentUrl?: string;
   /** Interactive "experience" (arcade) shown inside the drawer. */
   arcade: ArcadeConfig | null;
+  /** Only on an island's generated References building: that island's APA references, sorted. */
+  references?: { id: string; apa: string; url: string }[];
 };
 
 export type ExploreSign = {

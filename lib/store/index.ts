@@ -61,6 +61,8 @@ type State = {
   timeOfDay: "day" | "sunset" | "night";
   /** Camera: high isometric overview (default) or the driver's seat. Not persisted. */
   cameraMode: "iso" | "driver";
+  /** The overview camera is turned, tilted, zoomed or panned away from the default (HUD shows Recenter). */
+  freeLook: boolean;
   // toasts (survive route changes, e.g. 3D -> reading mode)
   toast: Toast | null;
 };
@@ -89,6 +91,7 @@ type Actions = {
   setRenderer: (renderer: string | null) => void;
   setAmbienceOn: (on: boolean) => void;
   toggleCameraMode: () => void;
+  setFreeLook: (freeLook: boolean) => void;
   cycleTimeOfDay: () => void;
   setFlying: (flying: boolean) => void;
   showToast: (message: string) => void;
@@ -115,6 +118,7 @@ export const useStore = create<State & Actions>()(
       renderer: null,
       ambienceOn: false,
       cameraMode: "iso",
+      freeLook: false,
       timeOfDay: "day",
       flying: false,
       toast: null,
@@ -153,6 +157,7 @@ export const useStore = create<State & Actions>()(
       cycleTimeOfDay: () =>
         set((s) => ({ timeOfDay: s.timeOfDay === "day" ? "sunset" : s.timeOfDay === "sunset" ? "night" : "day" })),
       toggleCameraMode: () => set((s) => ({ cameraMode: s.cameraMode === "iso" ? "driver" : "iso" })),
+      setFreeLook: (freeLook) => set((s) => (s.freeLook === freeLook ? s : { freeLook })),
       showToast: (message) => set({ toast: { id: Date.now(), message } }),
       clearToast: (id) => set((s) => (s.toast?.id === id ? { toast: null } : s)),
     }),

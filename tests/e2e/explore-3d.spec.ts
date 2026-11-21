@@ -642,3 +642,76 @@ test.describe("explore on a phone", () => {
     }
   });
 });
+
+/** Features added 22 Nov 2026 (docs/VISION.md): References building, NPC figures, free-look camera. */
+test.describe("world features", () => {
+  test.describe.configure({ mode: "default" });
+  test.setTimeout(150_000);
+  test.beforeEach(async ({ page }) => {
+    await relaxLoadWatchdog(page);
+  });
+
+  test("every island has a generated References building that lists its sources", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore?b=era-1-references");
+    const drawer = visibleDialogs(page);
+    await expect(drawer).toBeVisible({ timeout: 15_000 });
+    await expect(drawer.getByRole("heading", { name: /^References/ })).toBeVisible();
+    const links = drawer.locator("li a[href^='http']");
+    expect(await links.count()).toBeGreaterThan(0);
+    await expect(drawer.getByRole("link", { name: "Read more" })).toHaveAttribute(
+      "href",
+      /\/read\/[a-z0-9-]+#era-1-references$/,
+    );
+    // The other two islands have one as well.
+    for (const id of ["era-2-references", "era-3-references"]) {
+      await page.evaluate(
+        (b) =>
+          (window as unknown as { __store: { getState: () => { openBuilding: (id: string) => void } } }).__store
+            .getState()
+            .openBuilding(b),
+        id,
+      );
+      await expect(visibleDialogs(page).locator("li a[href^='http']").first()).toBeVisible();
+    }
+  });
+
+  test("faceless NPCs stand around every island", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore");
+    const counts = () =>
+      page.evaluate(() => (window as unknown as { __npcCounts?: Record<string, number> }).__npcCounts ?? {});
+    await expect.poll(async () => Object.keys(await counts()).sort()).toEqual(["era-1", "era-2", "era-3"]);
+    for (const n of Object.values(await counts())) expect(n).toBeGreaterThan(0);
+  });
+
+  test("free look: drag turns and tilts, the wheel zooms, Recenter and C bring the view back", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore");
+    type FreeLook = { __store: { getState: () => { freeLook: boolean } } };
+    const freeLook = () => page.evaluate(() => (window as unknown as FreeLook).__store.getState().freeLook);
+    const recenter = page.getByRole("button", { name: /^Recenter/ });
+    await expect(recenter).toHaveCount(0);
+
+    // Right-drag on the world turns and tilts the view.
+    const box = (await page.locator("canvas").first().boundingBox())!;
+    const cx = box.x + box.width * 0.6;
+    const cy = box.y + box.height * 0.6;
+    await page.mouse.move(cx, cy);
+    await page.mouse.down({ button: "right" });
+    await page.mouse.move(cx + 160, cy + 60, { steps: 8 });
+    await page.mouse.up({ button: "right" });
+    await expect.poll(freeLook).toBe(true);
+    await expect(recenter).toBeVisible();
+    await page.keyboard.press("c");
+    await expect.poll(freeLook).toBe(false);
+    await expect(recenter).toHaveCount(0);
+
+    // The wheel zooms out; the Recenter button brings it back.
+    await page.mouse.move(cx, cy);
+    await page.mouse.wheel(0, 600);
+    await expect.poll(freeLook).toBe(true);
+    await recenter.click();
+    await expect.poll(freeLook).toBe(false);
+  });
+});

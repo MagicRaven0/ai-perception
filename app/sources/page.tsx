@@ -2,16 +2,10 @@ import type { Metadata } from "next";
 import { eras, sources } from "@/lib/content";
 import { TopNav } from "@/components/layout/TopNav";
 import { Footer } from "@/components/layout/Footer";
-import { ContentText } from "@/components/content/ContentText";
+import { ReferenceList } from "@/components/content/ReferenceList";
 import { isPlaceholder } from "@/lib/content/placeholder";
 
 export const metadata: Metadata = { title: "Works cited" };
-
-/** APA strings end with their URL; it is shown once, as the clickable link after the text. */
-function withoutTrailingUrl(apa: string, url: string): string {
-  const trimmed = apa.trimEnd();
-  return /^https?:\/\//.test(url) && trimmed.endsWith(url) ? trimmed.slice(0, -url.length).trimEnd() : apa;
-}
 
 export default function SourcesPage() {
   // One APA 7 reference list, alphabetical by first author. Placeholders go last as "coming soon" boxes.
@@ -36,30 +30,13 @@ export default function SourcesPage() {
         {list.length === 0 ? (
           <p className="mt-12 border-t border-ink pt-6 text-muted">Sources are being added.</p>
         ) : (
-          <ul className="mt-14 border-t border-ink">
-            {list.map((s) => (
-              <li
-                key={s.id}
-                id={s.id}
-                className="scroll-mt-24 border-b border-rule py-4 pl-8 -indent-8 leading-relaxed target:bg-paper"
-              >
-                {isPlaceholder(s.apa) ? <ContentText value={s.apa} /> : withoutTrailingUrl(s.apa, s.url)}{" "}
-                {!isPlaceholder(s.apa) && /^https?:\/\//.test(s.url) && (
-                  <a
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="break-all underline underline-offset-2"
-                  >
-                    {s.url}
-                  </a>
-                )}
-                {s.eraIds.length > 0 && (
-                  <span className="mt-1 block indent-0 text-sm text-muted">{eraNames(s.eraIds)}</span>
-                )}
-              </li>
-            ))}
-          </ul>
+          <div className="mt-14">
+            <ReferenceList
+              items={list}
+              anchors
+              extra={(s) => eraNames(sources.find((x) => x.id === s.id)?.eraIds ?? []) || null}
+            />
+          </div>
         )}
       </main>
       <Footer />

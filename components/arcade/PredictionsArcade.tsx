@@ -42,7 +42,10 @@ export function PredictionsArcade({
       : `You were ${off} year${off === 1 ? "" : "s"} ${guess < answerYear ? "early" : "late"}.`;
 
   return (
-    <div className="flex flex-col gap-5 rounded-[12px] border border-ink bg-paper p-5 text-ink md:p-6">
+    <div
+      data-arcade="predictions"
+      className="flex flex-col gap-5 rounded-[12px] border border-ink bg-paper p-5 text-ink md:p-6"
+    >
       <label htmlFor={id} className="text-lg leading-snug font-medium">
         In {predictedIn}, researchers predicted a computer chess champion within {withinYears} years. In what year did a
         computer first beat the reigning world champion?

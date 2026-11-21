@@ -51,11 +51,48 @@ export const input = {
  * Overview camera orbit (360° view). `target` is where the visitor wants to look from (radians added to the
  * default azimuth); the camera eases `yaw` toward it. Drag on the world, or Q / Z, change it.
  */
-export const orbit = { yaw: 0, target: 0, dragging: false };
+export const orbit = {
+  yaw: 0,
+  target: 0,
+  dragging: false,
+  /** Free look (docs/VISION.md, added 22 Nov 2026): tilt (radians added to the base elevation), zoom
+   * (multiplier on the base zoom) and pan (metres from the car), each eased from value toward target. */
+  pitch: 0,
+  pitchTarget: 0,
+  zoom: 1,
+  zoomTarget: 1,
+  panX: 0,
+  panZ: 0,
+  panTargetX: 0,
+  panTargetZ: 0,
+  /** performance.now() of the visitor's last camera input (driving eases pan and zoom back after a pause). */
+  lastInput: 0,
+};
 
 /** Rotate the overview by a step (Q / Z keys). */
 export function rotateView(step: number) {
   orbit.target += step;
+  orbit.lastInput = performance.now();
+}
+
+/** Recenter (HUD button or C): back to the default view behind the car, by the shortest turn. */
+export function recenterView() {
+  orbit.target = Math.round(orbit.yaw / (Math.PI * 2)) * Math.PI * 2;
+  orbit.pitchTarget = 0;
+  orbit.zoomTarget = 1;
+  orbit.panTargetX = orbit.panTargetZ = 0;
+  orbit.lastInput = 0;
+}
+
+/** True while the view differs from the default (the HUD shows Recenter). */
+export function isFreeLook(): boolean {
+  const turn = Math.abs(orbit.target - Math.round(orbit.target / (Math.PI * 2)) * Math.PI * 2) > 0.05;
+  return (
+    turn ||
+    Math.abs(orbit.pitchTarget) > 0.02 ||
+    Math.abs(orbit.zoomTarget - 1) > 0.02 ||
+    Math.hypot(orbit.panTargetX, orbit.panTargetZ) > 0.5
+  );
 }
 
 /**

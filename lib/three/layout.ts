@@ -193,7 +193,15 @@ export type IslandLayout = {
   campus?: { position: Vec3; radius: number };
   /** The Future only: the chatbot guide character. */
   guide?: { position: Vec3; rotationY: number; sensorRadius: number };
+  /** Generic faceless bystanders (not real people, no names): see placeNpcs. */
+  npcs: PlacedNpc[];
 };
+
+/** One background NPC: where it stands, which way it faces, and a stable seed for outfit and idle timing. */
+export type PlacedNpc = { position: Vec3; rotationY: number; seed: number };
+
+/** NPCs per island (the low quality tier draws every other one). */
+export const NPCS_PER_ISLAND = 9;
 
 export type WorldLayout = {
   islands: Record<EraId, IslandLayout>;
@@ -503,7 +511,7 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
     });
   }
 
-  const layout: IslandLayout = { eraId, geometry: g, spawn, buildings, insights, figures, edgeWalls };
+  const layout: IslandLayout = { eraId, geometry: g, spawn, buildings, insights, figures, edgeWalls, npcs: [] };
 
   if (reserveCentre) {
     layout.campus = { position: [center[0], 0, center[1]], radius: rr - rw / 2 - 6 };
@@ -514,7 +522,64 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
       sensorRadius: 7.5,
     };
   }
+  layout.npcs = placeNpcs(layout);
   return layout;
+}
+
+/** Deterministic 0..1 hash (no Math.random, so the same content always gives the same world). */
+function hash01(i: number, salt: number): number {
+  const x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+/**
+ * Background NPCs (docs/VISION.md, added 22 Nov 2026): on the inner lawn by the road and on the outer lawn
+ * near the island edge, never on a road, a bridge or runway connector, a building plot or its interact
+ * zone, or next to an anchor figure, signpost, the guide or the campus. Faces the road, or a neighbour.
+ */
+function placeNpcs(island: IslandLayout): PlacedNpc[] {
+  const g = island.geometry;
+  const { center, roadRadius: rr, roadWidth: rw, radius } = g;
+  const salt = ERA_ORDER.indexOf(island.eraId) + 1;
+  const rings = [rr - rw / 2 - 3.2, radius - 5];
+  const candidates: { angle: number; r: number; k: number }[] = [];
+  let k = 0;
+  for (const r of rings) {
+    const count = Math.floor((TAU * r) / 7);
+    for (let i = 0; i < count; i++) candidates.push({ angle: wrapAngle((TAU * (i + 0.5)) / count), r, k: k++ });
+  }
+  const dist = (p: Vec3, q: Vec3) => Math.hypot(p[0] - q[0], p[2] - q[2]);
+  const ok = (p: Vec3, angle: number, r: number) => {
+    const clear = (rw / 2 + 3) / r;
+    if (g.bridgeAngles.some((b) => angleDiff(angle, b) < clear)) return false;
+    for (const b of island.buildings) {
+      if (dist(p, b.position) < Math.max(b.plot.width, b.plot.depth) * 0.62 + 1) return false;
+      if (dist(p, b.sensor.position) < b.sensor.radius + 1.5) return false;
+    }
+    if (island.figures.some((f) => dist(p, f.position) < f.sensorRadius + 1)) return false;
+    if (island.insights.some((x) => dist(p, x.position) < 3)) return false;
+    if (island.guide && dist(p, island.guide.position) < island.guide.sensorRadius + 1) return false;
+    if (island.campus && dist(p, island.campus.position) < island.campus.radius + 1.5) return false;
+    if (dist(p, [island.spawn.x, 0, island.spawn.z]) < 8) return false;
+    return true;
+  };
+  // Shuffle deterministically, then take the first free spots, keeping NPCs at least 4 m apart.
+  const order = [...candidates].sort((a, b) => hash01(a.k, salt) - hash01(b.k, salt));
+  const out: PlacedNpc[] = [];
+  for (const c of order) {
+    if (out.length >= NPCS_PER_ISLAND) break;
+    const position = polar(center, c.angle, c.r);
+    if (!ok(position, c.angle, c.r) || out.some((n) => dist(n.position, position) < 4)) continue;
+    // Inner lawn: face the road (outwards). Edge lawn: face the island centre, with a little variety.
+    const out_ = c.r < rr ? 1 : -1;
+    const jitter = (hash01(c.k, salt + 7) - 0.5) * 1.2;
+    out.push({
+      position,
+      rotationY: headingOf(Math.cos(c.angle) * out_, Math.sin(c.angle) * out_) + jitter,
+      seed: c.k,
+    });
+  }
+  return out;
 }
 
 /** The whole world: three islands + bridges + bounds. Serialisable, so the server page can compute it. */

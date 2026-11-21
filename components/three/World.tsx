@@ -1,5 +1,6 @@
 "use client";
 
+import { Npcs } from "./Npcs";
 import { lazy, memo, Suspense, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { CuboidCollider, CylinderCollider, Physics, RigidBody } from "@react-three/rapier";
@@ -64,6 +65,9 @@ function World({ world, start, onFirstFrame }: { world: WorldLayout; start: Pose
               />
             );
           })}
+          {ERA_ORDER.map((id) => (
+            <Npcs key={`npcs-${id}`} island={world.islands[id]} />
+          ))}
           <FirstFrame onFirstFrame={onFirstFrame} />
         </Suspense>
       </Physics>

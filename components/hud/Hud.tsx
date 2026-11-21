@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import type { EraId } from "@/lib/content/schema";
 import type { ExploreData } from "@/lib/three/explore-data";
-import { isTypingTarget, requestLanding, rotateView } from "@/lib/three/transient";
+import { isTypingTarget, recenterView, requestLanding, rotateView } from "@/lib/three/transient";
 import { Ambience } from "@/components/three/Ambience";
 import { BuildingDrawer } from "./BuildingDrawer";
 import { ControlsPanel } from "./ControlsPanel";
@@ -34,6 +34,7 @@ export function Hud({ data }: { data: ExploreData }) {
   const driverView = useStore((s) => s.cameraMode === "driver");
   const timeOfDay = useStore((s) => s.timeOfDay);
   const flying = useStore((s) => s.flying);
+  const freeLook = useStore((s) => s.freeLook);
   // The extra buttons fold away so the top bar stays calm; the choice is remembered in this browser.
   // (The HUD only renders in the browser once the world is ready, so reading storage here is safe.)
   const [expanded, setExpanded] = useState(() => {
@@ -70,7 +71,7 @@ export function Hud({ data }: { data: ExploreData }) {
     setPanel((p) => (p === which ? null : which));
   };
 
-  // R = "I'm stuck", V = driver's view, Q / Z = turn the overview 45°. (E lives in InteractPrompt, driving keys in lib/three/transient.)
+  // R = "I'm stuck", V = driver's view, Q / Z = turn the overview 45°, C = recenter the view. (E lives in InteractPrompt, driving keys in lib/three/transient.)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || isTypingTarget(e.target)) return;
@@ -80,6 +81,7 @@ export function Hud({ data }: { data: ExploreData }) {
       if (e.code === "KeyL" && useStore.getState().flying) requestLanding();
       if (e.code === "KeyQ") rotateView(Math.PI / 4);
       if (e.code === "KeyZ") rotateView(-Math.PI / 4);
+      if (e.code === "KeyC") recenterView();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -113,6 +115,15 @@ export function Hud({ data }: { data: ExploreData }) {
                 className="flex h-11 items-center gap-2 rounded-full bg-orange px-4 font-semibold text-coal shadow-pill transition-transform duration-300 ease-calm hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 Land <span className="text-xs opacity-70">L</span>
+              </button>
+            )}
+            {freeLook && !driverView && (
+              <button
+                type="button"
+                onClick={recenterView}
+                className="flex h-11 items-center gap-2 rounded-full bg-paper px-4 font-semibold text-ink shadow-pill transition-transform duration-300 ease-calm hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Recenter <span className="hidden text-xs text-muted sm:inline">C</span>
               </button>
             )}
             <IconButton

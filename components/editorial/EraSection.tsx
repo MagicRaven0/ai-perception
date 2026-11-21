@@ -20,6 +20,8 @@ import { YouTubeEmbed } from "./YouTubeEmbed";
 import { SpeakerList } from "@/components/audio/SpeakerList";
 import { Arcade } from "@/components/arcade/Arcade";
 import { arcadeFor } from "@/lib/content/arcades";
+import { referencesBuildingId, referencesForEra } from "@/lib/content/references";
+import { ReferenceList } from "@/components/content/ReferenceList";
 import { SummarizerChips } from "@/components/ai/SummarizerChips";
 import { itemText } from "@/lib/ai/corpus";
 import { storedSummariesFor } from "@/lib/ai/summaries";
@@ -31,6 +33,7 @@ export function EraSection({ era, headingLevel = 2 }: { era: Era; headingLevel?:
   const insights = insightsForEra(era.id);
   const datasets = datasetsForEra(era.id);
   const episodes = episodesForEra(era.id);
+  const references = referencesForEra(era.id);
 
   return (
     <section id={era.slug} data-era={era.id} aria-labelledby={`${era.slug}-title`} className="scroll-mt-4">
@@ -120,6 +123,18 @@ export function EraSection({ era, headingLevel = 2 }: { era: Era; headingLevel?:
           </ul>
         </div>
       )}
+
+      {/* 8. References for this era: the same list as the island's References building */}
+      <div id={referencesBuildingId(era.id)} className="mx-auto max-w-[1280px] scroll-mt-4 px-6 pb-16 md:px-12">
+        <h3 className="mb-6 font-display text-3xl font-medium tracking-headline md:text-4xl">
+          References for this era
+        </h3>
+        {references.length > 0 ? (
+          <ReferenceList items={references} />
+        ) : (
+          <p className="border-t border-ink pt-6 text-muted">Sources for this era are being added.</p>
+        )}
+      </div>
     </section>
   );
 }

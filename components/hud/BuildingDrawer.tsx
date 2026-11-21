@@ -11,6 +11,7 @@ import { buildingName } from "./InteractPrompt";
 import { useDialog } from "./useDialog";
 import { SpeakerList } from "@/components/audio/SpeakerList";
 import { Arcade } from "@/components/arcade/Arcade";
+import { ReferenceList } from "@/components/content/ReferenceList";
 
 /**
  * Building drawer (PLAN 7.1 z-drawer): right panel 420px on desktop, bottom sheet at 70% height on phones.
@@ -86,6 +87,13 @@ function Drawer({ b, era }: { b: ExploreBuilding; era?: ExploreEra }) {
         )}
 
         {b.arcade && <Arcade config={b.arcade} />}
+
+        {b.references &&
+          (b.references.length > 0 ? (
+            <ReferenceList items={b.references} size="sm" />
+          ) : (
+            <p className="text-muted">Sources for this island are being added.</p>
+          ))}
 
         {b.speakers.length > 0 && <SpeakerList speakers={b.speakers} />}
 

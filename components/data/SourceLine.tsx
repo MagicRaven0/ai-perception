@@ -8,7 +8,7 @@ export function SourceLine({ source, tone = "dark" }: { source?: SourceRef; tone
   }
   const linkable = /^https?:\/\//.test(source.url);
   return (
-    <p className={`font-mono text-xs leading-relaxed ${color}`}>
+    <p className={`font-mono text-xs leading-relaxed wrap-anywhere ${color}`}>
       Source:{" "}
       {linkable ? (
         <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">

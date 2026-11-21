@@ -1,6 +1,7 @@
 import type { Building, Era, Insight } from "@/lib/content/schema";
 import {
   buildingsForEra,
+  citations,
   datasetsForEra,
   episodesForEra,
   eras,
@@ -63,12 +64,12 @@ export function EraSection({ era, headingLevel = 2 }: { era: Era; headingLevel?:
       {/* 2. Editorial block */}
       <div className="mx-auto grid max-w-[1280px] gap-10 px-6 py-16 md:grid-cols-12 md:px-12 md:py-20">
         <div className="flex flex-col gap-5 text-lg leading-[1.6] text-muted md:col-span-7">
-          <Markdown value={era.perceptionSummary} />
+          <Markdown value={era.perceptionSummary} citations={citations} />
         </div>
         <aside className="md:col-span-4 md:col-start-9">
           <h3 className="border-b border-ink pb-2 font-semibold">How this era supports our argument</h3>
           <div className="mt-4 flex flex-col gap-4 leading-relaxed text-muted">
-            <Markdown value={era.thesisLink} />
+            <Markdown value={era.thesisLink} citations={citations} />
           </div>
         </aside>
       </div>
@@ -177,7 +178,7 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
           <p className="text-muted">Coming soon. This part of the story is still being written.</p>
         ) : (
           <div className="flex max-w-[68ch] flex-col gap-4 text-lg leading-[1.6] text-muted">
-            <Markdown value={b.long} />
+            <Markdown value={b.long} citations={citations} />
           </div>
         )}
 
@@ -205,7 +206,7 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
         )}
 
         {(sources.length > 0 || b.groupCommentary) && (
-          <p className="font-mono text-xs leading-relaxed text-muted">
+          <p className="font-mono text-xs leading-relaxed wrap-anywhere text-muted">
             {b.groupCommentary && sources.length === 0
               ? "Group commentary"
               : sources.map((s, i) => (

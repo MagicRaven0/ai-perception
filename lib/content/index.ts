@@ -16,6 +16,7 @@ import {
   Source,
   type EraId,
 } from "./schema";
+import { citationMatchers } from "./citations";
 import { site as rawSite } from "@/content/site";
 import { about as rawAbout } from "@/content/about";
 import { eras as rawEras } from "@/content/eras";
@@ -46,6 +47,8 @@ export const comparisons = z.array(Comparison).parse(rawComparisons);
 export const datasets = z.array(Dataset).parse(rawDatasets);
 export const episodes = z.array(Episode).parse(rawEpisodes);
 export const sources = z.array(Source).parse(rawSources);
+/** Matchers that turn APA in-text citations in prose into source ids (and /sources#<id> links). */
+export const citations = citationMatchers(sources);
 export const credits = z.array(Credit).parse(rawCredits);
 export const images = z.array(Image).parse(rawImages);
 

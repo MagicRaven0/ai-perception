@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { about, credits, images, site } from "@/lib/content";
+import { about, citations, credits, images, site } from "@/lib/content";
 import { TopNav } from "@/components/layout/TopNav";
 import { Footer } from "@/components/layout/Footer";
 import { ContentText } from "@/components/content/ContentText";
@@ -66,7 +66,7 @@ export default function AboutPage() {
             Why this genre
           </h2>
           <div className="flex flex-col gap-4 text-lg leading-[1.6] text-muted md:col-span-8">
-            <Markdown value={about.genreRationale} />
+            <Markdown value={about.genreRationale} citations={citations} />
           </div>
         </section>
 

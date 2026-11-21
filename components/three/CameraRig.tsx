@@ -8,7 +8,7 @@ import { useStore } from "@/lib/store";
 import { findBuilding, type Pose, type WorldLayout } from "@/lib/three/layout";
 import { motion } from "@/lib/three/motion";
 import { player } from "@/lib/three/transient";
-import { CAMERA_AZIMUTH, CAMERA_DISTANCE, CAMERA_ELEVATION_DEG } from "@/lib/three/camera";
+import { CAMERA_AZIMUTH, CAMERA_DISTANCE, CAMERA_ELEVATION_DEG, CAMERA_SPAN } from "@/lib/three/camera";
 
 /**
  * SHARED. High-angle isometric camera (latecheckout.studio look) that follows the car with a slow, floaty
@@ -31,9 +31,12 @@ const SCREEN_RIGHT = new THREE.Vector3(Math.cos(AZIMUTH), 0, -Math.sin(AZIMUTH))
 const desired = new THREE.Vector3();
 const look = new THREE.Vector3();
 
-/** Zoom: about 80 x 50 m on desktop; on narrow phones about 46 m across, so the car stays readable. */
+/**
+ * Zoom (pixels per metre): a calm overview of about 104 x 65 m on desktop (the road ahead and a few buildings);
+ * on narrow phones about 52 m across, so the car stays readable. See CAMERA_SPAN.
+ */
 function baseZoom(width: number, height: number) {
-  return Math.min(width / (width < 640 ? 46 : 80), height / 50);
+  return Math.min(width / (width < 640 ? CAMERA_SPAN.phone : CAMERA_SPAN.wide), height / CAMERA_SPAN.tall);
 }
 
 export function CameraRig({ world, start }: { world: WorldLayout; start: Pose }) {
@@ -91,7 +94,7 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
       ref={camera}
       makeDefault
       near={1}
-      far={600}
+      far={700}
       zoom={baseZoom(size.width, size.height)}
       position={[start.x + OFFSET.x, OFFSET.y, start.z + OFFSET.z]}
     />

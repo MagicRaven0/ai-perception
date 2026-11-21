@@ -1,0 +1,533 @@
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test, type Page } from "@playwright/test";
+import { buildings } from "../../content/buildings";
+
+/**
+ * /explore in 3D (Phase 3): the ?b= deep link into a building drawer, driving, failure handling, leaving /
+ * coming back (Next keeps /explore mounted but hidden after a navigation), the load watchdog and the phone HUD.
+ * The tests need WebGL 2 in headless Chromium (SwiftShader). They skip ONLY when the browser has no WebGL 2
+ * at all; when it does, /explore must reach "ready" or the test fails.
+ *
+ * Software WebGL is CPU-heavy: this file runs in its own Playwright project with ONE worker (playwright.config.ts),
+ * after a warm-up that has compiled every route and the 3D code once (warmup.setup.ts), so worlds never load in
+ * parallel and no test pays the first Turbopack compile.
+ */
+
+// Software WebGL in headless Chromium (the no-WebGL tests stub it out anyway).
+test.use({
+  launchOptions: { args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] },
+});
+
+/** Skips when this browser has no WebGL 2; otherwise opens `url` and requires the 3D world to be ready. */
+async function open3d(page: Page, url: string) {
+  await page.goto(url);
+  const webgl2 = await page.evaluate(() => Boolean(document.createElement("canvas").getContext("webgl2")));
+  test.skip(!webgl2, "this browser has no WebGL 2");
+  await expectReady(page);
+}
+
+/**
+ * How long a test waits for "ready": longer than the relaxed 45 s test watchdog below, so a slow software-WebGL
+ * load ends in either "ready" or the watchdog's own fallback, never in a test-side timeout first.
+ */
+const READY_TIMEOUT = 60_000;
+
+function expectReady(page: Page) {
+  return expect(page.locator("[data-explore-state]")).toHaveAttribute("data-explore-state", "ready", {
+    timeout: READY_TIMEOUT,
+  });
+}
+
+type Debug = {
+  __explore: {
+    player: { x: number; z: number; heading: number };
+    gl: { getContext: () => WebGL2RenderingContext };
+  };
+  __store: { getState: () => { nearbyBuildingId: string | null; openBuildingId: string | null } };
+};
+
+const playerPose = (page: Page) =>
+  page.evaluate(() => {
+    const p = (window as unknown as Debug).__explore.player;
+    return { x: p.x, z: p.z, heading: p.heading };
+  });
+
+/** Visible dialogs only (the hidden /explore page stays in the DOM after leaving). */
+const visibleDialogs = (page: Page) => page.getByRole("dialog");
+
+/**
+ * Software WebGL is CPU-heavy, and several workers may load worlds at once: give the load watchdog more than
+ * its real 20 s (LOAD_TIMEOUT_MS; development-only hook) so a busy CPU is not reported as a broken device. The real limit has
+ * its own test below.
+ */
+async function relaxLoadWatchdog(page: Page) {
+  await page.addInitScript(() => {
+    (window as unknown as { __exploreLoadTimeoutMs: number }).__exploreLoadTimeoutMs = 45_000;
+  });
+}
+
+test.describe("explore in 3D", () => {
+  // Run the 3D tests in this file one after another (the project also has a single worker).
+  test.describe.configure({ mode: "default" });
+  test.setTimeout(150_000);
+  test.beforeEach(async ({ page }) => {
+    await relaxLoadWatchdog(page);
+  });
+
+  test("?b= deep link drives to the building and opens its drawer", async ({ page }) => {
+    const target = [...buildings].sort((a, b) => a.eraId.localeCompare(b.eraId) || a.order - b.order)[0];
+    test.skip(!target, "no buildings in content yet");
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, `/explore?b=${target!.id}`);
+
+    const drawer = visibleDialogs(page);
+    await expect(drawer).toBeVisible({ timeout: 15_000 });
+    await expect(drawer.getByRole("link", { name: "Read more" })).toHaveAttribute(
+      "href",
+      new RegExp(`/read/[a-z0-9-]+#${target!.id}$`),
+    );
+    expect(page.url()).toContain(`b=${target!.id}`);
+    // The dialog's name never reads out authoring text ("Placeholder: ..." / "TODO:").
+    expect(await drawer.getAttribute("aria-label").then((l) => l ?? "")).not.toMatch(/placeholder|TODO/i);
+    await expect(drawer).toHaveAccessibleName(/\S/);
+    await expect(drawer).not.toHaveAccessibleName(/placeholder|TODO/i);
+
+    // Escape closes it and the URL forgets the building. A deep link had no opener: focus goes to the
+    // prompt's Open button (the car is still parked at the building), not back to the top of the page.
+    const prompt = page.getByRole("button", { name: /^E\s*Open/ });
+    await page.keyboard.press("Escape");
+    await expect(drawer).toBeHidden();
+    await expect.poll(() => new URL(page.url()).searchParams.get("b")).toBeNull();
+    await expect(prompt).toBeFocused();
+    await prompt.blur();
+
+    // The car is still parked in the building's sensor: the prompt shows, but nothing opens by itself.
+    await page.waitForTimeout(1000);
+    await expect(drawer).toBeHidden();
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as Debug).__store.getState().nearbyBuildingId))
+      .toBe(target!.id);
+    await expect(prompt).toBeVisible();
+    // E opens it, and the URL is shareable again.
+    await page.keyboard.press("e");
+    await expect(drawer).toBeVisible();
+    await expect.poll(() => new URL(page.url()).searchParams.get("b")).toBe(target!.id);
+    await page.keyboard.press("Escape");
+    await expect(drawer).toBeHidden();
+
+    // Opening from the prompt's button with the keyboard returns focus to that button on close.
+    await prompt.focus();
+    await page.keyboard.press("Enter");
+    await expect(drawer).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(drawer).toBeHidden();
+    await expect(prompt).toBeFocused();
+
+    // Escape also works after focus left the drawer (clicked the world behind it).
+    await page.goto(`/explore?b=${target!.id}`);
+    await expect(drawer).toBeVisible({ timeout: READY_TIMEOUT });
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    await page.keyboard.press("Escape");
+    await expect(drawer).toBeHidden();
+
+    // The HUD is there: fast travel, minimap, progress.
+    await expect(page.getByRole("navigation", { name: "Fast travel" }).first()).toBeVisible();
+    await expect(page.getByText(/\d+ \/ \d+/).first()).toBeVisible();
+    await page.screenshot({ path: "screenshots/explore-1440.png" });
+  });
+
+  test("the car drives with the keyboard (W / arrows) and the skip link comes first", async ({ page }) => {
+    await open3d(page, "/explore?era=era-1");
+    await page.keyboard.press("Tab");
+    const first = page.locator(":focus");
+    await expect(first).toHaveText("Go to reading mode");
+    await expect(first).toHaveAttribute("href", /^\/read\//);
+    await first.blur();
+
+    const start = await playerPose(page);
+    await page.keyboard.down("KeyW");
+    await page.waitForTimeout(1500);
+    await page.keyboard.up("KeyW");
+    const moved = await playerPose(page);
+    expect(Math.hypot(moved.x - start.x, moved.z - start.z)).toBeGreaterThan(3);
+
+    await page.keyboard.down("ArrowUp");
+    await page.keyboard.down("ArrowLeft");
+    await page.waitForTimeout(1200);
+    await page.keyboard.up("ArrowLeft");
+    await page.keyboard.up("ArrowUp");
+    const turned = await playerPose(page);
+    expect(Math.abs(turned.heading - moved.heading)).toBeGreaterThan(0.3);
+  });
+
+  test("leaving /explore tears the 3D down, and coming back builds a fresh world without a stale drawer", async ({
+    page,
+  }) => {
+    const target = buildings[0];
+    test.skip(!target, "no buildings in content yet");
+    await open3d(page, `/explore?b=${target!.id}`);
+    await expect(visibleDialogs(page)).toBeVisible({ timeout: 15_000 });
+
+    // Read more -> /read: no canvas left running, no false "3D stopped" toast.
+    await visibleDialogs(page).getByRole("link", { name: "Read more" }).click();
+    // A dev-server navigation under software WebGL can take a while when several workers share the CPU.
+    await expect(page).toHaveURL(/\/read\//, { timeout: 15_000 });
+    await expect(page.locator("canvas")).toHaveCount(0);
+    await page.waitForTimeout(1000);
+    await expect(page.getByText("3D stopped, switched to reading mode")).toHaveCount(0);
+
+    // Back to /explore with the site nav: a live world, no drawer left open, nothing nearby from before.
+    await page.getByRole("link", { name: "Explore", exact: true }).first().click();
+    await expect(page).toHaveURL(/\/explore/, { timeout: 15_000 });
+    await expectReady(page);
+    await expect(visibleDialogs(page)).toHaveCount(0);
+    expect(await page.evaluate(() => (window as unknown as Debug).__store.getState().openBuildingId)).toBeNull();
+    expect(await page.evaluate(() => (window as unknown as Debug).__explore.gl.getContext().isContextLost())).toBe(
+      false,
+    );
+    await expect(page.locator("canvas")).toHaveCount(1);
+  });
+
+  for (const scheme of ["light", "dark"] as const) {
+    test(`HUD, drawer and options have no serious accessibility issues (${scheme})`, async ({ page }) => {
+      const target = buildings[0];
+      test.skip(!target, "no buildings in content yet");
+      await page.emulateMedia({ colorScheme: scheme });
+      await open3d(page, `/explore?b=${target!.id}`);
+      await expect(visibleDialogs(page)).toBeVisible({ timeout: 15_000 });
+      // The 3D page has a main landmark and a heading for screen readers.
+      await expect(page.getByRole("main")).toHaveCount(1);
+      await expect(page.getByRole("heading", { level: 1, name: "Explore the islands" })).toHaveCount(1);
+
+      const scan = async () => {
+        const results = await new AxeBuilder({ page })
+          .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+          .exclude("nextjs-portal")
+          .analyze();
+        const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+        return serious.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
+      };
+      expect(await scan()).toEqual([]);
+
+      await page.keyboard.press("Escape");
+      await page.getByRole("button", { name: "Options" }).click();
+      await expect(page.getByRole("dialog", { name: "Options" })).toBeVisible();
+      expect(await scan()).toEqual([]);
+    });
+  }
+
+  test("losing the WebGL context switches to reading mode, and Back offers 3D again", async ({ page }) => {
+    await open3d(page, "/explore?era=era-2");
+    // ?era= spawned on The Jobs Era and was dropped from the URL.
+    await expect(
+      page.getByRole("navigation", { name: "Fast travel" }).getByRole("button", { name: "The Jobs Era" }),
+    ).toHaveAttribute("aria-current", "location");
+    await expect.poll(() => new URL(page.url()).searchParams.get("era")).toBeNull();
+
+    await page.evaluate(() =>
+      (window as unknown as Debug).__explore.gl.getContext().getExtension("WEBGL_lose_context")?.loseContext(),
+    );
+    await expect(page.getByText("3D stopped, switched to reading mode")).toBeVisible();
+    await expect(page).toHaveURL(/\/read(\/|$)/, { timeout: 15_000 });
+    await expect(page.locator("canvas")).toHaveCount(0);
+
+    // Back: never a dead canvas. The reading-mode screen explains what happened and offers 3D again.
+    await page.goBack();
+    await expect(page).toHaveURL(/\/explore/, { timeout: 15_000 });
+    await expect(page.locator("[data-explore-state]")).toHaveAttribute("data-explore-state", "fallback");
+    await expect(page.getByText("stopped working on this device")).toBeVisible();
+    await page.getByRole("button", { name: "Try 3D anyway" }).click();
+    await expectReady(page);
+    expect(await page.evaluate(() => (window as unknown as Debug).__explore.gl.getContext().isContextLost())).toBe(
+      false,
+    );
+  });
+
+  test("one HUD dialog at a time: Options closes the drawer, a building closes Options", async ({ page }) => {
+    const target = buildings[0];
+    test.skip(!target, "no buildings in content yet");
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, `/explore?b=${target!.id}`);
+    await expect(visibleDialogs(page)).toHaveCount(1, { timeout: 15_000 });
+
+    // Mouse click on Options with the drawer open: the drawer closes, Options is the only dialog.
+    const options = page.getByRole("button", { name: "Options" });
+    await options.click();
+    await expect(page.getByRole("dialog", { name: "Options" })).toBeVisible();
+    await expect(visibleDialogs(page)).toHaveCount(1);
+    expect(await page.evaluate(() => (window as unknown as Debug).__store.getState().openBuildingId)).toBeNull();
+    await page.keyboard.press("Escape");
+    await expect(visibleDialogs(page)).toHaveCount(0);
+    await expect(options).toBeFocused();
+
+    // A building opening while Options is open closes Options.
+    await options.click();
+    await expect(page.getByRole("dialog", { name: "Options" })).toBeVisible();
+    await page.evaluate(
+      (id) =>
+        (window as unknown as { __store: { getState: () => { openBuilding: (id: string) => void } } }).__store
+          .getState()
+          .openBuilding(id),
+      target!.id,
+    );
+    await expect(page.getByRole("dialog", { name: "Options" })).toHaveCount(0);
+    await expect(visibleDialogs(page)).toHaveCount(1);
+  });
+
+  test("a background tab never counts as a 3D failure: loading waits until the tab is visible", async ({ page }) => {
+    // Chrome in a background tab: document.hidden is true and requestAnimationFrame never fires (timers do).
+    await page.addInitScript(() => {
+      const realRaf = window.requestAnimationFrame.bind(window);
+      let hidden = true;
+      const queued: FrameRequestCallback[] = [];
+      Object.defineProperty(Document.prototype, "hidden", { configurable: true, get: () => hidden });
+      Object.defineProperty(Document.prototype, "visibilityState", {
+        configurable: true,
+        get: () => (hidden ? "hidden" : "visible"),
+      });
+      window.requestAnimationFrame = (cb) => {
+        if (!hidden) return realRaf(cb);
+        queued.push(cb);
+        return 0;
+      };
+      (window as unknown as { __unhide: () => void }).__unhide = () => {
+        hidden = false;
+        document.dispatchEvent(new Event("visibilitychange"));
+        queued.splice(0).forEach((cb) => realRaf(cb));
+      };
+    });
+    // A deliberately short TEST-ONLY limit of 10 s while hidden (the real LOAD_TIMEOUT_MS is 20 s; a shorter limit
+    // keeps the wait below short): if hidden time counted, this would fire. This init script runs after the relaxed one.
+    await page.addInitScript(() => {
+      (window as unknown as { __exploreLoadTimeoutMs: number }).__exploreLoadTimeoutMs = 10_000;
+    });
+    await page.goto("/explore?era=era-2");
+    const webgl2 = await page.evaluate(() => Boolean(document.createElement("canvas").getContext("webgl2")));
+    test.skip(!webgl2, "this browser has no WebGL 2");
+    const state = page.locator("[data-explore-state]");
+    await expect(state).toHaveAttribute("data-explore-state", "loading", { timeout: 15_000 });
+    // The 3D code arrives and the canvas mounts, but a hidden tab never draws a frame.
+    await expect(page.locator("canvas")).toHaveCount(1, { timeout: 30_000 });
+
+    // Longer than the 10 s test-only limit: still loading, no toast, no failure remembered.
+    await page.waitForTimeout(12_000);
+    await expect(state).toHaveAttribute("data-explore-state", "loading");
+    expect(page.url()).toContain("/explore");
+    expect(await page.evaluate(() => sessionStorage.getItem("explore-3d-failed"))).toBeNull();
+    await expect(page.getByText("3D stopped, switched to reading mode")).toHaveCount(0);
+
+    // Back in the foreground: the world finishes loading (relaxed limit again: a busy CPU is not a failure).
+    await page.evaluate(() => {
+      (window as unknown as { __exploreLoadTimeoutMs: number }).__exploreLoadTimeoutMs = 45_000;
+      (window as unknown as { __unhide: () => void }).__unhide();
+    });
+    await expectReady(page);
+  });
+
+  test("audio keeps playing while driving and after leaving /explore for /read", async ({ page }) => {
+    // No episode is recorded yet: play a generated 60 s silent WAV through the real audio engine and dock.
+    const rate = 8000;
+    const seconds = 60;
+    const data = rate * seconds;
+    const wav = Buffer.alloc(44 + data);
+    wav.write("RIFF", 0);
+    wav.writeUInt32LE(36 + data, 4);
+    wav.write("WAVEfmt ", 8);
+    wav.writeUInt32LE(16, 16);
+    wav.writeUInt16LE(1, 20); // PCM
+    wav.writeUInt16LE(1, 22); // mono
+    wav.writeUInt32LE(rate, 24);
+    wav.writeUInt32LE(rate, 28);
+    wav.writeUInt16LE(1, 32);
+    wav.writeUInt16LE(8, 34);
+    wav.write("data", 36);
+    wav.writeUInt32LE(data, 40);
+    wav.fill(128, 44); // 8-bit silence
+    await page.route("**/e2e-test-audio.wav", (route) =>
+      route.fulfill({ status: 200, contentType: "audio/wav", body: wav }),
+    );
+    const track = {
+      id: "e2e-test-track",
+      title: "Test track",
+      src: "/e2e-test-audio.wav",
+      kindLabel: "Podcast",
+      durationSec: seconds,
+    };
+    await page.addInitScript((t) => {
+      if (!localStorage.getItem("ai-perception"))
+        localStorage.setItem("ai-perception", JSON.stringify({ state: { track: t, currentTime: 0 }, version: 1 }));
+    }, track);
+
+    await open3d(page, "/explore?era=era-1");
+    const dock = page.getByRole("region", { name: "Audio player" });
+    // Keyboard, not a click: in development the Next dev-tools badge sits over the dock's Play button.
+    await dock.getByRole("button", { name: "Play", exact: true }).press("Enter");
+    await expect(dock.getByRole("button", { name: "Pause" })).toBeVisible();
+    const status = () =>
+      page.evaluate(
+        () => (window as unknown as { __store: { getState: () => { status: string } } }).__store.getState().status,
+      );
+    const audioTime = () =>
+      page.evaluate(
+        () =>
+          (window as unknown as { __store: { getState: () => { currentTime: number } } }).__store.getState()
+            .currentTime,
+      );
+    await expect.poll(status).toBe("playing");
+
+    // Drive for a while: the audio keeps running.
+    const t0 = await audioTime();
+    const p0 = await playerPose(page);
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    await page.keyboard.down("KeyW");
+    await page.waitForTimeout(2000);
+    await page.keyboard.up("KeyW");
+    const p1 = await playerPose(page);
+    expect(Math.hypot(p1.x - p0.x, p1.z - p0.z), "the car drove").toBeGreaterThan(3);
+    await expect.poll(audioTime).toBeGreaterThan(t0 + 1);
+    expect(await status()).toBe("playing");
+
+    // Leave for /read with the HUD's Read pill: the world tears down, the audio does not stop.
+    const t1 = await audioTime();
+    await page.getByRole("group", { name: "World controls" }).getByRole("link", { name: "Read", exact: true }).click();
+    await expect(page).toHaveURL(/\/read/, { timeout: 15_000 });
+    await expect(page.locator("canvas")).toHaveCount(0);
+    await expect.poll(audioTime).toBeGreaterThan(t1 + 1);
+    expect(await status()).toBe("playing");
+    await expect(dock.getByRole("button", { name: "Pause" })).toBeVisible();
+  });
+
+  test("screenshot at 375px", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await open3d(page, "/explore?era=era-1");
+    await page.waitForTimeout(1500);
+    await page.screenshot({ path: "screenshots/explore-375.png" });
+  });
+});
+
+test.describe("explore load watchdog", () => {
+  test.setTimeout(150_000);
+
+  test("3D that has not drawn a frame after 20 s falls back to reading mode", async ({ page }) => {
+    // Physics never arrives (its chunk hangs), so the first frame never comes. The limit is 20 s (LOAD_TIMEOUT_MS;
+    // docs/VISION.md overrides PLAN 6.6's 10 s); the loading screen keeps "Read in 2D instead" visible.
+    await page.route(/rapier3d-compat/, () => {});
+    // Time the loading state in the page itself (test polling lags when several workers share the CPU).
+    await page.addInitScript(() => {
+      const times: { loading?: number; left?: number } = {};
+      (window as unknown as { __loadTimes: typeof times }).__loadTimes = times;
+      new MutationObserver(() => {
+        const state = document.querySelector("[data-explore-state]")?.getAttribute("data-explore-state");
+        if (state === "loading") times.loading ??= performance.now();
+        else if (times.loading !== undefined) times.left ??= performance.now();
+      }).observe(document, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ["data-explore-state"],
+      });
+    });
+    // The hung chunk can hold up the window "load" event: do not wait for it.
+    await page.goto("/explore?era=era-2", { waitUntil: "domcontentloaded" });
+    const webgl2 = await page.evaluate(() => Boolean(document.createElement("canvas").getContext("webgl2")));
+    test.skip(!webgl2, "this browser has no WebGL 2");
+    // While it waits, the way out is always on screen.
+    await expect(page.getByRole("link", { name: "Read in 2D instead" })).toHaveAttribute("href", "/read");
+    await expect(page.getByText("3D stopped, switched to reading mode")).toBeVisible({ timeout: 45_000 });
+    const t = await page.evaluate(
+      () => (window as unknown as { __loadTimes: { loading?: number; left?: number } }).__loadTimes,
+    );
+    const waited = (t.left ?? 0) - (t.loading ?? 0);
+    expect(waited, "fell back after about 20 s").toBeGreaterThan(19_500);
+    expect(waited).toBeLessThan(26_000);
+    // The island the URL asked for.
+    await expect(page).toHaveURL(/\/read\/the-jobs-era/, { timeout: 15_000 });
+  });
+});
+
+test.describe("explore on a phone", () => {
+  test.use({ viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true });
+  test.setTimeout(150_000);
+  test.beforeEach(async ({ page }) => {
+    await relaxLoadWatchdog(page);
+  });
+
+  test("phones get a choice, and 3D shows touch controls (never a Leva panel)", async ({ page }) => {
+    await page.goto("/explore");
+    const webgl2 = await page.evaluate(() => Boolean(document.createElement("canvas").getContext("webgl2")));
+    test.skip(!webgl2, "this browser has no WebGL 2");
+    const state = page.locator("[data-explore-state]");
+    await expect(state).toHaveAttribute("data-explore-state", "choose");
+    await expect(page.getByRole("heading", { name: "How do you want to explore?" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Read in 2D" })).toHaveAttribute("href", "/read");
+    await page.getByRole("button", { name: "Explore in 3D" }).click();
+    // The button disappears with the choice screen: focus moves to the skip link, still first in Tab order.
+    // After a tap it stays screen-reader-only (shown on keyboard focus only), so it never covers the HUD.
+    const skip = page.getByRole("link", { name: "Go to reading mode" });
+    await expect(skip).toBeFocused();
+    await expectReady(page);
+    await expect(skip).toBeFocused();
+    await expect(skip).toHaveCSS("position", "absolute");
+    await expect(page.getByRole("button", { name: "Boost", exact: true })).toBeVisible();
+    // No separate round "Open" button: the prompt's own "Tap to open / Tap to talk" is the interact button.
+    await expect(page.getByRole("button", { name: "Open", exact: true })).toHaveCount(0);
+    await expect(page.locator("[class*='leva']")).toHaveCount(0);
+    await page.screenshot({ path: "screenshots/explore-phone-375.png" });
+  });
+
+  test("the interact prompt sits clear of the touch controls, chat button and audio dock", async ({ page }) => {
+    await page.goto("/explore");
+    const webgl2 = await page.evaluate(() => Boolean(document.createElement("canvas").getContext("webgl2")));
+    test.skip(!webgl2, "this browser has no WebGL 2");
+    await page.getByRole("button", { name: "Explore in 3D" }).click();
+    await expectReady(page);
+    // Put the visitor "near" things through the dev-only store hook (driving there on a phone is slow and
+    // the joystick is a DOM widget): the prompt is the same either way.
+    type Near = { getState: () => { setNearGuide: (n: boolean) => void; enterBuilding: (id: string) => void } };
+    type Box = { x: number; y: number; width: number; height: number };
+
+    const card = page.locator("[data-interact-prompt] > div");
+    const tap = page.locator("#interact-prompt-button");
+    const others = {
+      joystick: page.locator("[data-touch-joystick] > div").first(),
+      Boost: page.getByRole("button", { name: "Boost", exact: true }),
+      "chat button": page.getByRole("button", { name: "Ask the guide" }),
+      "audio dock": page.getByRole("region", { name: "Audio player" }),
+    };
+    const overlaps = (a: Box, b: Box) =>
+      a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+    const checkClear = async (label: string) => {
+      await expect(card).toBeVisible();
+      const c = await card.boundingBox();
+      expect(c, `${label}: prompt box`).toBeTruthy();
+      for (const [name, el] of Object.entries(others)) {
+        await expect(el, `${label}: ${name} is shown`).toBeVisible();
+        const o = await el.boundingBox();
+        expect(o, `${label}: ${name} box`).toBeTruthy();
+        expect(overlaps(c!, o!), `${label}: prompt vs ${name}`).toBe(false);
+      }
+      // The whole card is on screen (nothing cut off at the edges).
+      expect(c!.x).toBeGreaterThanOrEqual(0);
+      expect(c!.x + c!.width).toBeLessThanOrEqual(375);
+      // The tap target meets the 44 px touch-target size.
+      const t = await tap.boundingBox();
+      expect(t!.height, `${label}: tap target height`).toBeGreaterThanOrEqual(44);
+    };
+
+    // Near the guide (the longest prompt), then near a building.
+    await page.evaluate(() => (window as unknown as { __store: Near }).__store.getState().setNearGuide(true));
+    await checkClear("guide");
+    await expect(page.getByRole("button", { name: /Tap to talk/ })).toBeVisible();
+    await page.evaluate(() => (window as unknown as { __store: Near }).__store.getState().setNearGuide(false));
+    const target = buildings[0];
+    if (target) {
+      await page.evaluate(
+        (id) => (window as unknown as { __store: Near }).__store.getState().enterBuilding(id),
+        target.id,
+      );
+      await checkClear("building");
+      await expect(page.getByRole("button", { name: /Tap to open/ })).toBeVisible();
+      await page.screenshot({ path: "screenshots/explore-phone-375-prompt.png" });
+    }
+  });
+});

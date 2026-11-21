@@ -18,7 +18,7 @@ type Props = {
   world: WorldLayout;
   /** Where the car starts (deep link, era spawn or saved position). */
   start: Pose;
-  /** First frame rendered (physics loaded, all three islands in, scene drawn): clears the 10 s watchdog. */
+  /** First frame rendered (physics loaded, all three islands in, scene drawn): clears the load watchdog (LOAD_TIMEOUT_MS, 20 s). */
   onReady: () => void;
   /** WebGL context lost: the page switches to reading mode. */
   onLost: () => void;

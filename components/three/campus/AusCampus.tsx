@@ -1,85 +1,121 @@
 "use client";
 
 /**
- * AUS MINI CAMPUS (The Future, centre plot). Placeholder by the foundation build.
+ * AUS MINI CAMPUS (The Future, centre plot). Owner: the campus agent (components/three/campus/).
  *
- * Owner: the Future island agent (or a dedicated campus agent). May freely change this file and add files
- * under components/three/campus/. Keep the named export `AusCampus` and its props.
- *
+ * CONTRACT (unchanged): named export `AusCampus` with props { position, radius, palette }.
  * Input: position (centre of the plot, y = 0), radius (keep everything inside it: the ring road starts
- * about 6 m outside), palette (era-3 palette).
+ * about 6 m outside), palette (era-3 palette; only `accent` is used, for the lime glow).
+ * Budget (a share of The Future's budget): <= 20k triangles and <= 14 draw calls on High (shadow pass
+ * included), <= 8k triangles and <= 6 draw calls on Low.
  *
- * Vision (docs/VISION.md): the full campus, simplified, with the AUS name and logo. Online photos are
- * modelling reference only. The logo needs permission and a credit in content/credits.ts before it ships;
- * until then the sign below is a blank plate. Decor colliders: fixed <RigidBody> + cuboids only, and the
- * inner lawn is open, so every solid building needs a simple collider like the ones below.
- * Budget: this is a SHARE of The Future island's budget (IslandFuture.tsx), not extra: <= 20k triangles and
- * <= 14 draw calls on High (shadow pass included), <= 8k triangles and <= 6 draw calls on Low. Read the tier
- * with useStore(selectTier) to drop detail on Low; wrap static parts in <StaticMerge>.
+ * WHAT IT SHOWS: a simplified, symmetrical American University of Sharjah. Modelling reference only (public
+ * descriptions and the AUS campus maps; no photo, logo or texture was downloaded or copied):
+ * - the Main Building at the head of the axis: long arcaded block, central portal, big central dome on a
+ *   drum, domed corner pavilions;
+ * - the long rectangular mall in front of it, lined on both sides by square, domed academic buildings with
+ *   the same arched face on every side, each in its own lawn;
+ * - a reflecting pool with fountains down the middle, date palms, bougainvillea, lamps and benches;
+ * - the university name (content/site.ts) on a sloped sign at the entrance, repeated as a DOM world label on
+ *   small screens where the sign's lettering is too small to read (CampusLabel.tsx); an optional logo slot (config.ts);
+ * - a marked pad with a blank plaque near the Main Building, reserved for the local expert.
+ * The axis faces the camera (lib/three/camera), turned by AXIS_SKEW, so the entrance and name sign are nearest
+ * the viewer and the tall dome stands on the far side where it never hides the ring road.
+ *
+ * DRAW CALLS: everything static is one <StaticMerge>, built from three "shades" only (parts.tsx): solid
+ * (2 calls on High: colour + shadow), flat (1), glow (1). The name text is 1 more (canvas texture), the
+ * animated fountain jets 1 (instanced). About 6 calls on High, 4 on Low.
+ *
+ * COLLIDERS: fixed cuboids for the Main Building footprint, the four academic halls (the inner lawn is open to
+ * the car, so every solid building needs one), the name sign and the pool. Palms, lamps and benches have none.
+ *
+ * DEV: in development `window.__ausCampus` is the campus root group (hide it to measure its own cost:
+ * compare window.__explore.gl.info.render with `__ausCampus.visible` true and false).
  */
 
+import { useEffect, useMemo, useRef } from "react";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
+import type * as THREE from "three";
+import { useStore } from "@/lib/store";
+import { CAMERA_AZIMUTH } from "@/lib/three/camera";
 import type { Vec3 } from "@/lib/three/layout";
-import { SHARED, type EraPalette } from "@/lib/three/palette";
-import { Block } from "../buildings/registry";
+import type { EraPalette } from "@/lib/three/palette";
+import { selectTier } from "@/lib/three/quality";
 import { StaticMerge } from "../kit/StaticMerge";
+import { AcademicHall, HALL_HALF } from "./AcademicHall";
+import { CampusLabel } from "./CampusLabel";
+import { AXIS_SKEW, DESIGN_RADIUS } from "./config";
+import { FountainJets } from "./FountainJets";
+import { GROUNDS, Grounds } from "./Grounds";
+import { MAIN_HALF, MainBuilding } from "./MainBuilding";
+import { NameSign, SIGN_HALF } from "./NameSign";
+import { CAMPUS } from "./palette";
+
+const HALLS: { x: number; z: number; tone: string }[] = [-1, 1].flatMap((s) =>
+  GROUNDS.hallZ.map((z, i) => ({ x: s * GROUNDS.hallX, z, tone: i === 0 ? CAMPUS.stoneMid : CAMPUS.stoneShade })),
+);
 
 export function AusCampus({ position, radius, palette }: { position: Vec3; radius: number; palette: EraPalette }) {
-  const r = radius;
-  return (
-    <group position={position}>
-      {/* Plaza */}
-      <mesh rotation-x={-Math.PI / 2} position-y={0.025} receiveShadow>
-        <circleGeometry args={[r, 48]} />
-        <meshLambertMaterial color={palette.road} />
-      </mesh>
-      <mesh rotation-x={-Math.PI / 2} position-y={0.035}>
-        <ringGeometry args={[r - 0.6, r, 64]} />
-        <meshBasicMaterial color={palette.accent} />
-      </mesh>
+  const hi = useStore(selectTier) === "high";
+  // Designed for the current plot; a smaller plot scales the whole campus down so it still fits.
+  const k = Math.min(1, radius / DESIGN_RADIUS);
+  const accent = palette.accent;
+  const root = useRef<THREE.Group>(null);
 
-      {/* Simple box colliders so the car bumps into the buildings instead of driving through */}
+  const jets = useMemo(() => GROUNDS.fountainZ.map((z) => [0, 0.5, z] as [number, number, number]), []);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    const w = window as unknown as { __ausCampus?: THREE.Group | null };
+    w.__ausCampus = root.current;
+    return () => {
+      w.__ausCampus = null;
+    };
+  }, []);
+
+  return (
+    <group position={position} rotation-y={CAMERA_AZIMUTH + AXIS_SKEW}>
       <RigidBody type="fixed" colliders={false}>
-        <CuboidCollider args={[r * 0.55, 2.5, r * 0.2]} position={[0, 2.5, -r * 0.25]} />
-        <CuboidCollider args={[r * 0.16, 2, r * 0.35]} position={[-r * 0.62, 2, r * 0.2]} />
-        <CuboidCollider args={[r * 0.16, 2, r * 0.35]} position={[r * 0.62, 2, r * 0.2]} />
+        <CuboidCollider
+          args={[MAIN_HALF.x * k, (MAIN_HALF.height / 2) * k, MAIN_HALF.z * k]}
+          position={[0, (MAIN_HALF.height / 2) * k, GROUNDS.mainZ * k]}
+        />
+        {HALLS.map((h) => (
+          <CuboidCollider
+            key={`${h.x}${h.z}`}
+            args={[HALL_HALF.x * k, HALL_HALF.height * k, HALL_HALF.z * k]}
+            position={[h.x * k, HALL_HALF.height * k, h.z * k]}
+          />
+        ))}
+        <CuboidCollider
+          args={[SIGN_HALF.x * k, SIGN_HALF.height * k, SIGN_HALF.z * k]}
+          position={[0, SIGN_HALF.height * k, GROUNDS.sign.z * k]}
+        />
+        <CuboidCollider
+          args={[(GROUNDS.pool.width / 2) * k, 0.45 * k, (GROUNDS.pool.length / 2) * k]}
+          position={[0, 0.45 * k, GROUNDS.pool.z * k]}
+        />
       </RigidBody>
 
-      <StaticMerge>
-        {/* Main building: long block with a central dome and arches (simplified placeholder) */}
-        <Block size={[r * 1.1, 5, r * 0.4]} position={[0, 2.5, -r * 0.25]} color={SHARED.cream} />
-        <mesh position={[0, 5, -r * 0.25]} castShadow>
-          <sphereGeometry args={[r * 0.17, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
-          <meshLambertMaterial color={SHARED.cream} />
-        </mesh>
-        <mesh position={[0, 5 + r * 0.17, -r * 0.25]}>
-          <sphereGeometry args={[0.4, 8, 6]} />
-          <meshLambertMaterial color={palette.accent} emissive={palette.accent} emissiveIntensity={0.8} />
-        </mesh>
-        {[-0.4, -0.2, 0, 0.2, 0.4].map((f) => (
-          <Block
-            key={f}
-            size={[1.6, 2.8, 0.15]}
-            position={[r * f, 1.4, -r * 0.05 + 0.08]}
-            color={SHARED.ink}
-            shadow={false}
-          />
-        ))}
-
-        {/* Two wings */}
-        {[-1, 1].map((s) => (
-          <Block
-            key={s}
-            size={[r * 0.32, 4, r * 0.7]}
-            position={[s * r * 0.62, 2, r * 0.2]}
-            color={SHARED.creamShade}
-          />
-        ))}
-
-        {/* Name sign: blank plate until the AUS name/logo artwork is approved and credited */}
-        <Block size={[6, 1.4, 0.3]} position={[0, 0.9, r * 0.55]} color={SHARED.snow} />
-        <Block size={[6.4, 0.2, 0.4]} position={[0, 0.1, r * 0.55]} color={palette.accent} emissive />
-      </StaticMerge>
+      <group ref={root} scale={k}>
+        <StaticMerge>
+          <Grounds radius={radius / k} hi={hi} accent={accent} />
+          <group position-z={GROUNDS.mainZ}>
+            <MainBuilding hi={hi} accent={accent} />
+          </group>
+          {HALLS.map((h) => (
+            <group key={`${h.x}${h.z}`} position={[h.x, 0, h.z]}>
+              <AcademicHall hi={hi} tone={h.tone} />
+            </group>
+          ))}
+          <group position-z={GROUNDS.sign.z}>
+            <NameSign accent={accent} />
+          </group>
+        </StaticMerge>
+        <FountainJets positions={jets} />
+        {/* The name as readable DOM text on small screens, over the entrance sign (no draw call). */}
+        <CampusLabel position={[0, SIGN_HALF.height * 2 + 1.5, GROUNDS.sign.z]} />
+      </group>
     </group>
   );
 }

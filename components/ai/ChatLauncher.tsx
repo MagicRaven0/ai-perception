@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useStore } from "@/lib/store";
 import type { ChunkRef } from "@/lib/ai/corpus";
 import type { PersonaId } from "@/lib/ai/personas";
 import { ChatPanel, type StoredAnswers } from "./ChatPanel";
@@ -8,6 +9,8 @@ import { ChatPanel, type StoredAnswers } from "./ChatPanel";
 /**
  * Floating "Ask" button + chat panel. Mounted once in the root layout so the conversation persists across
  * pages. Right-hand panel on desktop (400px), full-screen sheet on phones; sits above the audio dock.
+ * The button hides while a /explore building drawer is open: the drawer is a modal dialog (focus stays inside),
+ * so the button could not be reached there anyway, and it would cover the drawer's content.
  */
 export function ChatLauncher(props: {
   refs: Record<string, ChunkRef>;
@@ -17,6 +20,7 @@ export function ChatLauncher(props: {
 }) {
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
+  const drawerOpen = useStore((s) => s.openBuildingId !== null);
 
   useEffect(() => {
     if (!open) return;
@@ -39,7 +43,7 @@ export function ChatLauncher(props: {
 
   return (
     <>
-      {!open && (
+      {!open && !drawerOpen && (
         <button
           ref={button}
           type="button"

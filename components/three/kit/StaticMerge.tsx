@@ -27,7 +27,10 @@ import { selectTier, TIERS } from "@/lib/three/quality";
  *   draw call, and the merge is rebuilt when the tier changes.
  * - Colliders are unaffected.
  * - The hidden source meshes are frozen (no per-frame matrix updates): change detection refreshes their
- *   local matrices itself once a second, and un-merging (cleanup) unfreezes them.
+ *   local matrices itself once a second, and un-merging (cleanup) unfreezes them. So are the plain Groups /
+ *   Object3Ds between the root and those meshes whose whole subtree is frozen (the wrappers islands put
+ *   round every primitive): three would otherwise recompute their matrices every frame for nothing. A group
+ *   that holds anything else (a textured or instanced mesh, a collider, an animated part) stays live.
  */
 
 const MERGED = "__staticMerge";
@@ -47,32 +50,82 @@ function eligible(o: THREE.Object3D): o is Eligible {
 }
 
 const scratch = new THREE.Matrix4();
-/** Quantised to 1 cm; `${-0}` is "0", so float noise around zero does not flip the fingerprint. */
-const q = (n: number) => `${Math.round(n * 100)}`;
+
+/*
+ * Fingerprint of the source meshes: a 32-bit FNV-1a style hash over integers (geometry and material ids, colours,
+ * emissive intensity, and the transform relative to the root quantised to 1 cm), so the once-a-second check
+ * allocates nothing (an earlier string fingerprint cost about 200 KB of garbage a second across the islands).
+ * Transforms are composed from local matrices up to the root (exact, and independent of where the root is in the
+ * world). The traverse callback and its state live at module level: no closure per check.
+ */
+let hash = 0;
+let sigRoot: THREE.Object3D | null = null;
+
+function mix(n: number) {
+  hash = Math.imul(hash ^ (n | 0), 16777619) >>> 0;
+}
+
+/** Quantised to 1 cm (`-0 | 0` is 0, so float noise around zero does not flip the hash). */
+const cm = (n: number) => Math.round(n * 100);
+
+function visit(o: THREE.Object3D) {
+  // Frozen sources and wrapper groups skip three's per-frame matrix update: bring their local matrices up to
+  // date here (traverse visits parents first, so every ancestor below the root is current when a mesh is read).
+  if (o.userData[FROZEN]) o.updateMatrix();
+  if (!eligible(o)) return;
+  scratch.copy(o.matrix);
+  for (let p = o.parent; p && p !== sigRoot; p = p.parent) scratch.premultiply(p.matrix);
+  const e = scratch.elements;
+  const m = o.material;
+  mix(o.geometry.id);
+  mix(m.id);
+  mix(m.color.getHex());
+  mix(m.emissive.getHex());
+  mix(Math.round((m.emissiveIntensity ?? 0) * 1000));
+  mix(cm(e[12]!));
+  mix(cm(e[13]!));
+  mix(cm(e[14]!));
+  mix(cm(e[0]!));
+  mix(cm(e[10]!));
+}
 
 /**
- * Fingerprint of the source meshes. Transforms are composed from local matrices up to the root (exact, and
- * independent of where the root is in the world). No allocations besides the string.
+ * Freezes the plain Groups / Object3Ds below `root` whose every descendant is frozen (post-order, so wrappers
+ * of wrappers freeze too). Never the root itself. Returns the objects this call froze (to unfreeze in cleanup).
  */
-function signature(group: THREE.Group): string {
-  let sig = "";
-  group.traverse((o) => {
-    if (!eligible(o)) return;
-    // Frozen (hidden) sources skip three's per-frame matrix update: bring the local matrix up to date here.
-    if (o.userData[FROZEN]) o.updateMatrix();
-    scratch.copy(o.matrix);
-    for (let p = o.parent; p && p !== group; p = p.parent) scratch.premultiply(p.matrix);
-    const e = scratch.elements;
-    sig += `${o.geometry.uuid}:${o.material.uuid}:${o.material.color.getHex()}:${o.material.emissiveIntensity}:${q(e[12]!)},${q(e[13]!)},${q(e[14]!)},${q(e[0]!)},${q(e[10]!)};`;
-  });
-  return sig;
+function freezeWrappers(root: THREE.Object3D): THREE.Object3D[] {
+  const frozen: THREE.Object3D[] = [];
+  const settle = (o: THREE.Object3D): boolean => {
+    let all = true;
+    for (const c of o.children) if (!settle(c)) all = false;
+    if (o === root) return false;
+    // Already frozen: a hidden source of this merge or of a nested one (and its wrappers).
+    if (o.userData[FROZEN]) return all;
+    const plain = o.type === "Group" || o.type === "Object3D";
+    if (!all || !plain || o.children.length === 0 || !o.matrixAutoUpdate || !o.matrixWorldAutoUpdate) return false;
+    o.userData[FROZEN] = true;
+    o.matrixAutoUpdate = false;
+    o.matrixWorldAutoUpdate = false;
+    frozen.push(o);
+    return true;
+  };
+  settle(root);
+  return frozen;
+}
+
+function signature(group: THREE.Group): number {
+  hash = 2166136261;
+  sigRoot = group;
+  group.traverse(visit);
+  sigRoot = null;
+  return hash;
 }
 
 export function StaticMerge({ children, enabled = true }: { children: ReactNode; enabled?: boolean }) {
   const root = useRef<THREE.Group>(null);
   const [version, setVersion] = useState(0);
   const shadows = useStore((s) => TIERS[selectTier(s)].shadows);
-  const sig = useRef("");
+  const sig = useRef(0);
   const frame = useRef(0);
   const offset = useRef(0);
 
@@ -134,6 +187,7 @@ export function StaticMerge({ children, enabled = true }: { children: ReactNode;
     });
 
     const merged: THREE.Mesh[] = [];
+    let wrappers: THREE.Object3D[] = [];
     if (hidden.length >= 2) {
       for (const b of buckets.values()) {
         const geometry = mergeGeometries(b.parts, false);
@@ -162,6 +216,7 @@ export function StaticMerge({ children, enabled = true }: { children: ReactNode;
           m.matrixWorldAutoUpdate = false;
         }
       });
+      wrappers = freezeWrappers(group);
     }
     for (const b of buckets.values()) b.parts.forEach((g) => g.dispose());
 
@@ -171,13 +226,16 @@ export function StaticMerge({ children, enabled = true }: { children: ReactNode;
         m.geometry.dispose();
         (m.material as THREE.Material).dispose();
       }
+      const thaw = (o: THREE.Object3D) => {
+        if (!o.userData[FROZEN]) return;
+        delete o.userData[FROZEN];
+        o.matrixAutoUpdate = true;
+        o.matrixWorldAutoUpdate = true;
+      };
+      wrappers.forEach(thaw);
       hidden.forEach((m) => {
         m.visible = true;
-        if (m.userData[FROZEN]) {
-          delete m.userData[FROZEN];
-          m.matrixAutoUpdate = true;
-          m.matrixWorldAutoUpdate = true;
-        }
+        thaw(m);
       });
     };
   }, [enabled, version, shadows]);

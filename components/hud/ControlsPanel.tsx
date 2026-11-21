@@ -24,7 +24,7 @@ const TABS = [
     rows: [
       ["Joystick (bottom left)", "Drive and steer"],
       ["Boost (bottom right)", "Hold to go faster"],
-      ["Open (bottom right)", "Open a building / talk to the guide"],
+      ["Tap to open / Tap to talk (on the prompt)", "Open a building / talk to the guide"],
       ["Island buttons (top)", "Fast travel between islands"],
     ],
   },

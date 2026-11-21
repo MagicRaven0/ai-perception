@@ -1,7 +1,13 @@
 "use client";
 
 /**
- * ISLAND: THE PAST (era-1, 1950s). Placeholder by the foundation build, to be replaced by the island agent.
+ * ISLAND: THE PAST (era-1, 1950s). A big, old, academic campus computing lab: giant mainframe cabinets with
+ * blinking phosphor lamps and spinning tape reels round a paved quad with the "1956" workshop monument, a
+ * brick clock tower, a chalkboard, giant punch-card stacks and vacuum tubes, and era-styled buildings
+ * (components/three/islands/past/). Built procedurally: each part is ONE vertex-coloured mesh (see past/geo.ts),
+ * lamps and reels are two instanced meshes.
+ *
+ * Contract from the foundation build (kept below).
  *
  * The island agent OWNS and may freely change:
  * - this file (components/three/islands/IslandPast.tsx; keep the default export and the IslandProps input);
@@ -39,13 +45,13 @@
  *   limits of 150k / 120 (High) and 60k / 60 (Low). Check in development with
  *   window.__explore.gl.info.render (calls, triangles) after switching Options > Quality. Rough costs: a
  *   default building 3-4 calls on Low, 6-8 on High; a signpost 1 on Low, 2-3 on High; each building's
- *   floating beacon 1 on both tiers; a figure with its blank photo billboard about 5 (the blank's 3 panels
- *   are not merged). Instance repeats (Trees, <Instances>). No shadows from
+ *   floating beacon 1 on both tiers; a figure with its blank photo billboard 1 on Low, 2 on High (the blank
+ *   panels merge with it; a credited photo adds 1). Instance repeats (Trees, <Instances>). No shadows from
  *   tiny props. Models go through glTF-Transform (Meshopt) and are credited
  *   in content/credits.ts. That file is SHARED by all island agents: only append new entries at the end of
  *   its list (id prefix "past-", "jobs-", "future-" or "aus-"); never edit, reorder or reformat other entries.
  * - Loading: the three islands share ONE Suspense boundary in World.tsx, and the world only counts as ready
- *   (10 s budget, then reading mode) once all three have rendered. Never suspend at the top of this file:
+ *   (20 s budget, LOAD_TIMEOUT_MS, then reading mode) once all three have rendered. Never suspend at the top of this file:
  *   wrap anything that loads (useGLTF, useTexture, photos) in its own <Suspense fallback={<Placeholder/>}>
  *   inside the island, as Figure.tsx does, so a slow model shows a placeholder instead of failing the load.
  * - Reduced motion: decorative animation in useFrame (spinning, bobbing, swaying) checks `motion.reduced`
@@ -59,47 +65,75 @@
  *   (except your own palette file), lib/store, components/hud/*, app/explore/*.
  */
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
-import { scatterOnIsland } from "@/lib/three/scatter";
-import { SHARED } from "@/lib/three/palette";
+import type * as THREE from "three";
+import { useStore } from "@/lib/store";
+import { selectTier } from "@/lib/three/quality";
+import { PAST } from "@/lib/three/palettes/past";
 import { Building } from "../Building";
 import { Figure } from "../Figure";
 import { Signpost } from "../Signpost";
 import { IslandGround } from "../kit/IslandGround";
-import { Trees } from "../kit/Trees";
-import { Block } from "../buildings/registry";
-import { StaticMerge } from "../kit/StaticMerge";
+import { buildPastDecor, checkColliders } from "./past/decor";
+import { PastLamps, PastReels } from "./past/Extras";
+import { PastProvider, usePastMaterial } from "./past/material";
+import { PAST_MODEL_HEIGHT, PastBuildingModel } from "./past/models";
 import type { IslandProps } from "./types";
 
-export default function IslandPast({ layout, buildings, insights, figures, palette }: IslandProps) {
-  const trees = useMemo(() => scatterOnIsland(layout, { count: 70, zone: "outer" }), [layout]);
-  const [cx, cz] = layout.geometry.center;
+export default function IslandPast(props: IslandProps) {
+  const low = useStore(selectTier) === "low";
+  return (
+    <PastProvider low={low}>
+      <PastIsland {...props} low={low} />
+    </PastProvider>
+  );
+}
+
+function PastIsland({ layout, buildings, insights, figures, palette, low }: IslandProps & { low: boolean }) {
+  const material = usePastMaterial();
+  const root = useRef<THREE.Group>(null);
+
+  const decor = useMemo(() => buildPastDecor(layout, low), [layout, low]);
+  useEffect(
+    () => () => {
+      decor.cast?.dispose();
+      decor.flat?.dispose();
+    },
+    [decor],
+  );
+
+  const colliders = decor.colliders;
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    const bad = checkColliders(layout, colliders);
+    if (bad.length) console.warn("[IslandPast] decor colliders on a road:", bad);
+    // Development hook: measure this island alone (toggle window.__past.visible and read renderer.info).
+    const w = window as unknown as { __past?: THREE.Group | null };
+    const group = root.current;
+    w.__past = group;
+    return () => {
+      if (w.__past === group) delete w.__past;
+    };
+  }, [layout, colliders]);
 
   return (
-    <group>
-      <IslandGround geometry={layout.geometry} palette={palette} />
-      <Trees items={trees} leaves={palette.leaves} trunk={palette.trunk} />
+    <group ref={root}>
+      <IslandGround geometry={layout.geometry} palette={palette} curb={PAST.curb} />
 
-      {/* Placeholder landmark: a row of oversized 1950s mainframe cabinets in the middle of the lawn. */}
-      <group position={[cx, 0, cz]}>
-        <RigidBody type="fixed" colliders={false}>
-          <CuboidCollider args={[7.8, 3.5, 1.4]} position={[0, 3.5, 0]} />
-        </RigidBody>
-        <StaticMerge>
-          {[-6, -2, 2, 6].map((x) => (
-            <group key={x} position={[x, 0, 0]}>
-              <Block size={[3.2, 7, 2.6]} position={[0, 3.5, 0]} color={palette.base} />
-              <Block size={[2.4, 0.5, 0.1]} position={[0, 5.6, 1.31]} color={palette.accent} emissive />
-              <Block size={[1, 1, 0.1]} position={[-0.6, 3.6, 1.31]} color={SHARED.ink} />
-              <Block size={[1, 1, 0.1]} position={[0.6, 3.6, 1.31]} color={SHARED.ink} />
-            </group>
-          ))}
-        </StaticMerge>
-      </group>
+      {decor.cast && <mesh geometry={decor.cast} material={material} castShadow receiveShadow />}
+      {decor.flat && <mesh geometry={decor.flat} material={material} receiveShadow />}
+      <RigidBody key={low ? "low" : "high"} type="fixed" colliders={false}>
+        {colliders.map((c, i) => (
+          <CuboidCollider key={i} args={c.half} position={c.position} rotation={[0, c.rotationY, 0]} />
+        ))}
+      </RigidBody>
+      <PastLamps lights={decor.lights} />
+      <PastReels reels={decor.reels} material={material} />
 
       {buildings.map((b) => (
-        <Building key={b.id} placed={b} />
+        <Building key={b.id} placed={b} Model={PastBuildingModel} merge={false} height={PAST_MODEL_HEIGHT[b.kind]} />
       ))}
       {insights.map((i) => (
         <Signpost key={i.id} placed={i} />

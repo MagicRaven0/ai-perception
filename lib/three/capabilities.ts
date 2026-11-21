@@ -66,12 +66,13 @@ export function fallbackReasons(c: Capabilities): string[] {
 }
 
 /**
- * PLAN 6.6: 3D that has not drawn its first frame 10 s after loading started (visible-tab time) falls back to
- * reading mode. One budget for everything before that frame: the 3D chunk, physics (WASM), the three island
- * chunks and the first render. The same in development, so probes on the dev server see the real limit
- * (open /explore once after a restart so Turbopack has compiled the 3D code before timing anything).
+ * Load timeout: 20 s (docs/VISION.md overrides PLAN 6.6's 10 s, because the 3D download on shared class Wi-Fi can
+ * exceed 10 s). 3D that has not drawn its first frame 20 s after loading started (visible-tab time) falls back to
+ * reading mode; the loading screen keeps "Read in 2D instead" one click away the whole time. One budget for everything before that frame: the 3D chunk, physics
+ * (WASM), the three island chunks and the first render. The same in development, so probes on the dev server
+ * see the real limit (open /explore once after a restart so Turbopack has compiled the 3D code before timing).
  */
-export const LOAD_TIMEOUT_MS = 10_000;
+export const LOAD_TIMEOUT_MS = 20_000;
 
 const FORCE_KEY = "explore-force-3d";
 const FAILED_KEY = "explore-3d-failed";
@@ -118,7 +119,7 @@ export function clearForce3d() {
 }
 
 /**
- * 3D failed in this tab (load error, 10 s watchdog, lost WebGL context). From then on /explore shows the
+ * 3D failed in this tab (load error, 20 s watchdog, lost WebGL context). From then on /explore shows the
  * reading-mode screen with "Try 3D anyway" instead of retrying (and bouncing) on every visit.
  */
 export function markFailed3d() {

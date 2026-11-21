@@ -37,7 +37,11 @@ export type EraPalette = {
   /** Fog and far sea colour. */
   fog: string;
   sea: string;
-  /** Sun (directional) and fill (hemisphere) light. */
+  /**
+   * Sun (directional) and fill (hemisphere) light. The canvas has no tone mapping and materials are Lambert, so
+   * a sunlit floor shows about albedo x (sunIntensity x 0.6 + hemiIntensity) / PI. Keep that near 1 (cream
+   * roads stay cream, the lawn stays #267A60) and let the hemisphere carry most of it, so shadows stay soft.
+   */
   sun: string;
   sunIntensity: number;
   hemiSky: string;
@@ -74,6 +78,8 @@ export const SHARED = {
   carDark: "#2b2b2b",
   carGlass: "#9ee3ea",
   bridge: "#fbfaf6",
+  /** Soft sandy curb band along both bridge edges (reads against the cream deck in golden-hour light). */
+  bridgeCurb: "#eadfc4",
   bridgeRail: "#d8d2c4",
 } as const;
 
@@ -85,34 +91,34 @@ export const INSIGHT_COLOUR = {
 } as const;
 
 export const ERA_PALETTE: Record<EraId, EraPalette> = {
-  // The Past (1950s): manila + phosphor green, big old lab, golden hour.
+  // The Past (1950s): manila + phosphor green, big old lab, golden hour with a slightly cooler, academic fill.
   "era-1": {
     ground: "#267a60",
     cliff: "#1d5f4a",
     road: "#fbfaf6",
-    curb: "#e8d9b0",
+    curb: "#efe3c2",
     base: "#e8d9b0",
     accent: "#3bd16f",
     buildings: ["#e8d9b0", "#f2e7c9", "#d9c89a", "#efe2bf"],
     roofs: ["#b3a274", "#8f8a6a", "#cdbd90"],
     leaves: ["#a8c94a", "#c9d84a", "#6fa83a"],
     trunk: "#8a6a4a",
-    skyTop: "#9ee3ea",
-    skyBottom: "#f4e6c8",
-    fog: "#f1e6cc",
+    skyTop: "#a6dde6",
+    skyBottom: "#f6e4c4",
+    fog: "#f2e6cb",
     sea: "#bfe6dc",
-    sun: "#ffd9a0",
-    sunIntensity: 2.4,
-    hemiSky: "#fff3d6",
-    hemiGround: "#267a60",
-    hemiIntensity: 1.1,
+    sun: "#ffe6c2",
+    sunIntensity: 2.3,
+    hemiSky: "#eef0ea",
+    hemiGround: "#5d8a6e",
+    hemiIntensity: 1.95,
   },
-  // The Jobs Era (1984-2011): platinum + pink, human scale, looks like modern times.
+  // The Jobs Era (1984-2011): platinum + pink, human scale, looks like modern times; warm, pinkish horizon.
   "era-2": {
     ground: "#2f8a6a",
     cliff: "#1d5f4a",
     road: "#fbfaf6",
-    curb: "#d8d2c4",
+    curb: "#ece8dc",
     base: "#d8d2c4",
     accent: "#ff87a2",
     buildings: ["#ffffff", "#d8d2c4", "#ffd6df", "#ece8dc"],
@@ -120,36 +126,37 @@ export const ERA_PALETTE: Record<EraId, EraPalette> = {
     leaves: ["#a8c94a", "#c9d84a", "#8fbf4a"],
     trunk: "#8a6a4a",
     skyTop: "#9ee3ea",
-    skyBottom: "#e2e2ee",
-    fog: "#e6e8ef",
+    skyBottom: "#f1e3e6",
+    fog: "#efe6e8",
     sea: "#bfe9ee",
-    sun: "#ffe2b8",
-    sunIntensity: 2.2,
-    hemiSky: "#f4f6ff",
-    hemiGround: "#2f8a6a",
-    hemiIntensity: 1.15,
+    sun: "#ffe9cf",
+    sunIntensity: 2.3,
+    hemiSky: "#f3f3f6",
+    hemiGround: "#5f977d",
+    hemiIntensity: 1.95,
   },
-  // The Future (2020s): night + lime glow, AUS campus in the centre.
+  // The Future (2020s): night #141414 + lime glow as ACCENTS (buildings, road, curb) in a golden-hour day
+  // (sky, fog and light stay daytime-readable); AUS campus in the centre.
   "era-3": {
-    ground: "#1f4d3f",
-    cliff: "#141414",
+    ground: "#22694f",
+    cliff: "#1a4a3a",
     road: "#2b2b2b",
     curb: "#d5ff95",
     base: "#141414",
     accent: "#d5ff95",
     buildings: ["#2b2b2b", "#3a3a36", "#1c1c1a", "#34332f"],
     roofs: ["#d5ff95", "#33aaff", "#5e489b"],
-    leaves: ["#6fa83a", "#4f8a3a", "#a8c94a"],
-    trunk: "#4a3a2a",
-    skyTop: "#0e1a2a",
-    skyBottom: "#3a2f5e",
-    fog: "#232036",
-    sea: "#1b2a3a",
-    sun: "#c9b8ff",
-    sunIntensity: 1.2,
-    hemiSky: "#5e489b",
-    hemiGround: "#141414",
-    hemiIntensity: 0.9,
+    leaves: ["#a8c94a", "#c9d84a", "#6fa83a"],
+    trunk: "#6a5240",
+    skyTop: "#b4c3ec",
+    skyBottom: "#ffd9b4",
+    fog: "#f3dcc8",
+    sea: "#c9d6ee",
+    sun: "#ffdcb0",
+    sunIntensity: 2.4,
+    hemiSky: "#ecebf4",
+    hemiGround: "#4f7f6a",
+    hemiIntensity: 1.85,
   },
 };
 

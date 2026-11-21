@@ -10,6 +10,7 @@ import { Atmosphere } from "./Atmosphere";
 import { CameraRig } from "./CameraRig";
 import { IslandSensor } from "./IslandSensor";
 import { Vehicle } from "./Vehicle";
+import { StaticMerge } from "./kit/StaticMerge";
 import type { IslandProps } from "./islands/types";
 
 /**
@@ -17,7 +18,7 @@ import type { IslandProps } from "./islands/types";
  * own chunk), bridges, invisible edge walls, island sensors, the car and the camera.
  * Physics ground lives here (not in island files), so island visuals can change without breaking driving.
  *
- * The islands and FirstFrame share ONE Suspense boundary: the world counts as ready (and the 10 s load
+ * The islands and FirstFrame share ONE Suspense boundary: the world counts as ready (and the 20 s load
  * watchdog in ExploreClient stops) only once all three island chunks have arrived. A hung island chunk
  * therefore ends in the reading-mode fallback instead of an empty island. Island rule: anything that loads
  * slowly inside an island (GLTF, textures, photos) gets its OWN <Suspense> with a placeholder, so it never
@@ -89,9 +90,23 @@ function IslandPhysics({ island }: { island: IslandLayout }) {
   );
 }
 
-/** Cream deck with rails, flush with the island tops. */
+/** Width of the soft cream curb band along each side of a bridge deck (the inner edge lines up with the island
+ * connector-road curbs: road 7 m, so the curbs start 3.5 m from the centre line). */
+const BRIDGE_CURB = 1;
+/** Curb height: a hint of a step that catches the light, low enough that the car never looks sunk in it. */
+const BRIDGE_CURB_H = 0.05;
+
+/**
+ * Cream deck with soft curbs and low parapets, flush with the island tops (Late Checkout style). The visuals are
+ * merged (StaticMerge): one draw call on Low, three on High (deck + parapets, curbs, shadow pass) per bridge,
+ * down from six. Physics is separate.
+ */
 function Bridge({ bridge }: { bridge: BridgeGeometry }) {
   const { center, length, width, rotationY } = bridge;
+  const curbX = width / 2 - BRIDGE_CURB / 2;
+  // The deck overlaps 3 m into each island (lib/three/layout.ts): the bridge curbs start at the island rim, where
+  // the island's own connector-road curbs end.
+  const curbLength = Math.max(0, length - 6);
   return (
     <group position={[center[0], 0, center[1]]} rotation-y={rotationY}>
       <RigidBody type="fixed" colliders={false} friction={1}>
@@ -99,17 +114,27 @@ function Bridge({ bridge }: { bridge: BridgeGeometry }) {
         <CuboidCollider args={[0.25, 0.9, length / 2]} position={[-width / 2 - 0.25, 0.6, 0]} />
         <CuboidCollider args={[0.25, 0.9, length / 2]} position={[width / 2 + 0.25, 0.6, 0]} />
       </RigidBody>
-      <mesh position={[0, -0.6, 0]} receiveShadow castShadow>
-        <boxGeometry args={[width, 1.2, length]} />
-        <meshLambertMaterial color={SHARED.bridge} />
-      </mesh>
-      {/* Low parapets: one box per side keeps the bridge at 3 draw calls */}
-      {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * (width / 2 + 0.2), 0.45, 0]} castShadow receiveShadow>
-          <boxGeometry args={[0.4, 0.9, length]} />
-          <meshLambertMaterial color={SHARED.bridgeRail} />
+      <StaticMerge>
+        {/* Deck top 1 cm above the lawn where it overlaps the islands (no z-fighting at the joins) */}
+        <mesh position={[0, -0.59, 0]} receiveShadow castShadow>
+          <boxGeometry args={[width, 1.2, length]} />
+          <meshLambertMaterial color={SHARED.bridge} />
         </mesh>
-      ))}
+        {[-1, 1].map((s) => (
+          <group key={s}>
+            {/* Soft curb band (no shadow casting: a 5 cm step only makes shadow-map stipple) */}
+            <mesh position={[s * curbX, 0.01 + BRIDGE_CURB_H / 2, 0]} receiveShadow>
+              <boxGeometry args={[BRIDGE_CURB, BRIDGE_CURB_H, curbLength]} />
+              <meshLambertMaterial color={SHARED.bridgeCurb} />
+            </mesh>
+            {/* Low parapet */}
+            <mesh position={[s * (width / 2 + 0.2), 0.45, 0]} castShadow receiveShadow>
+              <boxGeometry args={[0.4, 0.9, length]} />
+              <meshLambertMaterial color={SHARED.bridgeRail} />
+            </mesh>
+          </group>
+        ))}
+      </StaticMerge>
     </group>
   );
 }

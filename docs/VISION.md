@@ -41,6 +41,8 @@ Faceless low-poly figures + photo billboards (licensed, credited). No 3D face li
 - Keep the full **2D reading mode** (phones, grading, accessibility, fallback).
 - Thesis: placeholder until the group finalises it (`content/site.ts`).
 - Team of 3; one member owns every account (GitHub, Vercel, AI Gateway, Upstash).
+- **Load timeout: 20 s** (overrides PLAN 6.6's 10 s, because the 3D download on shared class Wi-Fi can exceed 10 s). Code: `LOAD_TIMEOUT_MS` in `lib/three/capabilities.ts`.
+- **Touch interact button** (overrides PLAN 6.5): there is no separate round interact button. The interact prompt's own "Tap to open / Tap to talk" button is the touch interact button (at least 44 px tall), shown only when there is something to open; the joystick (bottom-left) and Boost (bottom-right) stay below it.
 
 ## Added features (requested 17 Nov 2026, not built yet)
 

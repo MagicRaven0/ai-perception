@@ -21,17 +21,22 @@ export function Figure({ placed, tint }: { placed: PlacedFigure; tint?: string }
         <StaticMerge>
           <FacelessFigure position={[-1.2, 0, 0.4]} tint={tint} />
           <BillboardFrame position={[0.9, 0, 0]} />
+          {/* No photo yet: the blank "photo coming" panels are plain Lambert, so they bake into this merge too
+              (the whole figure is one draw call; small props cast no shadow, so there is no shadow-pass call). */}
+          {!placed.imageSrc && (
+            <group position={[0.9, BOARD.y, 0.01]}>
+              <Blank w={BOARD.w} h={BOARD.h} />
+            </group>
+          )}
         </StaticMerge>
-        {/* The picture slot stays outside the merge: it swaps from "photo coming" to the photo on load. */}
-        <group position={[0.9, BOARD.y, 0.01]}>
-          {placed.imageSrc ? (
+        {/* A photo stays outside the merge (textured, unlit): it swaps from "photo coming" to the photo on load. */}
+        {placed.imageSrc && (
+          <group position={[0.9, BOARD.y, 0.01]}>
             <Suspense fallback={<Blank w={BOARD.w} h={BOARD.h} />}>
               <Photo src={placed.imageSrc} w={BOARD.w} h={BOARD.h} />
             </Suspense>
-          ) : (
-            <Blank w={BOARD.w} h={BOARD.h} />
-          )}
-        </group>
+          </group>
+        )}
       </group>
       <SignSensor id={placed.id} position={placed.position} radius={placed.sensorRadius} />
     </>
@@ -43,11 +48,11 @@ export function FacelessFigure({ position, tint }: { position: [number, number, 
   const body = tint ?? SHARED.figure;
   return (
     <group position={position}>
-      <mesh position={[0, 0.85, 0]} castShadow>
+      <mesh position={[0, 0.85, 0]}>
         <cylinderGeometry args={[0.32, 0.42, 1.3, 7]} />
         <meshLambertMaterial color={body} flatShading />
       </mesh>
-      <mesh position={[0, 1.8, 0]} castShadow>
+      <mesh position={[0, 1.8, 0]}>
         <icosahedronGeometry args={[0.36, 0]} />
         <meshLambertMaterial color={body} flatShading />
       </mesh>
@@ -66,12 +71,12 @@ function BillboardFrame({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
       {[-1, 1].map((s) => (
-        <mesh key={s} position={[(s * w) / 2.6, 1.2, -0.05]} castShadow>
+        <mesh key={s} position={[(s * w) / 2.6, 1.2, -0.05]}>
           <boxGeometry args={[0.1, 2.4, 0.1]} />
           <meshLambertMaterial color={SHARED.billboardFrame} />
         </mesh>
       ))}
-      <mesh position={[0, BOARD.y, -0.04]} castShadow>
+      <mesh position={[0, BOARD.y, -0.04]}>
         <boxGeometry args={[w + 0.24, h + 0.24, 0.08]} />
         <meshLambertMaterial color={SHARED.billboardFrame} />
       </mesh>
@@ -79,21 +84,24 @@ function BillboardFrame({ position }: { position: [number, number, number] }) {
   );
 }
 
-/** "Photo coming" frame: a blank panel with a simple person silhouette (no face). */
+/**
+ * "Photo coming" frame: a blank panel with a simple person silhouette (no face). Plain Lambert, no shadows,
+ * so inside a <StaticMerge> it joins the figure's merge instead of costing three draw calls of its own.
+ */
 function Blank({ w, h }: { w: number; h: number }) {
   return (
     <group>
       <mesh>
         <planeGeometry args={[w, h]} />
-        <meshBasicMaterial color={SHARED.billboardBlank} />
+        <meshLambertMaterial color={SHARED.billboardBlank} />
       </mesh>
       <mesh position={[0, 0.35, 0.01]}>
         <circleGeometry args={[0.38, 12]} />
-        <meshBasicMaterial color={SHARED.figure} />
+        <meshLambertMaterial color={SHARED.figure} />
       </mesh>
       <mesh position={[0, -0.75, 0.01]}>
         <planeGeometry args={[1.2, 0.9]} />
-        <meshBasicMaterial color={SHARED.figure} />
+        <meshLambertMaterial color={SHARED.figure} />
       </mesh>
     </group>
   );

@@ -5,6 +5,17 @@ const ROUTES = ["/", "/read", "/read/the-past", "/listen", "/listen/episode-1", 
 
 for (const route of ROUTES) {
   test(`no serious accessibility issues on ${route}`, async ({ page }) => {
+    if (route === "/explore") {
+      // The 2D fallback here (WebGL removed): the 3D world and its HUD are scanned in explore-3d.spec.ts, which
+      // runs one software-WebGL world at a time; loading one here too would run it in parallel with those.
+      await page.addInitScript(() => {
+        const original = HTMLCanvasElement.prototype.getContext;
+        HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...rest: unknown[]) {
+          if (typeof type === "string" && type.startsWith("webgl")) return null;
+          return (original as (...a: unknown[]) => unknown).call(this, type, ...rest);
+        } as typeof HTMLCanvasElement.prototype.getContext;
+      });
+    }
     await page.goto(route);
     await page.waitForLoadState("networkidle");
     const results = await new AxeBuilder({ page })

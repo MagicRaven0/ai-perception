@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * ISLAND: THE JOBS ERA (era-2, 1984-2011, looks like modern times, human scale). Placeholder by the foundation build, to be replaced by the island agent.
+ * ISLAND: THE JOBS ERA (era-2, 1984-2011, looks like modern times, human scale).
  *
  * The island agent OWNS and may freely change:
  * - this file (components/three/islands/IslandJobsEra.tsx; keep the default export and the IslandProps input);
@@ -39,13 +39,13 @@
  *   limits of 150k / 120 (High) and 60k / 60 (Low). Check in development with
  *   window.__explore.gl.info.render (calls, triangles) after switching Options > Quality. Rough costs: a
  *   default building 3-4 calls on Low, 6-8 on High; a signpost 1 on Low, 2-3 on High; each building's
- *   floating beacon 1 on both tiers; a figure with its blank photo billboard about 5 (the blank's 3 panels
- *   are not merged). Instance repeats (Trees, <Instances>). No shadows from
+ *   floating beacon 1 on both tiers; a figure with its blank photo billboard 1 on Low, 2 on High (the blank
+ *   panels merge with it; a credited photo adds 1). Instance repeats (Trees, <Instances>). No shadows from
  *   tiny props. Models go through glTF-Transform (Meshopt) and are credited
  *   in content/credits.ts. That file is SHARED by all island agents: only append new entries at the end of
  *   its list (id prefix "past-", "jobs-", "future-" or "aus-"); never edit, reorder or reformat other entries.
  * - Loading: the three islands share ONE Suspense boundary in World.tsx, and the world only counts as ready
- *   (10 s budget, then reading mode) once all three have rendered. Never suspend at the top of this file:
+ *   (20 s budget, LOAD_TIMEOUT_MS, then reading mode) once all three have rendered. Never suspend at the top of this file:
  *   wrap anything that loads (useGLTF, useTexture, photos) in its own <Suspense fallback={<Placeholder/>}>
  *   inside the island, as Figure.tsx does, so a slow model shows a placeholder instead of failing the load.
  * - Reduced motion: decorative animation in useFrame (spinning, bobbing, swaying) checks `motion.reduced`
@@ -57,47 +57,73 @@
  * - Do NOT edit shared files: World.tsx, Experience.tsx, Vehicle.tsx, CameraRig.tsx, Building.tsx,
  *   Signpost.tsx, Figure.tsx, GuideCharacter.tsx, *Sensor.tsx, buildings/registry.tsx, kit/*, lib/three/*
  *   (except your own palette file), lib/store, components/hud/*, app/explore/*.
+ *
+ * WHAT THIS ISLAND IS (Phase 3 art pass): a calm, human-scale design-studio town in platinum + pink.
+ * - Inner lawn (jobs-era/plan.ts lays it out in screen axes): a central plaza with a giant pointer arrow,
+ *   a window-and-icon wall behind it, a desk-computer sculpture garden (desktop + CRT, tower, laptop: generic
+ *   beige boxes, no brand shapes), a voice-waveform sculpture for 2011 (the only animation), a fountain,
+ *   benches, picnic tables, flower beds and cream footpaths out to the road.
+ * - Outer lawn: small studio houses fill the gaps between content buildings (dropped automatically as content
+ *   grows), lamps along both road edges, a phone box by the arrival road, bike racks by the bridge roads.
+ * - Content buildings use the era-styled models in jobs-era/models.tsx (all 7 kinds).
+ * Draw calls (High): the ground, ONE merged decor root (cast + its shadow pass + flat = 3 calls, trees
+ * included), the waveform bars (1), then content (each building about 4, each signpost 3, each figure 6).
+ * On Low the decor is 1 call and glow on the models is drawn as plain colour (no extra glow bucket).
  */
 
 import { useMemo } from "react";
-import { CuboidCollider, RigidBody } from "@react-three/rapier";
-import { scatterOnIsland } from "@/lib/three/scatter";
-import { SHARED } from "@/lib/three/palette";
+import { useStore } from "@/lib/store";
+import { selectTier, TIERS } from "@/lib/three/quality";
 import { Building } from "../Building";
 import { Figure } from "../Figure";
 import { Signpost } from "../Signpost";
 import { IslandGround } from "../kit/IslandGround";
-import { Trees } from "../kit/Trees";
-import { Block } from "../buildings/registry";
 import { StaticMerge } from "../kit/StaticMerge";
+import { DecorColliders, DecorPiece, Paths, TreeSet, WaveformBars } from "./jobs-era/decor";
+import { JOBS_MODEL_HEIGHT, JOBS_MODELS } from "./jobs-era/models";
+import { GlowProvider } from "./jobs-era/parts";
+import { planJobsEra } from "./jobs-era/plan";
 import type { IslandProps } from "./types";
 
 export default function IslandJobsEra({ layout, buildings, insights, figures, palette }: IslandProps) {
-  const trees = useMemo(() => scatterOnIsland(layout, { count: 60, seed: 2024 }), [layout]);
-  const [cx, cz] = layout.geometry.center;
+  const tier = useStore(selectTier);
+  const plan = useMemo(() => planJobsEra(layout), [layout]);
+  const density = TIERS[tier].decorDensity;
+  // Low thins the trees the same way kit/Trees does (decorDensity).
+  const trees = useMemo(
+    () => (density >= 1 ? plan.trees : plan.trees.filter((_, i) => (i * 0.618) % 1 < density)),
+    [plan, density],
+  );
+  // Low also drops the smallest props (flower beds, bike racks) and every other lamp.
+  const items = useMemo(() => {
+    if (density >= 1) return plan.items;
+    let lamp = 0;
+    return plan.items.filter((it) => {
+      if (it.kind === "flowerBed" || it.kind === "bikeRack") return false;
+      if (it.kind === "lamp") return lamp++ % 2 === 0;
+      return true;
+    });
+  }, [plan, density]);
+  const waveform = items.find((i) => i.kind === "waveform");
 
   return (
-    <group>
+    <group name="island-era-2">
       <IslandGround geometry={layout.geometry} palette={palette} />
-      <Trees items={trees} leaves={palette.leaves} trunk={palette.trunk} />
+      <DecorColliders items={items} />
+      <StaticMerge>
+        <Paths paths={plan.paths} />
+        {items.map((item, i) => (
+          <DecorPiece key={`${item.kind}-${i}`} item={item} />
+        ))}
+        <TreeSet items={trees} />
+      </StaticMerge>
+      {waveform && <WaveformBars item={waveform} />}
 
-      {/* Placeholder landmark: a giant friendly desktop computer in the middle of the lawn. */}
-      <group position={[cx, 0, cz]} rotation-y={Math.PI / 4}>
-        <RigidBody type="fixed" colliders={false}>
-          <CuboidCollider args={[3, 3, 2.6]} position={[0, 3, 0.4]} />
-        </RigidBody>
-        <StaticMerge>
-          <Block size={[6, 1.2, 4]} position={[0, 0.6, 0]} color={palette.base} />
-          <Block size={[5, 4.6, 4]} position={[0, 3.5, -0.2]} color={SHARED.snow} />
-          <Block size={[3.6, 2.8, 0.1]} position={[0, 3.9, 1.85]} color={SHARED.ink} />
-          <Block size={[3.2, 2.4, 0.1]} position={[0, 3.9, 1.92]} color={palette.accent} emissive />
-          <Block size={[4.6, 0.3, 1.6]} position={[0, 0.15, 3.2]} color={SHARED.snow} />
-        </StaticMerge>
-      </group>
-
-      {buildings.map((b) => (
-        <Building key={b.id} placed={b} />
-      ))}
+      <GlowProvider on={tier === "high"}>
+        {buildings.map((b) => (
+          <Building key={b.id} placed={b} Model={JOBS_MODELS[b.kind]} height={JOBS_MODEL_HEIGHT[b.kind]} />
+        ))}
+      </GlowProvider>
       {insights.map((i) => (
         <Signpost key={i.id} placed={i} />
       ))}

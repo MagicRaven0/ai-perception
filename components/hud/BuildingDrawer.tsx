@@ -13,8 +13,8 @@ import { useDialog } from "./useDialog";
 /**
  * Building drawer (PLAN 7.1 z-drawer): right panel 420px on desktop, bottom sheet at 70% height on phones.
  * Real DOM: heading, focus moved in and kept inside, Escape closes, focus returns. Opened only by the
- * visitor (E / tap / deep link ?b=), never automatically. The bottom padding keeps the action row clear of
- * the root layout's "Ask the guide" pill (z-chat sits above z-drawer) on every screen size.
+ * visitor (E / tap / deep link ?b=), never automatically. The root layout's "Ask the guide" pill hides while
+ * a drawer is open (ChatLauncher), so nothing covers the drawer's content.
  */
 export function BuildingDrawer({
   buildings,
@@ -62,7 +62,7 @@ function Drawer({ b, era }: { b: ExploreBuilding; era?: ExploreEra }) {
         </button>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-6 pt-2 pb-20">
+      <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-6 pt-2 pb-6">
         <h2
           ref={heading}
           id={titleId}

@@ -44,8 +44,8 @@ import { UrlSync } from "./UrlSync";
  *   "3D stopped, switched to reading mode" and the visitor lands in /read (the audio dock and chat live in
  *   the root layout, so audio keeps playing). The failure is remembered for the tab: coming back shows the
  *   reading-mode screen with "Try 3D anyway" instead of retrying and bouncing again.
- * Watchdog (PLAN 6.6): 10 s from the start of loading to the first frame (3D code, physics, the islands' own
- * chunks and the first render; see LOAD_TIMEOUT_MS). It only counts while the browser tab is visible: a
+ * Watchdog (PLAN 6.6, raised to 20 s): LOAD_TIMEOUT_MS from the start of loading to the first frame (3D code, physics, the islands' own
+ * chunks and the first render; see lib/three/capabilities.ts). It only counts while the browser tab is visible: a
  * background tab runs timers but no animation frames, so it can never draw its first frame there.
  * Hidden -> no timer; visible again -> a fresh timer with the full limit.
  *
@@ -154,7 +154,7 @@ export function ExploreClient({ data }: { data: ExploreData }) {
     router.push(slug ? `/read/${slug}` : "/read");
   }, [router, data.eras, data.world]);
 
-  // Watchdog: the first frame (code, physics, islands, first render) within 10 s, counted only while the tab
+  // Watchdog: the first frame (code, physics, islands, first render) within LOAD_TIMEOUT_MS (20 s), counted only while the tab
   // is visible. The fire-time check also covers a tab hidden without a visibilitychange event.
   useEffect(() => {
     if (state !== "loading" || tabHidden) return;
@@ -201,7 +201,7 @@ export function ExploreClient({ data }: { data: ExploreData }) {
 /**
  * The load limit. Development only: e2e tests that run several software-WebGL browsers at once raise it with
  * `window.__exploreLoadTimeoutMs`, so a busy CPU is not mistaken for a broken device. Production always uses
- * LOAD_TIMEOUT_MS (10 s).
+ * LOAD_TIMEOUT_MS (20 s).
  */
 function loadTimeout(): number {
   if (process.env.NODE_ENV === "production") return LOAD_TIMEOUT_MS;
@@ -232,15 +232,39 @@ function initialPose(world: WorldLayout): Pose {
   return world.islands[useStore.getState().activeEra].spawn;
 }
 
+/**
+ * Calm, time-based loading lines. There is no real byte progress to show (so no percentage or bar): the text
+ * only reassures that a slow load on busy Wi-Fi is normal. It changes twice at most, so screen readers hear
+ * it a few times, not constantly. "Read in 2D instead" stays outside the live region, one click away.
+ */
+const LOADING_STEPS = [
+  { after: 0, title: "Loading the islands…", detail: "Getting the 3D world ready." },
+  { after: 6_000, title: "Still loading…", detail: "Busy Wi-Fi can make this slow. It is safe to wait." },
+  { after: 14_000, title: "Nearly there…", detail: "Thanks for waiting. The same story is also ready to read in 2D." },
+] as const;
+
 function Loading() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const timers = LOADING_STEPS.slice(1).map((s, i) => setTimeout(() => setStep(i + 1), s.after));
+    return () => timers.forEach(clearTimeout);
+  }, []);
+  const current = LOADING_STEPS[step] ?? LOADING_STEPS[0];
   return (
-    <div className="absolute inset-0 z-hud flex items-center justify-center bg-linear-to-b from-sky-top to-sky-bottom">
-      <div className="flex flex-col items-center gap-4 rounded-[20px] bg-paper px-8 py-6 text-ink shadow-card">
-        <span className="size-8 animate-spin rounded-full border-4 border-rule border-t-ink" aria-hidden="true" />
-        <p role="status" className="font-semibold">
-          Loading the islands…
-        </p>
-        <Link href="/read" className="text-sm text-muted underline underline-offset-2 hover:text-ink">
+    <div className="absolute inset-0 z-hud flex items-center justify-center bg-linear-to-b from-sky-top to-sky-bottom px-4">
+      <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-[20px] bg-paper px-8 py-6 text-center text-ink shadow-card">
+        <span
+          className="size-8 animate-spin rounded-full border-4 border-rule border-t-ink motion-reduce:animate-none"
+          aria-hidden="true"
+        />
+        <div role="status" className="flex flex-col gap-1">
+          <p className="font-semibold">{current.title}</p>
+          <p className="text-sm text-muted">{current.detail}</p>
+        </div>
+        <Link
+          href="/read"
+          className="rounded-full border border-ink px-5 py-2 text-sm font-semibold hover:bg-ink hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        >
           Read in 2D instead
         </Link>
       </div>

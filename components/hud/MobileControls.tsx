@@ -2,19 +2,17 @@
 
 import { useEffect, type KeyboardEvent } from "react";
 import { Joystick, useJoystickStore } from "ecctrl/input";
-import { useStore } from "@/lib/store";
 import { input } from "@/lib/three/transient";
-import { interact } from "./InteractPrompt";
 
 /**
- * Touch controls (PLAN 6.5), shown on coarse pointers only: ecctrl's DOM joystick bottom-left, and real
- * buttons bottom-right (Open, hold-to-Boost), all placed above the audio mini-bar and the chat button.
- * The joystick store is read outside React and copied into the transient `input` (no re-renders).
- * Keyboard users have the same actions on keys (see the Controls panel).
+ * Touch controls (PLAN 6.5), shown on coarse pointers only: ecctrl's DOM joystick bottom-left and a real
+ * hold-to-Boost button bottom-right, both placed above the audio mini-bar and the chat button.
+ * The interact button is the prompt's own "Tap to open / Tap to talk" (InteractPrompt), which appears only when
+ * there is something to open; on touch layouts the prompt sits ABOVE this row (the joystick reaches 214px from
+ * the bottom, Boost 192px; the prompt starts at 14.5rem = 232px), so neither ever covers it. The joystick store is read outside React and copied into the transient
+ * `input` (no re-renders). Keyboard users have the same actions on keys (see the Controls panel).
  */
 export function MobileControls() {
-  const canOpen = useStore((s) => (s.nearbyBuildingId !== null || s.nearGuide) && s.openBuildingId === null);
-
   useEffect(() => {
     const unsub = useJoystickStore.subscribe((s) => {
       const j = s.joysticks.default;
@@ -41,7 +39,7 @@ export function MobileControls() {
 
   return (
     <div className="hidden [@media(pointer:coarse)]:block">
-      <div aria-hidden="true">
+      <div aria-hidden="true" data-touch-joystick="">
         <Joystick
           joystickWrapperStyle={{
             left: "max(0.5rem, env(safe-area-inset-left))",
@@ -60,15 +58,7 @@ export function MobileControls() {
           joystickKnobStyle={{ width: "52px", height: "52px", background: "var(--color-paper)" }}
         />
       </div>
-      <div className="fixed right-4 bottom-[8.5rem] z-hud flex flex-col items-end gap-3">
-        <button
-          type="button"
-          onClick={interact}
-          disabled={!canOpen}
-          className={`flex size-16 items-center justify-center rounded-full bg-ink text-sm font-semibold text-paper shadow-pill-strong transition-opacity disabled:opacity-40 ${focusRing}`}
-        >
-          Open
-        </button>
+      <div className="fixed right-4 bottom-[8.5rem] z-hud">
         <button
           type="button"
           onPointerDown={hold(true)}

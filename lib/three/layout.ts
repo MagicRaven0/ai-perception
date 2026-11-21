@@ -68,7 +68,8 @@ const SPECS: Record<EraId, IslandSpec> = {
   },
 };
 
-export const BRIDGE_WIDTH = 9;
+/** Bridge deck width (m). Widened from 9 to 12 on 21 Nov 2026 so the drive between islands feels easier. */
+export const BRIDGE_WIDTH = 12;
 const BRIDGE_PAIRS: [EraId, EraId][] = [
   ["era-1", "era-2"],
   ["era-2", "era-3"],

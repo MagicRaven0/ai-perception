@@ -3,6 +3,8 @@ import type { EraId } from "@/lib/content/schema";
 /**
  * World ambience for /explore (docs/VISION.md: lo-fi music per island + ambient sounds, mute always there).
  *
+ * Music: by default the site plays its own generated lo-fi groove (lib/audio/lofi.ts), different per island,
+ * so nothing is needed here. To use a recorded track instead, add the MP3 at the music path below.
  * To add a track: put the MP3 at the path below (public/audio/ambient/...), add a credit with the same
  * creditId to content/credits.ts (kind "music" or "audio"; set aiTool if it was AI-made), done.
  * Missing files are skipped silently. Ambience is off until the visitor turns it on, and it pauses while

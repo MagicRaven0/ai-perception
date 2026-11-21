@@ -32,6 +32,7 @@ export function Hud({ data }: { data: ExploreData }) {
   const ambienceOn = useStore((s) => s.ambienceOn);
   const drawerOpen = useStore((s) => s.openBuildingId !== null);
   const driverView = useStore((s) => s.cameraMode === "driver");
+  const timeOfDay = useStore((s) => s.timeOfDay);
   const ids = useMemo(() => Object.keys(data.buildings), [data.buildings]);
   const eraNames = useMemo(
     () => Object.fromEntries(data.eras.map((e) => [e.id, e.islandName])) as Record<EraId, string>,
@@ -56,6 +57,7 @@ export function Hud({ data }: { data: ExploreData }) {
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || isTypingTarget(e.target)) return;
       if (e.code === "KeyR") respawn(data.world);
       if (e.code === "KeyV") useStore.getState().toggleCameraMode();
+      if (e.code === "KeyT") useStore.getState().cycleTimeOfDay();
       if (e.code === "KeyQ") rotateView(Math.PI / 4);
       if (e.code === "KeyZ") rotateView(-Math.PI / 4);
     };
@@ -93,6 +95,21 @@ export function Hud({ data }: { data: ExploreData }) {
               onClick={() => useStore.getState().toggleCameraMode()}
             >
               <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z" />
+            </IconButton>
+            <IconButton
+              label={`Time of day: ${timeOfDay} (T to change)`}
+              onClick={() => useStore.getState().cycleTimeOfDay()}
+            >
+              {/* Clock face (distinct from the Options gear); the hands point to morning, evening or midnight. */}
+              <path
+                d={
+                  timeOfDay === "day"
+                    ? "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z M12 7.5V12l-3 2"
+                    : timeOfDay === "sunset"
+                      ? "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z M12 7.5V12l3.5 1.5"
+                      : "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z M12 6.5V12"
+                }
+              />
             </IconButton>
             <IconButton label="Options" pressed={panel === "options"} onClick={() => togglePanel("options")}>
               <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z M12 3v2.5 M12 18.5V21 M3 12h2.5 M18.5 12H21 M5.6 5.6l1.8 1.8 M16.6 16.6l1.8 1.8 M5.6 18.4l1.8-1.8 M16.6 7.4l1.8-1.8" />

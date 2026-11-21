@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { motion } from "@/lib/three/motion";
 import { useStore } from "@/lib/store";
 import { player } from "@/lib/three/transient";
-import { ERA_PALETTE } from "@/lib/three/palette";
+import { ERA_PALETTE, TIME_OF_DAY, type TimeOfDay } from "@/lib/three/palette";
 import { selectTier, TIERS } from "@/lib/three/quality";
 
 /**
@@ -47,9 +47,9 @@ const SUN_DISTANCE = 120;
 const SHADOW_HALF_WIDTH = 74;
 const SHADOW_HALF_HEIGHT = 62;
 
-function coloursFor(era: keyof typeof ERA_PALETTE) {
+function coloursFor(era: keyof typeof ERA_PALETTE, time: TimeOfDay = "day") {
   const p = ERA_PALETTE[era];
-  return {
+  const c = {
     top: new THREE.Color(p.skyTop),
     bottom: new THREE.Color(p.skyBottom),
     fog: new THREE.Color(p.fog),
@@ -59,6 +59,18 @@ function coloursFor(era: keyof typeof ERA_PALETTE) {
     hemiGround: new THREE.Color(p.hemiGround),
     hemiIntensity: p.hemiIntensity,
   };
+  const t = TIME_OF_DAY[time];
+  if (!t) return c;
+  // Blend the island's own palette toward sunset / night, so each island keeps a hint of its colours.
+  c.top.lerp(new THREE.Color(t.skyTop), t.amount);
+  c.bottom.lerp(new THREE.Color(t.skyBottom), t.amount);
+  c.fog.lerp(new THREE.Color(t.fog), t.amount);
+  c.sun.lerp(new THREE.Color(t.sun), t.amount);
+  c.hemiSky.lerp(new THREE.Color(t.hemiSky), t.amount);
+  c.hemiGround.lerp(new THREE.Color(t.hemiGround), t.amount);
+  c.sunIntensity *= t.sunScale;
+  c.hemiIntensity *= t.hemiScale;
+  return c;
 }
 
 export function Atmosphere() {
@@ -67,10 +79,12 @@ export function Atmosphere() {
   const sun = useRef<THREE.DirectionalLight>(null);
   const hemi = useRef<THREE.HemisphereLight>(null);
 
-  const target = useMemo(() => coloursFor(era), [era]);
+  const time = useStore((s) => s.timeOfDay);
+  const target = useMemo(() => coloursFor(era, time), [era, time]);
   // Start on the right colours (no fade on first load).
   const [initialEra] = useState(era);
-  const initial = useMemo(() => coloursFor(initialEra), [initialEra]);
+  const [initialTime] = useState(time);
+  const initial = useMemo(() => coloursFor(initialEra, initialTime), [initialEra, initialTime]);
   const sky = useMemo(
     () =>
       new THREE.ShaderMaterial({

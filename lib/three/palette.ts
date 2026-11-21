@@ -121,6 +121,37 @@ export const CAR_COLOURS: Record<
   },
 };
 
+/**
+ * Time of day (HUD sun/moon button). "day" is the island's own golden-hour palette; the others blend it toward
+ * a sunset or night look (amount = how far). Lamps, screens and glow strips are emissive, so they shine at night.
+ */
+export const TIME_OF_DAY = {
+  day: null,
+  sunset: {
+    amount: 0.6,
+    skyTop: "#f29e7a",
+    skyBottom: "#f7d6a0",
+    fog: "#f0c9a2",
+    sun: "#ff9a5c",
+    sunScale: 0.85,
+    hemiSky: "#f3c7a6",
+    hemiGround: "#5a4a3a",
+    hemiScale: 0.85,
+  },
+  night: {
+    amount: 0.85,
+    skyTop: "#0b1430",
+    skyBottom: "#2a3462",
+    fog: "#1c2547",
+    sun: "#9db4ff",
+    sunScale: 0.28,
+    hemiSky: "#40528a",
+    hemiGround: "#0f1318",
+    hemiScale: 0.5,
+  },
+} as const;
+export type TimeOfDay = keyof typeof TIME_OF_DAY;
+
 /** Insight signpost tags (same hexes as --color-benefit / --color-risk / --color-danger). */
 export const INSIGHT_COLOUR = {
   benefit: "#3bd16f",

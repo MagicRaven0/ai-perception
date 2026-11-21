@@ -4,9 +4,12 @@ import { useEffect } from "react";
 import { ambience, type AmbienceLayer } from "@/content/ambience";
 import type { EraId } from "@/lib/content/schema";
 import { useStore } from "@/lib/store";
+import { playLofi, stopLofi } from "@/lib/audio/lofi";
 
 /**
- * World ambience: per-island lo-fi music + ambient loop (config: content/ambience.ts). DOM audio, rendered
+ * World ambience: per-island music + ambient loop. The music is generated live (lib/audio/lofi.ts: an original
+ * lo-fi groove that changes key and sound per island); an MP3 in content/ambience.ts replaces it for an island
+ * if the group adds one. Ambient sound loops are files (content/ambience.ts). DOM/Web Audio, rendered
  * by the HUD (not inside the canvas). Rules:
  * - off until the visitor turns it on (Options or the sound button), and remembered;
  * - crossfades when the active island changes;
@@ -70,6 +73,10 @@ function step() {
 }
 
 function apply(era: EraId | null) {
+  // Generated music, unless the group added a music file for this island (then the file plays instead).
+  const musicFile = era ? slotFor(ambience[era].music) : null;
+  if (era && musicFile?.available !== true) playLofi(era);
+  else stopLofi();
   for (const [id, layers] of Object.entries(ambience) as [EraId, (typeof ambience)[EraId]][]) {
     for (const layer of [layers.music, layers.sounds]) {
       const slot = slotFor(layer);
@@ -96,6 +103,7 @@ export function Ambience() {
   // Leaving /explore: silence everything.
   useEffect(
     () => () => {
+      stopLofi();
       for (const s of slots.values()) {
         s.target = 0;
         s.el?.pause();

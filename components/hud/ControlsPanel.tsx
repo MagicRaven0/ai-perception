@@ -15,6 +15,7 @@ const TABS = [
       ["E", "Open a building / talk to the guide"],
       ["R", "I’m stuck: back to this island’s start"],
       ["V", "Driver’s view on / off (drag to look around)"],
+      ["T", "Time of day: golden hour, sunset, night"],
       ["Q / Z, or drag", "Turn the view all the way around (360°)"],
       ["Click a spot on the island", "The car drives there by itself (any key takes over)"],
       ["Esc", "Close a panel"],
@@ -32,6 +33,7 @@ const TABS = [
       ["Island buttons (top)", "Fast travel between islands"],
       ["Drag on the world", "Turn the view all the way around (360°)"],
       ["Eye button (top)", "Driver’s view on / off"],
+      ["Sun / moon button (top)", "Time of day: golden hour, sunset, night"],
     ],
   },
 ] as const;

@@ -55,6 +55,8 @@ type State = {
   renderer: string | null;
   /** World ambience (lo-fi music + ambient loops). Off until the visitor turns it on. Persisted. */
   ambienceOn: boolean;
+  /** Time of day in the 3D world (HUD button). Persisted. */
+  timeOfDay: "day" | "sunset" | "night";
   /** Camera: high isometric overview (default) or the driver's seat. Not persisted. */
   cameraMode: "iso" | "driver";
   // toasts (survive route changes, e.g. 3D -> reading mode)
@@ -85,6 +87,7 @@ type Actions = {
   setRenderer: (renderer: string | null) => void;
   setAmbienceOn: (on: boolean) => void;
   toggleCameraMode: () => void;
+  cycleTimeOfDay: () => void;
   showToast: (message: string) => void;
   clearToast: (id: number) => void;
 };
@@ -109,6 +112,7 @@ export const useStore = create<State & Actions>()(
       renderer: null,
       ambienceOn: false,
       cameraMode: "iso",
+      timeOfDay: "day",
       toast: null,
 
       setViewMode: (viewMode) => set({ viewMode }),
@@ -141,6 +145,8 @@ export const useStore = create<State & Actions>()(
       setAutoTier: (autoTier) => set((s) => (s.autoTier === autoTier ? s : { autoTier })),
       setRenderer: (renderer) => set({ renderer }),
       setAmbienceOn: (ambienceOn) => set({ ambienceOn }),
+      cycleTimeOfDay: () =>
+        set((s) => ({ timeOfDay: s.timeOfDay === "day" ? "sunset" : s.timeOfDay === "sunset" ? "night" : "day" })),
       toggleCameraMode: () => set((s) => ({ cameraMode: s.cameraMode === "iso" ? "driver" : "iso" })),
       showToast: (message) => set({ toast: { id: Date.now(), message } }),
       clearToast: (id) => set((s) => (s.toast?.id === id ? { toast: null } : s)),
@@ -158,6 +164,7 @@ export const useStore = create<State & Actions>()(
         visitedBuildingIds: s.visitedBuildingIds,
         quality: s.quality,
         ambienceOn: s.ambienceOn,
+        timeOfDay: s.timeOfDay,
       }),
       // Rehydration can run after a deep link already opened a building: keep both lists of visited ids.
       merge: (persisted, current) => {

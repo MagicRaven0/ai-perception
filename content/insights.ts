@@ -160,7 +160,7 @@ export const insights: z.input<typeof Insight>[] = [
     groupCommentary: false,
   },
   {
-    id: "era-1-risk-2",
+    id: "era-1-risk-3",
     eraId: "era-1",
     kind: "risk",
     text: "As in the 1950s, a few people again shape AI: Witt calls Nvidia's Jensen Huang \"the emperor of A.I.\"",

@@ -78,6 +78,7 @@ const buildingIds = unique("buildings", buildings);
 unique("insights", insights);
 unique("comparisons", comparisons);
 unique("datasets", datasets);
+const datasetIds = new Set(datasets.map((d) => d.id));
 const episodeIds = unique("episodes", episodes);
 const sourceIds = unique("sources", sources);
 const creditIds = unique("credits", credits);
@@ -97,6 +98,7 @@ for (const b of buildings) {
   b.sourceIds.forEach((s) => ref(label, "sourceId", s, sourceIds));
   ref(label, "episodeId", b.media?.episodeId, episodeIds);
   ref(label, "imageId", b.media?.imageId, imageIds);
+  ref(label, "datasetId", b.media?.datasetId, datasetIds);
   const key = `${b.eraId}#${b.order}`;
   if (orders.has(key)) errors.push(`${label}: order ${b.order} is already used on ${b.eraId}`);
   orders.set(key, 1);

@@ -86,6 +86,14 @@ export function getSource(id: string) {
   return sources.find((s) => s.id === id);
 }
 
+/** The chart a building shows inside it (content `media.datasetId`), with its source; null when none. */
+export function buildingChart(b: Pick<Building, "media">) {
+  const dataset = b.media.datasetId ? datasets.find((d) => d.id === b.media.datasetId) : undefined;
+  if (!dataset) return null;
+  const s = dataset.sourceId ? getSource(dataset.sourceId) : undefined;
+  return { dataset, source: s ? { apa: s.apa, url: s.url } : undefined };
+}
+
 export function getImage(id: string) {
   return images.find((i) => i.id === id);
 }

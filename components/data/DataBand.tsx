@@ -1,10 +1,7 @@
 import type { Dataset } from "@/lib/content/schema";
 import { getSource } from "@/lib/content";
-import { ContentText } from "@/components/content/ContentText";
 import { Reveal } from "@/components/ui/Reveal";
-import { ChartFigure } from "./ChartFigure";
-import { StatCard } from "./StatCard";
-import { datasetContext } from "@/lib/content/format";
+import { DatasetView } from "./DatasetView";
 
 /** Ceros-style dark band holding an era's statistics. Placeholder data never shows fake numbers. */
 export function DataBand({ datasets, heading }: { datasets: Dataset[]; heading: string }) {
@@ -17,50 +14,10 @@ export function DataBand({ datasets, heading }: { datasets: Dataset[]; heading: 
         {datasets.map((d) => {
           const src = d.sourceId ? getSource(d.sourceId) : undefined;
           const source = src ? { apa: src.apa, url: src.url } : undefined;
-
-          if (d.status === "placeholder") return <DataComing key={d.id} title={d.title} />;
-
-          if (d.chartType === "stat") {
-            const y = d.series[0]?.points[0]?.y ?? 0;
-            return (
-              <Reveal key={d.id}>
-                <StatCard value={y} unit={d.unit} label={d.title} context={statContext(d)} source={source} />
-              </Reveal>
-            );
-          }
-          return (
-            <Reveal key={d.id}>
-              <ChartFigure dataset={d} source={source} />
-            </Reveal>
-          );
+          const view = <DatasetView key={d.id} dataset={d} source={source} />;
+          return d.status === "placeholder" ? view : <Reveal key={d.id}>{view}</Reveal>;
         })}
       </div>
     </section>
-  );
-}
-
-function statContext(d: Dataset): string {
-  const c = datasetContext(d.questionWording);
-  const lead = c.kind === "note" ? `Note: ${c.text}` : `Question: “${c.text}”`;
-  return `${lead} ${d.population}${d.sampleSize ? `, n = ${d.sampleSize.toLocaleString()}` : ""}, ${d.fieldDates}.`;
-}
-
-function DataComing({ title }: { title: string }) {
-  return (
-    <div
-      className="rounded-[4px] border border-dashed border-chart-text/50 p-8"
-      style={{
-        backgroundImage:
-          "repeating-linear-gradient(135deg, transparent 0 10px, color-mix(in srgb, var(--color-chart-text) 12%, transparent) 10px 11px)",
-      }}
-    >
-      <p className="mono-label text-chart-text">Data coming</p>
-      <p className="mt-3 max-w-2xl text-xl text-snow">
-        <ContentText value={title} />
-      </p>
-      <p className="mt-2 text-sm text-chart-text">
-        This chart appears once the survey numbers and their source are added. We never show placeholder numbers.
-      </p>
-    </div>
   );
 }

@@ -12,6 +12,7 @@ import { useDialog } from "./useDialog";
 import { SpeakerList } from "@/components/audio/SpeakerList";
 import { Arcade } from "@/components/arcade/Arcade";
 import { ReferenceList } from "@/components/content/ReferenceList";
+import { EmbeddedChart } from "@/components/data/DatasetView";
 
 /**
  * Building drawer (PLAN 7.1 z-drawer): right panel 420px on desktop, bottom sheet at 70% height on phones.
@@ -87,6 +88,8 @@ function Drawer({ b, era }: { b: ExploreBuilding; era?: ExploreEra }) {
         )}
 
         {b.arcade && <Arcade config={b.arcade} />}
+
+        {b.chart && <EmbeddedChart dataset={b.chart.dataset} source={b.chart.source} />}
 
         {b.references &&
           (b.references.length > 0 ? (

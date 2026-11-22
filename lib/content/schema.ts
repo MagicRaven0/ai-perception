@@ -126,6 +126,8 @@ export const Building = z
           .optional(),
         /** Link to a document or PDF. */
         documentUrl: z.url().optional(),
+        /** A dataset from content/datasets.ts to show inside this building (3D drawer and 2D section). */
+        datasetId: Id.optional(),
       })
       .default({}),
     sourceIds: z.array(Id),

@@ -1,5 +1,6 @@
 import type { ArcadeConfig } from "@/lib/content/arcades";
-import type { BuildingKind, EraId } from "@/lib/content/schema";
+import type { BuildingKind, Dataset, EraId } from "@/lib/content/schema";
+import type { SourceRef } from "@/components/data/SourceLine";
 import type { Track } from "@/lib/store";
 import type { WorldLayout } from "./layout";
 
@@ -39,6 +40,8 @@ export type ExploreBuilding = {
   documentUrl?: string;
   /** Interactive "experience" (arcade) shown inside the drawer. */
   arcade: ArcadeConfig | null;
+  /** Chart shown inside the drawer (content `media.datasetId`), with its source line. */
+  chart?: { dataset: Dataset; source?: SourceRef } | null;
   /** Only on an island's generated References building: that island's APA references, sorted. */
   references?: { id: string; apa: string; url: string }[];
 };

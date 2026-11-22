@@ -1,5 +1,5 @@
 /**
- * Runs the 60 questions in docs/CHATBOT_TESTS.md against the chatbot, the same way /api/chat does
+ * Runs every question in docs/CHATBOT_TESTS.md (70 as of round 5) against the chatbot, the same way /api/chat does
  * (same instructions, corpus, temperature and token limit), and saves the raw results as JSON.
  * Each answer gets automatic checks (which chunks and sources it cites, whether it said [NONE]); the ✓ / ✗ / ?
  * verdict is a person's (or a reviewing Claude's) judgement against the expected answer, written into
@@ -19,23 +19,30 @@ type Test = { persona: PersonaId; n: number; question: string; expected: string;
 
 function parseTests(md: string): Test[] {
   const tests: Test[] = [];
+  const isPersona = (x: string): x is PersonaId => (PERSONA_IDS as readonly string[]).includes(x);
   let persona: PersonaId | null = null;
   for (const line of md.split(/\r?\n/)) {
-    const h = line.match(/^##\s.*\(`([a-z0-9-]+)`/);
-    if (h) {
-      persona = (PERSONA_IDS as readonly string[]).includes(h[1]) ? (h[1] as PersonaId) : null;
+    if (/^##\s/.test(line)) {
+      // "## Research Guide (`guide`)" sets the persona for the rows below; any other heading clears it.
+      const h = line.match(/\(`([a-z0-9-]+)`/)?.[1];
+      persona = h && isPersona(h) ? h : null;
       continue;
     }
-    const row = line.match(/^\|\s*(\d+)\s*\|(.+)\|(.+)\|(.+)\|\s*$/);
-    if (!row || !persona) continue;
-    const sources = row[4].trim();
+    // Two row shapes: "| n | question | expected | sources |" under a persona heading, and
+    // "| persona | n | question | expected | sources |" in mixed tables (the round 5 additions).
+    const mixed = line.match(/^\|\s*([a-z0-9-]+)\s*\|\s*(\d+)\s*\|(.+)\|(.+)\|(.+)\|\s*$/);
+    const plain = line.match(/^\|\s*(\d+)\s*\|(.+)\|(.+)\|(.+)\|\s*$/);
+    const who = mixed && isPersona(mixed[1]) ? mixed[1] : plain ? persona : null;
+    const cells = mixed && isPersona(mixed[1]) ? mixed.slice(2) : plain?.slice(1);
+    if (!who || !cells) continue;
+    const [n, question, expected, sources] = cells.map((c) => c.trim());
     tests.push({
-      persona,
-      n: Number(row[1]),
-      question: row[2].trim(),
-      expected: row[3].trim(),
+      persona: who,
+      n: Number(n),
+      question,
+      expected,
       sources,
-      // "none" rows are the five questions our research cannot answer.
+      // "none" rows are the questions our research cannot answer.
       answerable: sources !== "none",
     });
   }

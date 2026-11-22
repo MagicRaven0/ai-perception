@@ -1,5 +1,6 @@
 import type { Building, Era, Insight } from "@/lib/content/schema";
 import {
+  buildingChart,
   buildingsForEra,
   citations,
   datasetsForEra,
@@ -15,6 +16,7 @@ import { toTrack } from "@/lib/audio/track";
 import { ContentText } from "@/components/content/ContentText";
 import { Markdown } from "@/components/content/Markdown";
 import { DataBand } from "@/components/data/DataBand";
+import { EmbeddedChart } from "@/components/data/DatasetView";
 import { PlayButton } from "@/components/audio/PlayButton";
 import { YouTubeEmbed } from "./YouTubeEmbed";
 import { SpeakerList } from "@/components/audio/SpeakerList";
@@ -31,7 +33,9 @@ export function EraSection({ era, headingLevel = 2 }: { era: Era; headingLevel?:
   const H = headingLevel === 1 ? "h1" : "h2";
   const buildings = buildingsForEra(era.id);
   const insights = insightsForEra(era.id);
-  const datasets = datasetsForEra(era.id);
+  // A dataset a building already shows (media.datasetId) is drawn there, not again in the era's data band.
+  const shownInBuildings = new Set(buildings.map((b) => b.media.datasetId).filter(Boolean));
+  const datasets = datasetsForEra(era.id).filter((d) => !shownInBuildings.has(d.id));
   const episodes = episodesForEra(era.id);
   const references = referencesForEra(era.id);
 
@@ -185,6 +189,7 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
   const sources = b.sourceIds.map(getSource).filter((s) => s !== undefined);
   const summaryText = b.summarizable ? itemText(b.id) : null;
   const arcade = arcadeFor(b.id);
+  const chart = buildingChart(b);
 
   return (
     <article id={b.id} className="grid scroll-mt-4 gap-4 border-b border-ink py-8 md:grid-cols-12 md:gap-8">
@@ -219,6 +224,13 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
         ) : (
           <div className="flex max-w-[68ch] flex-col gap-4 text-lg leading-[1.6] text-muted">
             <Markdown value={b.long} citations={citations} />
+          </div>
+        )}
+
+        {/* After the text: the text introduces the chart ("Compare the two groups in the chart"). */}
+        {chart && (
+          <div className="max-w-[68ch]">
+            <EmbeddedChart dataset={chart.dataset} source={chart.source} />
           </div>
         )}
 

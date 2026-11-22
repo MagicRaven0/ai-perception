@@ -147,6 +147,8 @@ export type PlacedBuilding = {
   sensor: { position: Vec3; radius: number };
   /** Where the car is put for a ?b= deep link: on the road in front of the building. */
   approach: Pose;
+  /** Podcast studios: one faceless figure per episode speaker, dressed in that speaker's look (no names). */
+  hosts: FigureLookInput[];
 };
 
 export type PlacedInsight = {
@@ -216,7 +218,14 @@ export type LayoutInput = {
     id: EraId;
     anchorFigures: { name: string; role: string; imageSrc?: string; imageAlt?: string; look?: FigureLookInput }[];
   }[];
-  buildings: { id: string; eraId: EraId; order: number; kind: BuildingKind; comingSoon: boolean }[];
+  buildings: {
+    id: string;
+    eraId: EraId;
+    order: number;
+    kind: BuildingKind;
+    comingSoon: boolean;
+    hosts?: FigureLookInput[];
+  }[];
   insights: { id: string; eraId: EraId; kind: "benefit" | "risk" | "danger"; buildingId?: string }[];
 };
 
@@ -422,6 +431,7 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
         radius: Math.max(6.5, plot.width / 2 + 1.5),
       },
       approach: { x: road[0], y: road[1], z: road[2], heading: ringTangentHeading(angle) },
+      hosts: b.hosts ?? [],
     };
   });
 

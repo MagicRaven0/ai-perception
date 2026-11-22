@@ -1,7 +1,7 @@
 import { test } from "@playwright/test";
 
 /** Full-page screenshots at phone and desktop width, saved to screenshots/ for review. */
-const ROUTES = ["/", "/read", "/listen", "/sources", "/about"];
+const ROUTES = ["/", "/read", "/read/the-future", "/listen", "/sources", "/about"];
 const WIDTHS = [375, 1440];
 
 for (const route of ROUTES) {

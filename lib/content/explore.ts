@@ -1,12 +1,18 @@
 import "server-only";
 import { arcadeFor } from "./arcades";
 import { referencesBuildingId, referencesForEra } from "./references";
-import { buildings, eras, getEpisode, getImage, insights } from "./index";
+import { buildingChart, buildings, eras, getEpisode, getImage, insights } from "./index";
 import { BUILDING_LABEL, eraYears, INSIGHT_LABEL } from "./labels";
 import { isPlaceholder } from "./placeholder";
 import { toTrack } from "@/lib/audio/track";
 import { layoutWorld } from "@/lib/three/layout";
 import type { ExploreData } from "@/lib/three/explore-data";
+
+/** Outfits of an episode's speakers, in speaker order. Faceless figures only: no names, no likeness. */
+function hostLooks(episodeId: string | undefined) {
+  const episode = episodeId ? getEpisode(episodeId) : undefined;
+  return (episode?.speakers ?? []).flatMap((s) => (s.look ? [s.look] : []));
+}
 
 /**
  * Everything /explore needs, computed on the server from content/ (no coordinates in content files):
@@ -29,6 +35,8 @@ export function buildExploreData(): ExploreData {
       order: b.order,
       kind: b.kind,
       comingSoon: isPlaceholder(b.long),
+      // Podcast studios show their speakers as faceless figures by the door (one per speaker look).
+      hosts: b.kind === "podcast" ? hostLooks(b.media.episodeId) : [],
     })).concat(
       // One generated References building per island, after the content buildings (docs/VISION.md).
       eras.map((e) => ({
@@ -37,6 +45,7 @@ export function buildExploreData(): ExploreData {
         order: Math.max(0, ...buildings.filter((b) => b.eraId === e.id).map((b) => b.order)) + 1,
         kind: "documents" as const,
         comingSoon: false,
+        hosts: [],
       })),
     ),
     insights: insights.map((i) => ({ id: i.id, eraId: i.eraId, kind: i.kind, buildingId: i.buildingId })),
@@ -73,6 +82,7 @@ export function buildExploreData(): ExploreData {
       hasVideo: Boolean(b.media.youtubeId),
       documentUrl: b.media.documentUrl,
       arcade: arcadeFor(b.id),
+      chart: buildingChart(b),
     };
   }
   for (const e of eras) {

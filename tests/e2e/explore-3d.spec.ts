@@ -714,4 +714,65 @@ test.describe("world features", () => {
     await recenter.click();
     await expect.poll(freeLook).toBe(false);
   });
+
+  test("round 5: building charts, the long References list scrolls, and podcast hosts follow the speakers", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await open3d(page, "/explore?b=experts-vs-public");
+    const drawer = visibleDialogs(page);
+    await expect(drawer).toBeVisible({ timeout: 15_000 });
+    // Grouped bars: both series in the legend, the paraphrased wording as a note, population in the source line.
+    const chart = drawer.locator("[data-embedded-chart='experts-vs-public']");
+    await expect(chart.getByRole("list", { name: "Legend" })).toContainText("AI experts");
+    await expect(chart.getByRole("list", { name: "Legend" })).toContainText("U.S. adults");
+    await expect(chart.getByText("Note:", { exact: true })).toBeVisible();
+    await expect(chart).toContainText("1,013 AI experts");
+    await page.screenshot({ path: "screenshots/drawer-experts-vs-public-375.png" });
+
+    const open = (id: string) =>
+      page.evaluate(
+        (b) =>
+          (window as unknown as { __store: { getState: () => { openBuilding: (id: string) => void } } }).__store
+            .getState()
+            .openBuilding(b),
+        id,
+      );
+    await open("training-lab");
+    await expect(visibleDialogs(page).locator("[data-embedded-chart='shutdown-resistance']")).toContainText("97%");
+
+    // The Future's References list is long: its last entry scrolls into view inside the drawer.
+    await open("era-3-references");
+    const last = visibleDialogs(page).locator("li").last();
+    await last.scrollIntoViewIfNeeded();
+    await expect(last).toBeInViewport();
+    await page.screenshot({ path: "screenshots/drawer-era-3-references-375.png" });
+
+    // One faceless figure per episode speaker: 3 for episode 1 (with the fictional guest), 2 for episode 2,
+    // 3 for episode 3 (three hosts).
+    const want = Object.fromEntries(
+      buildings.filter((b) => b.kind === "podcast").map((b) => [b.id, b.media?.episodeId ?? ""]),
+    );
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { __hostCounts?: Record<string, number> }).__hostCounts ?? {}))
+      .toEqual(Object.fromEntries(Object.keys(want).map((id) => [id, id === "era-2-podcast" ? 2 : 3])));
+  });
+
+  test("screenshot: the podcast studio on The Future with its three hosts (1440px)", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore?b=era-3-podcast");
+    await expect(visibleDialogs(page)).toBeVisible({ timeout: 15_000 });
+    await page.screenshot({ path: "screenshots/explore-era-3-podcast-drawer-1440.png" });
+    await visibleDialogs(page).getByRole("button", { name: "Close" }).click();
+    await page.waitForTimeout(1500);
+    await page.screenshot({ path: "screenshots/explore-era-3-podcast-1440.png" });
+    // Free look round to the road side, where the hosts stand by the door, and zoom in.
+    await page.mouse.move(720, 450);
+    await page.mouse.down({ button: "right" });
+    await page.mouse.move(1320, 450, { steps: 20 });
+    await page.mouse.up({ button: "right" });
+    await page.mouse.wheel(0, -500);
+    await page.waitForTimeout(1500);
+    await page.screenshot({ path: "screenshots/explore-era-3-podcast-hosts-1440.png" });
+  });
 });

@@ -158,11 +158,10 @@ for (const [era, layers] of Object.entries(ambience)) {
 
 // 3D islands: buildings are auto-placed; past an island's capacity the plots start to overlap.
 for (const era of ERA_ORDER) {
-  // +1: every island also gets a generated References building (lib/content/references.ts).
-  const count = buildings.filter((b) => b.eraId === era).length + 1;
+  const count = buildings.filter((b) => b.eraId === era).length;
   const capacity = islandCapacity(era);
   if (count > capacity) {
-    warnings.push(`${era}: ${count} buildings (incl. References), but the island fits ${capacity} without overlapping plots`);
+    warnings.push(`${era}: ${count} buildings, but the island fits ${capacity} without overlapping plots`);
   }
 }
 

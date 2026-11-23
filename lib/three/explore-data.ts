@@ -57,6 +57,8 @@ export type ExploreSign = {
   /** "Benefit", "Risk", "Danger", or the person's name for figures. */
   label: string;
   text: string;
+  /** Small line above a figure's name (default "Person"). */
+  person?: string;
   /** Credit of the figure's billboard photo. */
   credit?: CreditText;
 };

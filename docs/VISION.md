@@ -55,12 +55,14 @@ Faceless low-poly figures + photo billboards (licensed, credited). No 3D face li
 ### Custom cursor (build in Phase 4 polish, after the 3D world)
 - A small round cursor in the site's own style (Late Checkout studio feel): it grows over links and buttons, shows a "drag" state on sliders, and a "drive / open" hint over buildings in 3D.
 - Desktop pointer devices only. Phones and tablets keep normal touch.
-- Accessibility: the real system cursor stays available (the custom one follows it, never replaces text selection or input carets), and the effect turns off with `prefers-reduced-motion` and in high-contrast/forced-colours mode.
+- The ring replaces the system cursor on desktop (group's choice, 23 Nov 2026): it sits exactly on the pointer with no trailing. Fullscreen video keeps the normal cursor. The effect turns off with `prefers-reduced-motion` and in high-contrast/forced-colours mode.
 - Purely decorative, so it never blocks clicks.
 
 ## Built after Phase 3 (21 Nov 2026)
 - **Era car:** the car morphs (~1.2 s) when you cross onto an island: 1950s sedan with chrome bumpers and fins (The Past), boxy hatchback with a pink bonnet stripe (The Jobs Era), low electric pod with a lime glow strip and thin wheels (The Future). Same collider in every era; top speed x0.85 / x1 / x1.15. Reduced motion: instant swap. Code: `components/three/car/EraCar.tsx`, colours in `lib/three/palette.ts` (`CAR_COLOURS`).
-- **Driver's view:** HUD eye button or V. Perspective camera in the driver's seat; drag to look around, eases back to straight ahead; closer fog in this view. Not remembered between visits.
+- **First person:** HUD eye button or V, in the car and in the plane. Drag (or Q / Z) to look all the way around, up and down; the view stays where you leave it, and driving on (or C) eases it back. The car or plane body is hidden so nothing blocks the view. Closer fog on the ground. Not remembered between visits. (Updated 23 Nov 2026.)
+- **Sources boards (23 Nov 2026):** each island's sources are listed on boards in its centre area (this is the island's References building; "Open" shows the full APA list).
+- **Team island (23 Nov 2026):** a tiny island north of The Jobs Era, over a short bridge or the Team button: one seated, faceless stone statue per group member with a symbol of that member's essay (`statue` in `content/site.ts`).
 - **Runways and planes:** each island has a runway jutting off its edge (The Past: west, The Jobs Era: south, The Future: east). Drive off the open end and the car becomes the era's plane: a 1940s propeller plane, a twin-tail jet fighter, or a flying car with glowing hover rotors (generic shapes, no real markings). W / ▲ climb, S / ▼ dive, A D / ◀ ▶ turn, Shift boost; it keeps a safe height and turns back at the world's edge. L or the Land button lands on the nearest runway as a car.
 - **Folding HUD:** the extra top-bar buttons (map, driver's view, time of day, options, controls, sound) fold behind a ⋯ button; the choice is remembered.
 

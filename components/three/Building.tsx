@@ -5,13 +5,14 @@ import { useFrame } from "@react-three/fiber";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import { useStore } from "@/lib/store";
-import type { FigureLookInput, PlacedBuilding } from "@/lib/three/layout";
+import { SOURCE_BOARD, type FigureLookInput, type PlacedBuilding } from "@/lib/three/layout";
 import { motion } from "@/lib/three/motion";
 import { ERA_PALETTE, SHARED, type EraPalette } from "@/lib/three/palette";
 import { BUILDING_MODELS, MODEL_HEIGHT, type BuildingModel } from "./buildings/registry";
 import { BuildingSensor } from "./BuildingSensor";
 import { StaticMerge } from "./kit/StaticMerge";
 import { FacelessFigure } from "./Figure";
+import { SourcesBoards } from "./SourcesBoards";
 import { VideoScreen } from "./VideoScreen";
 
 /**
@@ -41,6 +42,19 @@ export function Building({
   const pal = palette ?? ERA_PALETTE[placed.eraId];
   const { plot } = placed;
   const top = height ?? MODEL_HEIGHT[placed.kind];
+
+  // The References building: boards in the island's centre instead of a house on the ring road.
+  if (placed.sources) {
+    return (
+      <>
+        <SourcesBoards placed={placed} rows={placed.sources} accent={pal.accent} />
+        <group position={placed.position}>
+          <Beacon id={placed.id} y={SOURCE_BOARD.height + 2.6} accent={pal.accent} />
+        </group>
+        <BuildingSensor id={placed.id} position={placed.sensor.position} radius={placed.sensor.radius} />
+      </>
+    );
+  }
 
   return (
     <>
@@ -75,15 +89,7 @@ export function Building({
  * Built from the episode's speakers, so a third host (or a fictional guest) appears without a code change.
  * Static, so the group merges into one draw call.
  */
-function Hosts({
-  id,
-  looks,
-  plot,
-}: {
-  id: string;
-  looks: FigureLookInput[];
-  plot: { width: number; depth: number };
-}) {
+function Hosts({ id, looks, plot }: { id: string; looks: FigureLookInput[]; plot: { width: number; depth: number } }) {
   // Development only: lets the e2e tests count the figures at each studio.
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
@@ -98,7 +104,11 @@ function Hosts({
     <StaticMerge>
       {looks.map((look, i) => (
         // Turned slightly towards each other, as if talking, while still facing the road.
-        <group key={i} position={[cx + (i - mid) * gap, 0, z - Math.abs(i - mid) * 0.25]} rotation-y={(i - mid) * -0.35}>
+        <group
+          key={i}
+          position={[cx + (i - mid) * gap, 0, z - Math.abs(i - mid) * 0.25]}
+          rotation-y={(i - mid) * -0.35}
+        >
           <FacelessFigure position={[0, 0, 0]} look={look} />
         </group>
       ))}

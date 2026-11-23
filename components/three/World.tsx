@@ -14,6 +14,7 @@ import { Vehicle } from "./Vehicle";
 import { TapMarker } from "./TapMarker";
 import { Runway } from "./Runway";
 import { StaticMerge } from "./kit/StaticMerge";
+import { TeamIsland } from "./TeamIsland";
 import type { IslandProps } from "./islands/types";
 
 /**
@@ -45,6 +46,8 @@ function World({ world, start, onFirstFrame }: { world: WorldLayout; start: Pose
         {world.bridges.map((b) => (
           <Bridge key={b.id} bridge={b} />
         ))}
+        <Bridge bridge={world.team.bridge} />
+        <TeamIsland team={world.team} />
         {ERA_ORDER.map((id) => (
           <Runway key={`runway-${id}`} runway={world.runways[id]} />
         ))}

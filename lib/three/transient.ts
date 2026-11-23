@@ -26,6 +26,13 @@ export const player = {
   teleports: 0,
   /** True while the car has taken off from a runway and is a plane. */
   flying: false,
+  /** Plane attitude (radians): nose up, and left wing down. 0 on the ground. */
+  pitch: 0,
+  bank: 0,
+  /** The car's smoothly drawn position (between physics steps), for the first-person camera. Set by the vehicle. */
+  viewX: 0,
+  viewY: 0,
+  viewZ: 0,
 };
 
 /** Flight requests from the HUD / keys (the vehicle applies them on its next frame). */
@@ -68,6 +75,24 @@ export const orbit = {
   /** performance.now() of the visitor's last camera input (driving eases pan and zoom back after a pause). */
   lastInput: 0,
 };
+
+/** First-person look-around, relative to the nose of the car or plane. Free: a full turn in any direction. */
+export const look = { yaw: 0, pitch: 0, yawTarget: 0, pitchTarget: 0, dragging: false, lastInput: 0 };
+
+/** Turn the first-person view (Q / Z keys, or a drag). */
+export function turnLook(yaw: number, pitch = 0) {
+  look.yawTarget += yaw;
+  look.pitchTarget = Math.max(-1.35, Math.min(1.35, look.pitchTarget + pitch));
+  look.lastInput = performance.now();
+}
+
+/** Back to straight ahead, by the shortest turn. */
+export function recenterLook() {
+  const turns = Math.round(look.yawTarget / (Math.PI * 2)) * Math.PI * 2;
+  look.yaw -= turns;
+  look.yawTarget = look.pitchTarget = 0;
+  look.lastInput = 0;
+}
 
 /** Rotate the overview by a step (Q / Z keys). */
 export function rotateView(step: number) {
@@ -250,6 +275,7 @@ if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
     input,
     requestTeleport,
     orbit,
+    look,
     autoDrive,
     flight,
   };

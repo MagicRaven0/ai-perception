@@ -5,6 +5,8 @@
 
 export type Capabilities = {
   webgl2: boolean;
+  /** 3D is drawn by the CPU: the browser's hardware acceleration is off, or there is no graphics driver. */
+  softwareGl: boolean;
   /** navigator.deviceMemory < 4 (GB). */
   lowMemory: boolean;
   reducedMotion: boolean;
@@ -15,17 +17,28 @@ export type Capabilities = {
 
 export type GateVerdict = "ok" | "fallback" | "choose";
 
-function hasWebGL2(): boolean {
+/** Renderer names of CPU rasterisers (Windows WARP, SwiftShader, Mesa). */
+const SOFTWARE_GL = /basic render|swiftshader|llvmpipe|softpipe|software/i;
+
+function probeGl(): { webgl2: boolean; softwareGl: boolean } {
   try {
     const canvas = document.createElement("canvas");
     const gl = canvas.getContext("webgl2");
-    if (!gl) return false;
+    if (!gl) return { webgl2: false, softwareGl: false };
+    const info = gl.getExtension("WEBGL_debug_renderer_info");
+    const name = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : "";
     // Free the probe context straight away (browsers cap the number of live contexts).
     gl.getExtension("WEBGL_lose_context")?.loseContext();
-    return true;
+    return { webgl2: true, softwareGl: SOFTWARE_GL.test(name) && !assumeHardware() };
   } catch {
-    return false;
+    return { webgl2: false, softwareGl: false };
   }
+}
+
+/** Development only: the e2e browsers draw with software WebGL but test the normal world. */
+function assumeHardware(): boolean {
+  if (process.env.NODE_ENV === "production") return false;
+  return (window as { __exploreAssumeHardware?: unknown }).__exploreAssumeHardware === true;
 }
 
 let cached: Capabilities | null = null;
@@ -39,7 +52,7 @@ export function detectCapabilities(): Capabilities {
   };
   const mq = (q: string) => typeof window.matchMedia === "function" && window.matchMedia(q).matches;
   cached = {
-    webgl2: hasWebGL2(),
+    ...probeGl(),
     lowMemory: typeof nav.deviceMemory === "number" && nav.deviceMemory < 4,
     reducedMotion: mq("(prefers-reduced-motion: reduce)"),
     saveData: nav.connection?.saveData === true,

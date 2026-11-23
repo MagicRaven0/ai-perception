@@ -124,10 +124,11 @@ export function Atmosphere() {
     const f = fog.current;
     if (f) {
       f.color.lerp(target.fog, k);
-      // Driver's view sees along the ground: closer haze, fully fogged before the camera's far plane (260 m).
+      // First person sees along the ground: closer haze, fully fogged before the camera's far plane (500 m).
+      // From the plane you see further.
       const driver = useStore.getState().cameraMode === "driver";
-      const near = driver ? 70 : 185;
-      const far = driver ? 240 : 440;
+      const near = driver ? (player.flying ? 140 : 70) : 185;
+      const far = driver ? (player.flying ? 460 : 240) : 440;
       const kf = motion.reduced ? 1 : 1 - Math.exp(-dt * 4);
       f.near += (near - f.near) * kf;
       f.far += (far - f.far) * kf;

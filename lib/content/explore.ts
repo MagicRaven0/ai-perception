@@ -1,12 +1,12 @@
 import "server-only";
 import { arcadeFor } from "./arcades";
-import { referencesBuildingId, referencesForEra } from "./references";
-import { buildingChart, buildings, eras, getEpisode, insights } from "./index";
+import { referencesBuildingId, referencesForEra, sourceRow } from "./references";
+import { buildingChart, buildings, eras, getEpisode, insights, site } from "./index";
 import { BUILDING_LABEL, eraYears, INSIGHT_LABEL } from "./labels";
 import { buildingVideo, creditedImage } from "./media";
 import { isPlaceholder } from "./placeholder";
 import { toTrack } from "@/lib/audio/track";
-import { layoutWorld } from "@/lib/three/layout";
+import { layoutWorld, type SourceRow } from "@/lib/three/layout";
 import type { ExploreData } from "@/lib/three/explore-data";
 
 /** Outfits of an episode's speakers, in speaker order. Faceless figures only: no names, no likeness. */
@@ -30,27 +30,33 @@ export function buildExploreData(): ExploreData {
         return { name: f.name, role: f.role, imageSrc: img?.src, imageAlt: img?.alt, look: f.look };
       }),
     })),
-    buildings: buildings.map((b) => ({
-      id: b.id,
-      eraId: b.eraId,
-      order: b.order,
-      kind: b.kind,
-      comingSoon: isPlaceholder(b.long),
-      // Podcast studios show their speakers as faceless figures by the door (one per speaker look).
-      hosts: b.kind === "podcast" ? hostLooks(b.media.episodeId) : [],
-      videoSrc: buildingVideo(b)?.src,
-    })).concat(
-      // One generated References building per island, after the content buildings (docs/VISION.md).
-      eras.map((e) => ({
-        id: referencesBuildingId(e.id),
-        eraId: e.id,
-        order: Math.max(0, ...buildings.filter((b) => b.eraId === e.id).map((b) => b.order)) + 1,
-        kind: "documents" as const,
-        comingSoon: false,
-        hosts: [],
-        videoSrc: undefined,
-      })),
-    ),
+    buildings: buildings
+      .map((b) => ({
+        id: b.id,
+        eraId: b.eraId,
+        order: b.order,
+        kind: b.kind,
+        comingSoon: isPlaceholder(b.long),
+        // Podcast studios show their speakers as faceless figures by the door (one per speaker look).
+        hosts: b.kind === "podcast" ? hostLooks(b.media.episodeId) : [],
+        videoSrc: buildingVideo(b)?.src,
+        sources: undefined as SourceRow[] | undefined,
+      }))
+      .concat(
+        // One generated References building per island, after the content buildings (docs/VISION.md).
+        eras.map((e) => ({
+          id: referencesBuildingId(e.id),
+          eraId: e.id,
+          order: Math.max(0, ...buildings.filter((b) => b.eraId === e.id).map((b) => b.order)) + 1,
+          kind: "documents" as const,
+          comingSoon: false,
+          hosts: [],
+          videoSrc: undefined,
+          // Listed on boards in the centre of the island.
+          sources: referencesForEra(e.id).map((s) => sourceRow(s)),
+        })),
+      ),
+    team: site.team.map((m) => ({ name: m.name, role: m.role, statue: m.statue })),
     insights: insights.map((i) => ({ id: i.id, eraId: i.eraId, kind: i.kind, buildingId: i.buildingId })),
   });
 
@@ -121,6 +127,9 @@ export function buildExploreData(): ExploreData {
         credit: creditedImage(eras.find((e) => e.id === f.eraId)?.anchorFigures[f.index]?.imageId)?.credit,
       };
     }
+  }
+  for (const s of world.team.statues) {
+    data.signs[s.id] = { id: s.id, kind: "figure", label: s.name, text: s.role, person: "Our team" };
   }
   return data;
 }

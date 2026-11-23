@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Decorative cursor ring in the site's own style (docs/VISION.md, "Custom cursor").
+ * Cursor ring in the site's own style (docs/VISION.md, "Custom cursor"). It replaces the system cursor.
  * - Desktop mouse only (pointer: fine). Phones and tablets keep normal touch.
- * - The real system cursor stays visible: this ring only trails it, so text selection, input carets and
- *   precise clicking are untouched. It never takes pointer events (pointer-events: none, aria-hidden).
+ * - The system cursor is hidden (`custom-cursor` on <html>, globals.css), so the ring sits exactly on the pointer, with
+ *   no trailing, and has a light and a dark edge to stay visible on any background. Embedded players and fullscreen
+ *   video keep the system cursor. It never takes pointer events (pointer-events: none, aria-hidden).
  * - Grows over links and buttons, says "Drag" over sliders and "Drag to turn" over the 3D world.
  * - Off with prefers-reduced-motion and in forced-colours (high contrast) mode.
  */
@@ -46,10 +47,9 @@ export function CustomCursor() {
     const el = ring.current;
     const text = label.current;
     if (!el || !text) return;
-    const pos = { x: -100, y: -100, tx: -100, ty: -100 };
     let mode: Mode = "idle";
-    let raf = 0;
-    let visible = false;
+    const root = document.documentElement;
+    root.classList.add("custom-cursor");
 
     const setMode = (next: Mode) => {
       if (next === mode) return;
@@ -57,36 +57,30 @@ export function CustomCursor() {
       el.dataset.mode = next;
       text.textContent = LABEL[next];
     };
+    const place = (e: PointerEvent) => {
+      el.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+    };
     const onMove = (e: PointerEvent) => {
       if (e.pointerType !== "mouse") return;
-      pos.tx = e.clientX;
-      pos.ty = e.clientY;
-      if (!visible) {
-        visible = true;
-        pos.x = pos.tx;
-        pos.y = pos.ty;
-        el.style.opacity = "1";
-      }
+      place(e);
+      el.style.opacity = "1";
       setMode(modeFor(e.target));
     };
     const onLeave = () => {
-      visible = false;
       el.style.opacity = "0";
     };
-    const tick = () => {
-      // Trails the real cursor with a gentle ease (the calm, floaty Late Checkout feel).
-      pos.x += (pos.tx - pos.x) * 0.22;
-      pos.y += (pos.ty - pos.y) * 0.22;
-      el.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0)`;
-      raf = requestAnimationFrame(tick);
+    // Inside an embedded player the page gets no pointer events: the frame's own cursor takes over.
+    const onOver = (e: PointerEvent) => {
+      if (e.target instanceof HTMLIFrameElement) onLeave();
     };
     window.addEventListener("pointermove", onMove, { passive: true });
-    document.documentElement.addEventListener("pointerleave", onLeave);
-    raf = requestAnimationFrame(tick);
+    window.addEventListener("pointerover", onOver, { passive: true });
+    root.addEventListener("pointerleave", onLeave);
     return () => {
       window.removeEventListener("pointermove", onMove);
-      document.documentElement.removeEventListener("pointerleave", onLeave);
-      cancelAnimationFrame(raf);
+      window.removeEventListener("pointerover", onOver);
+      root.removeEventListener("pointerleave", onLeave);
+      root.classList.remove("custom-cursor");
     };
   }, [enabled]);
 
@@ -97,9 +91,9 @@ export function CustomCursor() {
       ref={ring}
       aria-hidden="true"
       data-mode="idle"
-      className="group pointer-events-none fixed top-0 left-0 z-skip opacity-0 transition-opacity duration-200"
+      className="group pointer-events-none fixed top-0 left-0 z-skip opacity-0"
     >
-      <span className="absolute size-7 -translate-x-1/2 -translate-y-1/2 rounded-full border border-ink/60 transition-[width,height,background-color,border-color] duration-200 ease-calm group-data-[mode=drag]:size-12 group-data-[mode=drag]:border-orange group-data-[mode=link]:size-11 group-data-[mode=link]:border-ink group-data-[mode=link]:bg-ink/10 group-data-[mode=world]:size-10 group-data-[mode=world]:border-snow group-data-[mode=world]:bg-snow/15" />
+      <span className="absolute size-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-snow ring-[1.5px] ring-coal transition-[width,height,background-color,border-color] duration-200 ease-calm group-data-[mode=drag]:size-12 group-data-[mode=drag]:border-orange group-data-[mode=link]:size-10 group-data-[mode=link]:bg-snow/25 group-data-[mode=world]:size-9 group-data-[mode=world]:bg-snow/15" />
       <span
         ref={label}
         className="absolute top-5 left-4 rounded-full bg-ink px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-paper empty:hidden"

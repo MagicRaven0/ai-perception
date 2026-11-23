@@ -73,6 +73,9 @@ export const SHARED = {
   /** Billboard placeholder (hatched "photo coming" frame). */
   billboardFrame: "#121211",
   billboardBlank: "#ece8dc",
+  /** Team statues: pale stone and its shaded side. */
+  statue: "#fbf6ea",
+  statueShade: "#d8d0bf",
   /** Car body. */
   car: "#ff87a2",
   carDark: "#2b2b2b",
@@ -84,6 +87,9 @@ export const SHARED = {
   /** Runway asphalt (soft dark grey, not black, to stay calm next to the cream roads). */
   runway: "#4a4d50",
 } as const;
+
+/** One accent per team statue (plinth band and symbol), in team order. */
+export const STATUE_ACCENTS = ["#ff87a2", "#fee163", "#5ee0d0"] as const;
 
 /**
  * The car changes with the era it is on (it morphs when you cross onto an island):

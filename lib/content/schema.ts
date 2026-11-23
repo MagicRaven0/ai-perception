@@ -26,6 +26,8 @@ export type EraId = z.infer<typeof EraId>;
 export const TeamMember = z.object({
   name: z.string().min(1),
   role: z.string().min(1),
+  /** What this person's statue sits with on the 3D team island (default: a book). */
+  statue: z.enum(["stop-button", "light-bulb", "robot", "book"]).optional(),
 });
 
 export const Site = z.object({

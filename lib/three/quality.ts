@@ -4,6 +4,8 @@
  * No React, no three.js.
  */
 
+import { detectCapabilities } from "./capabilities";
+
 export type QualityPref = "auto" | "high" | "low";
 export type Tier = "high" | "low";
 
@@ -34,7 +36,7 @@ export function initialAutoTier(): Tier {
   if (typeof window === "undefined") return "high";
   const nav = navigator as Navigator & { deviceMemory?: number };
   const coarse = typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
-  if (coarse) return "low";
+  if (coarse || detectCapabilities().softwareGl) return "low";
   if (typeof nav.deviceMemory === "number" && nav.deviceMemory < 8) return "low";
   return "high";
 }
@@ -44,8 +46,18 @@ export function selectTier(s: { quality: QualityPref; autoTier: Tier }): Tier {
   return s.quality === "auto" ? s.autoTier : s.quality;
 }
 
-/** Device pixel ratio for a tier (never above the screen's own ratio). */
-export function dprFor(tier: Tier): number {
+/**
+ * Resolution steps below Low, for machines that are still slow there. Only the number of pixels changes (nothing is
+ * rebuilt), so stepping down is free. CPU-drawn 3D starts one step down.
+ */
+export const RES_STEPS = [1, 0.75, 0.55] as const;
+
+export function startResStep(): number {
+  return typeof window !== "undefined" && detectCapabilities().softwareGl ? 1 : 0;
+}
+
+/** Device pixel ratio for a tier (never above the screen's own ratio). `step` only applies to Low. */
+export function dprFor(tier: Tier, step = 0): number {
   const device = typeof window === "undefined" ? 1 : window.devicePixelRatio || 1;
-  return Math.min(device, TIERS[tier].dpr);
+  return Math.min(device, TIERS[tier].dpr) * (tier === "low" ? (RES_STEPS[step] ?? 1) : 1);
 }

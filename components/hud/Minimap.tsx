@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useStore } from "@/lib/store";
 import { ERA_ORDER, allBuildings, type WorldLayout } from "@/lib/three/layout";
 import { CAMERA_AZIMUTH, MINIMAP_ROTATION_DEG } from "@/lib/three/camera";
-import { orbit, player } from "@/lib/three/transient";
+import { look, orbit, player } from "@/lib/three/transient";
 import type { EraId } from "@/lib/content/schema";
 
 /**
@@ -61,12 +61,13 @@ export function Minimap({ world, eraNames }: { world: WorldLayout; eraNames: Rec
       const c = cone.current;
       if (c) {
         // The camera looks along -(sin a, cos a) on the ground, a = azimuth + orbit.
-        const a = CAMERA_AZIMUTH + orbit.yaw;
+        // In first person it looks from the car, along the nose turned by the look-around.
+        const fp = useStore.getState().cameraMode === "driver";
+        const a = fp ? player.heading + look.yaw + Math.PI : CAMERA_AZIMUTH + orbit.yaw;
         const deg = (Math.atan2(-Math.cos(a), -Math.sin(a)) * 180) / Math.PI;
-        c.setAttribute(
-          "transform",
-          `translate(${(player.x + orbit.panX).toFixed(2)} ${(player.z + orbit.panZ).toFixed(2)}) rotate(${deg.toFixed(1)})`,
-        );
+        const px = player.x + (fp ? 0 : orbit.panX);
+        const pz = player.z + (fp ? 0 : orbit.panZ);
+        c.setAttribute("transform", `translate(${px.toFixed(2)} ${pz.toFixed(2)}) rotate(${deg.toFixed(1)})`);
         c.style.opacity = player.ready ? "1" : "0";
       }
       raf = requestAnimationFrame(tick);
@@ -97,6 +98,24 @@ export function Minimap({ world, eraNames }: { world: WorldLayout; eraNames: Rec
               strokeWidth={b.width}
             />
           ))}
+          <line
+            x1={world.team.bridge.start[0]}
+            y1={world.team.bridge.start[1]}
+            x2={world.team.bridge.end[0]}
+            y2={world.team.bridge.end[1]}
+            stroke="var(--color-rule)"
+            strokeWidth={world.team.bridge.width}
+          />
+          <circle
+            cx={world.team.center[0]}
+            cy={world.team.center[1]}
+            r={world.team.radius}
+            fill="var(--color-cream)"
+            stroke="var(--color-ink)"
+            strokeWidth={1.5}
+          >
+            <title>Our team</title>
+          </circle>
           {ERA_ORDER.map((id) => {
             const g = world.islands[id].geometry;
             return (

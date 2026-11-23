@@ -3,7 +3,7 @@
 import { useStore } from "@/lib/store";
 import type { ExploreEra } from "@/lib/three/explore-data";
 import type { WorldLayout } from "@/lib/three/layout";
-import { fastTravel } from "./actions";
+import { fastTravel, fastTravelTo } from "./actions";
 
 /** Three white island pills (Late Checkout nav style). Fade, teleport to the island's spawn, fade back. */
 export function FastTravelBar({
@@ -33,6 +33,15 @@ export function FastTravelBar({
             </button>
           </li>
         ))}
+        <li>
+          <button
+            type="button"
+            onClick={() => fastTravelTo(world.team.spawn, fade.current)}
+            className="block rounded-full px-3 py-2 text-sm font-semibold whitespace-nowrap text-ink transition-colors duration-200 hover:bg-cream focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink md:px-4 md:text-base"
+          >
+            Team
+          </button>
+        </li>
       </ul>
     </nav>
   );

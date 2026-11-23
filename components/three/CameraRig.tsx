@@ -7,7 +7,8 @@ import * as THREE from "three";
 import { useStore } from "@/lib/store";
 import { ERA_ORDER, findBuilding, nearestEra, type Pose, type WorldLayout } from "@/lib/three/layout";
 import { motion } from "@/lib/three/motion";
-import { isFreeLook, orbit, player, setAutoDrive } from "@/lib/three/transient";
+import { isFreeLook, look, orbit, player, recenterLook, setAutoDrive, turnLook } from "@/lib/three/transient";
+import { CAR_COLOURS } from "@/lib/three/palette";
 import { CAMERA_AZIMUTH, CAMERA_DISTANCE, CAMERA_ELEVATION_DEG, CAMERA_SPAN } from "@/lib/three/camera";
 
 /**
@@ -16,7 +17,9 @@ import { CAMERA_AZIMUTH, CAMERA_DISTANCE, CAMERA_ELEVATION_DEG, CAMERA_SPAN } fr
  * While a building drawer is open it frames the building beside the car, nudged left of the drawer.
  * 360° overview: drag on the world (mouse or one finger) or press Q / Z to orbit around the car; it stays where
  * you leave it. Driver's view (HUD eye button or V): a perspective camera in the driver's seat looking down the road; drag to
- * look around, released view eases back to straight ahead. Reduced motion: no easing, no look-ahead sway.
+ * look around, all the way round and up or down; it stays where you leave it, and driving on eases it back (C
+ * recenters). It works the same in the plane: the view follows climb and turn. The car or plane body is hidden, so
+ * nothing blocks the view or wobbles; in the car a fixed dashboard shows which way the nose points. Reduced motion: no easing.
  * Free look (docs/VISION.md, added 22 Nov 2026): drag (left on the world, or right) turns and tilts; wheel or
  * pinch zooms (out to the whole island); Shift-drag, middle-drag or a two-finger drag pans; two-finger twist
  * turns. Recenter (HUD button or C) eases back to the default view; driving eases pan and zoom back after a pause.
@@ -57,12 +60,15 @@ const raycaster = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
 const ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.2);
 const hit = new THREE.Vector3();
-const look = new THREE.Vector3();
-const seat = new THREE.Vector3();
+const lookTarget = new THREE.Vector3();
+const euler = new THREE.Euler();
+const turn = new THREE.Quaternion();
 
-/** Driver's seat, in car space (x right, y up, z forward), and how far you can look around by dragging. */
-const SEAT = { y: 1.35, z: 0.05, ahead: 12 };
-const LOOK_LIMIT = { yaw: 1.3, pitch: 0.45 };
+/** First-person eye height above the vehicle's origin, and how far down the resting view points (radians). */
+const CAR_EYE = 1.35;
+const PLANE_EYE = 1.5;
+const REST_PITCH = 0.1;
+const PLANE_REST_PITCH = 0.24;
 
 /**
  * Zoom (pixels per metre): a calm overview of about 104 x 65 m on desktop (the road ahead and a few buildings);
@@ -82,8 +88,9 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
   const mode = useStore((s) => s.cameraMode);
   const gl = useThree((s) => s.gl);
   const getThree = useThree((s) => s.get);
-  // Driver's view: smoothed heading and the drag-to-look offset.
-  const drive = useRef({ heading: start.heading, yaw: 0, pitch: 0, dragging: false, lastX: 0, lastY: 0 });
+  // First person: smoothed heading, eye height and plane attitude.
+  const drive = useRef({ heading: start.heading, y: 0, pitch: 0, bank: 0 });
+  const cockpit = useRef<THREE.Group>(null);
 
   // Drag on the world (mouse or one finger): orbits the overview 360°, or looks around in the driver's seat.
   const modeRef = useRef(mode);
@@ -91,11 +98,14 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
     modeRef.current = mode;
     const d = drive.current;
     d.heading = player.heading;
-    d.yaw = d.pitch = 0;
+    d.y = player.viewY + (player.flying ? PLANE_EYE : CAR_EYE);
+    d.pitch = player.pitch;
+    d.bank = 0;
+    look.yaw = look.yawTarget = look.pitch = look.pitchTarget = 0;
+    look.dragging = false;
   }, [mode]);
   useEffect(() => {
     const el = gl.domElement;
-    const d = drive.current;
     let dragging = false;
     let panning = false;
     let lastX = 0;
@@ -142,7 +152,7 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
       startT = performance.now();
       dragging = true;
       panning = modeRef.current === "iso" && (e.button === 1 || e.shiftKey);
-      d.dragging = true;
+      look.dragging = modeRef.current === "driver";
       orbit.dragging = modeRef.current === "iso" && !panning;
       lastX = e.clientX;
       lastY = e.clientY;
@@ -172,8 +182,7 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
       lastX = e.clientX;
       lastY = e.clientY;
       if (modeRef.current === "driver") {
-        d.yaw = THREE.MathUtils.clamp(d.yaw - dx * 0.005, -LOOK_LIMIT.yaw, LOOK_LIMIT.yaw);
-        d.pitch = THREE.MathUtils.clamp(d.pitch - dy * 0.004, -LOOK_LIMIT.pitch, LOOK_LIMIT.pitch);
+        turnLook(-dx * 0.006, -dy * 0.005);
       } else if (panning) {
         panBy(dx, dy);
         orbit.lastInput = performance.now();
@@ -191,7 +200,7 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
       }
       dragging = false;
       panning = false;
-      d.dragging = false;
+      look.dragging = false;
       orbit.dragging = false;
     };
     const wheel = (e: WheelEvent) => {
@@ -217,12 +226,16 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
       if (!raycaster.ray.intersectPlane(ground, hit)) return;
       // Only spots on the island the car is on (driving straight to another island would miss the bridge).
       const here = nearestEra(world, player.x, player.z);
-      const there = ERA_ORDER.find((id) => {
-        const g = world.islands[id].geometry;
-        return Math.hypot(hit.x - g.center[0], hit.z - g.center[1]) < g.radius - 3;
-      });
+      const onTeam = (x: number, z: number) =>
+        Math.hypot(x - world.team.center[0], z - world.team.center[1]) < world.team.radius - 2;
+      const there = onTeam(hit.x, hit.z)
+        ? "team"
+        : ERA_ORDER.find((id) => {
+            const g = world.islands[id].geometry;
+            return Math.hypot(hit.x - g.center[0], hit.z - g.center[1]) < g.radius - 3;
+          });
       if (!there) return;
-      if (there !== here) {
+      if (there !== (onTeam(player.x, player.z) ? "team" : here)) {
         useStore.getState().showToast("Tap a spot on this island, or use the island buttons to travel.");
         return;
       }
@@ -264,28 +277,43 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
       const cam = driverCam.current;
       if (!cam) return;
       const d = drive.current;
-      // Follow the car's heading with a short ease so turning feels smooth; snap on teleports.
       const snapped = seenTeleports.current !== player.teleports;
       seenTeleports.current = player.teleports;
+      const snap = snapped || motion.reduced;
+      // Heading: a short ease takes the edge off key-press steering.
       let diff = player.heading - d.heading;
       diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-      d.heading = snapped || motion.reduced ? player.heading : d.heading + diff * (1 - Math.exp(-dt * 10));
-      // Released drag eases back to straight ahead.
-      if (!d.dragging) {
-        const back = motion.reduced ? 1 : 1 - Math.exp(-dt * 3);
-        d.yaw -= d.yaw * back;
-        d.pitch -= d.pitch * back;
+      d.heading = snap ? player.heading : d.heading + diff * (1 - Math.exp(-dt * 14));
+      // Looking around is free and stays where you leave it; driving on eases it back after a short pause.
+      const idle = performance.now() - look.lastInput > EASE_BACK_MS;
+      if (snapped) recenterLook();
+      else if (!look.dragging && idle && player.speed > 2 && (look.yawTarget !== 0 || look.pitchTarget !== 0))
+        recenterLook();
+      const kl = snap ? 1 : 1 - Math.exp(-dt * (look.dragging ? 30 : 8));
+      look.yaw += (look.yawTarget - look.yaw) * kl;
+      look.pitch += (look.pitchTarget - look.pitch) * kl;
+      const turned = Math.abs(Math.sin(look.yawTarget / 2)) > 0.03 || Math.abs(look.pitchTarget) > 0.03;
+      if (turned !== useStore.getState().freeLook) useStore.getState().setFreeLook(turned);
+
+      // Height is smoothed on the ground (physics settles by millimetres); the plane's is already smooth.
+      const y = player.viewY + (player.flying ? PLANE_EYE : CAR_EYE);
+      d.y = snap || player.flying || Math.abs(y - d.y) > 1 ? y : d.y + (y - d.y) * (1 - Math.exp(-dt * 10));
+      d.pitch += ((player.flying ? player.pitch * 0.6 : 0) - d.pitch) * (snap ? 1 : 1 - Math.exp(-dt * 6));
+      d.bank +=
+        ((player.flying && !motion.reduced ? player.bank * 0.5 : 0) - d.bank) * (snap ? 1 : 1 - Math.exp(-dt * 6));
+
+      // The vehicle's frame (a camera looks down -Z, the vehicle faces +Z: half a turn), then the look-around.
+      euler.set(d.pitch, d.heading + Math.PI, d.bank, "YXZ");
+      cam.position.set(player.viewX, d.y, player.viewZ);
+      cam.quaternion.setFromEuler(euler);
+      if (cockpit.current) {
+        // In the air you look down at the islands: the dashboard would be in the way.
+        cockpit.current.visible = !player.flying;
+        cockpit.current.position.copy(cam.position);
+        cockpit.current.quaternion.copy(cam.quaternion);
       }
-      const h = d.heading;
-      seat.set(player.x + Math.sin(h) * SEAT.z, player.y + SEAT.y, player.z + Math.cos(h) * SEAT.z);
-      cam.position.copy(seat);
-      const lookH = h + d.yaw;
-      look.set(
-        seat.x + Math.sin(lookH) * SEAT.ahead,
-        seat.y - 1.2 + Math.sin(d.pitch) * SEAT.ahead,
-        seat.z + Math.cos(lookH) * SEAT.ahead,
-      );
-      cam.lookAt(look);
+      euler.set(look.pitch - (player.flying ? PLANE_REST_PITCH : REST_PITCH), look.yaw, 0, "YXZ");
+      cam.quaternion.multiply(turn.setFromEuler(euler));
       return;
     }
 
@@ -321,15 +349,15 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
     if (framing.current) {
       // Midpoint of car and building, pushed right in world space so it sits left of a 420px drawer.
       const drawerShift = size.width >= 768 ? 210 / (zoomBase * 1.15) : 0;
-      desired.set(player.x, 0, player.z).lerp(framing.current, 0.5).addScaledVector(screenRight, drawerShift);
+      desired.set(player.viewX, 0, player.viewZ).lerp(framing.current, 0.5).addScaledVector(screenRight, drawerShift);
     } else {
       // Look a little ahead of the car along its heading, more at speed.
       const ahead = Math.min(player.speed * 0.35, 6);
       // In the air the camera rises with the plane, so it stays in the middle of the view.
       desired.set(
-        player.x + Math.sin(player.heading) * ahead,
-        player.flying ? Math.max(0, player.y - 1) : 0,
-        player.z + Math.cos(player.heading) * ahead,
+        player.viewX + Math.sin(player.heading) * ahead,
+        player.flying ? Math.max(0, player.viewY - 1) : 0,
+        player.viewZ + Math.cos(player.heading) * ahead,
       );
     }
 
@@ -343,7 +371,7 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
     else target.current.lerp(desired, 1 - Math.exp(-dt * 2.2));
 
     cam.position.copy(target.current).add(offset);
-    cam.lookAt(look.copy(target.current));
+    cam.lookAt(lookTarget.copy(target.current));
 
     const zoomGoal = zoomBase * (framing.current ? 1.15 : 1) * orbit.zoom;
     const z = snapped || motion.reduced ? zoomGoal : cam.zoom + (zoomGoal - cam.zoom) * (1 - Math.exp(-dt * 2));
@@ -369,10 +397,37 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
           makeDefault
           fov={size.width < 640 ? 75 : 62}
           near={0.1}
-          far={260}
-          position={[player.x, player.y + SEAT.y, player.z]}
+          far={500}
+          position={[player.viewX, player.viewY + CAR_EYE, player.viewZ]}
         />
       )}
+      {mode === "driver" && (
+        <group ref={cockpit}>
+          <Cockpit />
+        </group>
+      )}
     </>
+  );
+}
+
+/** A low dashboard and steering wheel, fixed to the vehicle (camera space: -Z is the nose). Never blocks the road. */
+function Cockpit() {
+  const era = useStore((s) => s.activeEra);
+  const c = CAR_COLOURS[era];
+  return (
+    <group>
+      <mesh position={[0, -0.74, -0.95]} rotation-x={0.25}>
+        <boxGeometry args={[2.1, 0.14, 0.5]} />
+        <meshLambertMaterial color={c.body} />
+      </mesh>
+      <mesh position={[0, -0.66, -1.12]}>
+        <boxGeometry args={[2.1, 0.05, 0.12]} />
+        <meshLambertMaterial color={c.trim} />
+      </mesh>
+      <mesh position={[0, -0.66, -0.78]} rotation-x={-0.5}>
+        <torusGeometry args={[0.2, 0.025, 6, 20]} />
+        <meshLambertMaterial color={c.wheel} />
+      </mesh>
+    </group>
   );
 }

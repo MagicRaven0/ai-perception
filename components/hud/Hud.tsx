@@ -5,7 +5,14 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import type { EraId } from "@/lib/content/schema";
 import type { ExploreData } from "@/lib/three/explore-data";
-import { isTypingTarget, recenterView, requestLanding, rotateView } from "@/lib/three/transient";
+import {
+  isTypingTarget,
+  recenterLook,
+  recenterView,
+  requestLanding,
+  rotateView,
+  turnLook,
+} from "@/lib/three/transient";
 import { Ambience } from "@/components/three/Ambience";
 import { BuildingDrawer } from "./BuildingDrawer";
 import { ControlsPanel } from "./ControlsPanel";
@@ -16,6 +23,7 @@ import { MobileControls } from "./MobileControls";
 import { OptionsPanel } from "./OptionsPanel";
 import { ProgressCounter } from "./ProgressCounter";
 import { respawn } from "./actions";
+import { SoftwareNotice } from "./SoftwareNotice";
 
 /**
  * HUD over the canvas (normal DOM; z-hud, drawer z-drawer, panels z-modal). Mounted only once the world is
@@ -79,9 +87,9 @@ export function Hud({ data }: { data: ExploreData }) {
       if (e.code === "KeyV") useStore.getState().toggleCameraMode();
       if (e.code === "KeyT") useStore.getState().cycleTimeOfDay();
       if (e.code === "KeyL" && useStore.getState().flying) requestLanding();
-      if (e.code === "KeyQ") rotateView(Math.PI / 4);
-      if (e.code === "KeyZ") rotateView(-Math.PI / 4);
-      if (e.code === "KeyC") recenterView();
+      if (e.code === "KeyQ") turnView(Math.PI / 4);
+      if (e.code === "KeyZ") turnView(-Math.PI / 4);
+      if (e.code === "KeyC") recenter();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -117,10 +125,10 @@ export function Hud({ data }: { data: ExploreData }) {
                 Land <span className="text-xs opacity-70">L</span>
               </button>
             )}
-            {freeLook && !driverView && (
+            {freeLook && (
               <button
                 type="button"
-                onClick={recenterView}
+                onClick={recenter}
                 className="flex h-11 items-center gap-2 rounded-full bg-paper px-4 font-semibold text-ink shadow-pill transition-transform duration-300 ease-calm hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 Recenter <span className="hidden text-xs text-muted sm:inline">C</span>
@@ -192,6 +200,7 @@ export function Hud({ data }: { data: ExploreData }) {
           <div className="lg:hidden">
             <FastTravelBar world={data.world} eras={data.eras} fade={fade} />
           </div>
+          <SoftwareNotice />
         </div>
 
         <div className="pointer-events-auto absolute top-5 left-1/2 hidden -translate-x-1/2 lg:block">
@@ -213,6 +222,11 @@ export function Hud({ data }: { data: ExploreData }) {
     </>
   );
 }
+
+/** The overview or the first-person view, whichever is on screen. */
+const inDriverView = () => useStore.getState().cameraMode === "driver";
+const recenter = () => (inDriverView() ? recenterLook() : recenterView());
+const turnView = (step: number) => (inDriverView() ? turnLook(step) : rotateView(step));
 
 const iconClass =
   "size-11 items-center justify-center rounded-full bg-paper text-ink shadow-pill transition-transform duration-300 ease-calm hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-pressed:bg-ink aria-pressed:text-paper";

@@ -177,3 +177,14 @@ body {
     transform: none;
   }
 }
+
+/* The cursor ring replaces the system cursor (components/ui/CustomCursor.tsx). Fullscreen content cannot show the
+   ring, so it keeps the normal one. */
+html.custom-cursor,
+html.custom-cursor *:not(iframe) {
+  cursor: none !important;
+}
+html.custom-cursor :fullscreen,
+html.custom-cursor :fullscreen * {
+  cursor: auto !important;
+}

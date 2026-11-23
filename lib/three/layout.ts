@@ -82,6 +82,24 @@ const BRIDGE_PAIRS: [EraId, EraId][] = [
   ["era-2", "era-3"],
 ];
 
+/** The team island: hangs off its host island by one short bridge, on a side with no bridge or runway. */
+const TEAM = { host: "era-2" as EraId, angle: (Math.PI * 3) / 2, radius: 17, gap: 22 };
+
+/**
+ * Where each island's Sources boards stand: inside the ring road, clear of the centre landmark (and of the AUS
+ * campus), facing `face` (an angle from the island centre).
+ */
+const SOURCES_SPOT: Record<EraId, { angle: number; r: number; face: number }> = {
+  "era-1": { angle: Math.PI * 0.75, r: 19, face: Math.PI * 0.75 },
+  "era-2": { angle: 1.36, r: 16.5, face: 2.0 },
+  "era-3": { angle: 0.92, r: 25, face: 1.8 },
+};
+/** Sources board size (m) and how many rows fit on one. */
+export const SOURCE_BOARD = { width: 7.4, height: 6.4, gap: 0.7, rows: 6 };
+
+/** How many boards a list needs. */
+export const sourceBoardCount = (rows: number) => Math.max(1, Math.ceil(rows / SOURCE_BOARD.rows));
+
 /* --------------------------------------------------------------- types */
 
 export type IslandGeometry = {
@@ -151,7 +169,12 @@ export type PlacedBuilding = {
   hosts: FigureLookInput[];
   /** The building's own video, shown muted on a screen above it while the car is close. */
   videoSrc?: string;
+  /** The island's Sources boards (its References building): one row per source. Stands in the island's centre. */
+  sources?: SourceRow[];
 };
+
+/** One line on a Sources board, taken from the source's APA entry (lib/content/references.ts). */
+export type SourceRow = { who: string; title: string };
 
 export type PlacedInsight = {
   id: string;
@@ -207,8 +230,33 @@ export type PlacedNpc = { position: Vec3; rotationY: number; seed: number };
 /** NPCs per island (the low quality tier draws every other one). */
 export const NPCS_PER_ISLAND = 9;
 
+/** What a team member's statue sits with (content/site.ts `statue`). */
+export type StatueSymbol = "stop-button" | "light-bulb" | "robot" | "book";
+
+export type PlacedStatue = {
+  /** `team-${index}` */
+  id: string;
+  name: string;
+  role: string;
+  symbol: StatueSymbol;
+  position: Vec3;
+  rotationY: number;
+};
+
+/** The tiny team island north of The Jobs Era. Not an era: it has no road, buildings or sensors of its own era. */
+export type TeamIsland = {
+  center: Vec2;
+  radius: number;
+  bridge: BridgeGeometry;
+  statues: PlacedStatue[];
+  edgeWalls: EdgeWall[];
+  /** Fast travel: just off the bridge, facing the statues. */
+  spawn: Pose;
+};
+
 export type WorldLayout = {
   islands: Record<EraId, IslandLayout>;
+  team: TeamIsland;
   bridges: BridgeGeometry[];
   runways: Record<EraId, RunwayGeometry>;
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
@@ -228,7 +276,10 @@ export type LayoutInput = {
     comingSoon: boolean;
     hosts?: FigureLookInput[];
     videoSrc?: string;
+    sources?: SourceRow[];
   }[];
+  /** The group, from content/site.ts: one seated statue each on the team island. */
+  team: { name: string; role: string; statue?: StatueSymbol }[];
   insights: { id: string; eraId: EraId; kind: "benefit" | "risk" | "danger"; buildingId?: string }[];
 };
 
@@ -276,6 +327,7 @@ function islandGeometry(eraId: EraId): IslandGeometry {
     // You arrive by the bridge from the previous island; The Past has only one bridge.
     if (b === eraId || entryAngle === null) entryAngle = angle;
   }
+  if (eraId === TEAM.host) bridgeAngles.push(TEAM.angle);
   return {
     eraId,
     center: s.center,
@@ -382,7 +434,7 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
   const reserveCentre = SPECS[eraId].reserveCentre;
 
   // Buildings: outer ring first, then the inner ring (not on The Future, whose centre is the campus).
-  const own = input.buildings.filter((b) => b.eraId === eraId).sort((a, b) => a.order - b.order);
+  const own = input.buildings.filter((b) => b.eraId === eraId && !b.sources).sort((a, b) => a.order - b.order);
   const spacing = plot.width + 4;
   const rOuter = rr + rw / 2 + 1.5 + plot.depth / 2;
   const rInner = rr - rw / 2 - 1.5 - plot.depth / 2;
@@ -438,6 +490,36 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
       videoSrc: b.videoSrc,
     };
   });
+
+  // Sources boards: the island's References building, in the centre area instead of on the ring.
+  for (const b of input.buildings) {
+    if (b.eraId !== eraId || !b.sources) continue;
+    const spot = SOURCES_SPOT[eraId];
+    const position = polar(center, spot.angle, spot.r);
+    const fx = Math.cos(spot.face);
+    const fz = Math.sin(spot.face);
+    const n = sourceBoardCount(b.sources.length);
+    const width = n * SOURCE_BOARD.width + (n - 1) * SOURCE_BOARD.gap;
+    const at = (d: number): Vec3 => [position[0] + fx * d, 1.2, position[2] + fz * d];
+    const stop = at(9.5);
+    buildings.push({
+      id: b.id,
+      eraId,
+      order: b.order,
+      kind: b.kind,
+      comingSoon: b.comingSoon,
+      colourIndex: buildings.length,
+      ring: "inner",
+      angle: spot.angle,
+      position,
+      rotationY: headingOf(fx, fz),
+      plot: { width, depth: 4 },
+      sensor: { position: at(5), radius: 7.5 },
+      approach: { x: stop[0], y: 1.2, z: stop[2], heading: headingOf(-fx, -fz) },
+      hosts: [],
+      sources: b.sources,
+    });
+  }
 
   // Anchor figures: inner lawn, just after the arrival point, facing the road.
   const era = input.eras.find((e) => e.id === eraId);
@@ -596,7 +678,64 @@ function placeNpcs(island: IslandLayout): PlacedNpc[] {
   return out;
 }
 
-/** The whole world: three islands + bridges + bounds. Serialisable, so the server page can compute it. */
+function teamIsland(team: LayoutInput["team"]): TeamIsland {
+  const host = SPECS[TEAM.host];
+  const dir: Vec2 = [Math.cos(TEAM.angle), Math.sin(TEAM.angle)];
+  const along = (d: number): Vec2 => [host.center[0] + dir[0] * d, host.center[1] + dir[1] * d];
+  const center = along(host.radius + TEAM.gap + TEAM.radius);
+  const start = along(host.radius - 3);
+  const end = along(host.radius + TEAM.gap + 3);
+  const bridge: BridgeGeometry = {
+    id: "team",
+    from: TEAM.host,
+    to: TEAM.host,
+    start,
+    end,
+    center: [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2],
+    length: Math.hypot(end[0] - start[0], end[1] - start[1]),
+    width: BRIDGE_WIDTH,
+    rotationY: headingOf(dir[0], dir[1]),
+  };
+  // Statues in a shallow arc on the far side, all facing the bridge you arrive by.
+  const back = wrapAngle(TEAM.angle + Math.PI);
+  const statues = team.map((m, i): PlacedStatue => {
+    const offset = (i - (team.length - 1) / 2) * Math.min(0.95, 2.6 / Math.max(1, team.length));
+    const position = polar(center, TEAM.angle + offset, TEAM.radius * 0.5);
+    const focus = polar(center, back, TEAM.radius * 0.5);
+    return {
+      id: `team-${i}`,
+      name: m.name,
+      role: m.role,
+      symbol: m.statue ?? "book",
+      position,
+      rotationY: headingOf(focus[0] - position[0], focus[2] - position[2]),
+    };
+  });
+  const segments = 32;
+  const edgeR = TEAM.radius - 0.6;
+  const clear = (BRIDGE_WIDTH / 2 + 0.4) / edgeR;
+  const edgeWalls: EdgeWall[] = [];
+  for (let i = 0; i < segments; i++) {
+    const angle = (i / segments) * TAU;
+    if (angleDiff(angle, back) < clear + Math.PI / segments) continue;
+    edgeWalls.push({
+      position: polar(center, angle, edgeR, 0.6),
+      rotationY: headingOf(-Math.sin(angle), Math.cos(angle)),
+      length: ((TAU * edgeR) / segments) * 1.05,
+    });
+  }
+  const arrive = polar(center, back, TEAM.radius * 0.6, 1.2);
+  return {
+    center,
+    radius: TEAM.radius,
+    bridge,
+    statues,
+    edgeWalls,
+    spawn: { x: arrive[0], y: 1.2, z: arrive[2], heading: headingOf(dir[0], dir[1]) },
+  };
+}
+
+/** The whole world: three islands + the team island + bridges + bounds. Serialisable, so the server page can compute it. */
 export function layoutWorld(input: LayoutInput): WorldLayout {
   const islands = Object.fromEntries(ERA_ORDER.map((id) => [id, layoutIsland(id, input)])) as Record<
     EraId,
@@ -616,6 +755,7 @@ export function layoutWorld(input: LayoutInput): WorldLayout {
   const margin = RUNWAY.length + 44;
   return {
     islands,
+    team: teamIsland(input.team),
     bridges,
     runways,
     bounds: {

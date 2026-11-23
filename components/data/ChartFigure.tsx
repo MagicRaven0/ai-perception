@@ -5,10 +5,10 @@ import type { Dataset } from "@/lib/content/schema";
 import { BarChart } from "./BarChart";
 import { LineChart } from "./LineChart";
 import { DataTable } from "./DataTable";
-import { SourceLine, type SourceRef } from "./SourceLine";
+import { InTextCite, type SourceRef } from "@/components/content/InTextCite";
 import { datasetContext } from "@/lib/content/format";
 
-/** A chart with its honest context: question wording, who was asked, a table twin and the source. */
+/** A chart with its honest context: question wording, who was asked, a table twin and an in-text citation. */
 export function ChartFigure({ dataset, source }: { dataset: Dataset; source?: SourceRef }) {
   const [view, setView] = useState<"chart" | "table">("chart");
   const tableId = useId();
@@ -32,7 +32,8 @@ export function ChartFigure({ dataset, source }: { dataset: Dataset; source?: So
           </span>
           <span className="mt-1 block text-sm text-chart-text">
             {dataset.population}
-            {dataset.sampleSize ? ` · n = ${dataset.sampleSize.toLocaleString()}` : ""} · {dataset.fieldDates}
+            {dataset.sampleSize ? ` · n = ${dataset.sampleSize.toLocaleString()}` : ""} · {dataset.fieldDates}{" "}
+            {source ? <InTextCite sources={[source]} /> : "(source to be added)"}
           </span>
         </figcaption>
         <button
@@ -55,8 +56,6 @@ export function ChartFigure({ dataset, source }: { dataset: Dataset; source?: So
           <BarChart dataset={dataset} />
         )}
       </div>
-
-      <SourceLine source={source} />
     </figure>
   );
 }

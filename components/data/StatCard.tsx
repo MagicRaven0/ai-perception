@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SourceLine, type SourceRef } from "./SourceLine";
+import { InTextCite, type SourceRef } from "@/components/content/InTextCite";
 import { formatValue } from "@/lib/content/format";
 
-/** Ceros-style stat: one huge number (counts up once when visible), a one-line label, the source. */
+/** Ceros-style stat: one huge number (counts up once when visible), a one-line label, its context and citation. */
 export function StatCard({
   value,
   unit,
@@ -61,8 +61,9 @@ export function StatCard({
         <span className="sr-only">{formatValue(value, unit)}</span>
       </p>
       <p className="max-w-md text-lg text-snow">{label}</p>
-      {context && <p className="max-w-2xl text-sm text-chart-text">{context}</p>}
-      <SourceLine source={source} />
+      <p className="max-w-2xl text-sm text-chart-text">
+        {context} {source ? <InTextCite sources={[source]} /> : "(source to be added)"}.
+      </p>
     </div>
   );
 }

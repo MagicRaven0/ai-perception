@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { comparisons, eras, getSource, site } from "@/lib/content";
+import { comparisons, eras, site } from "@/lib/content";
 import { eraYears } from "@/lib/content/labels";
 import { TopNav } from "@/components/layout/TopNav";
 import { Footer } from "@/components/layout/Footer";
@@ -58,18 +58,9 @@ export default function ReadPage() {
             <h2 id="then-and-now" className="font-display text-4xl font-medium tracking-headline md:text-6xl">
               Then and now
             </h2>
-            {comparisons.map((c) => {
-              const ls = c.left.sourceId ? getSource(c.left.sourceId) : undefined;
-              const rs = c.right.sourceId ? getSource(c.right.sourceId) : undefined;
-              return (
-                <ComparisonSlider
-                  key={c.id}
-                  left={{ ...c.left, source: ls && { apa: ls.apa, url: ls.url } }}
-                  right={{ ...c.right, source: rs && { apa: rs.apa, url: rs.url } }}
-                  takeaway={c.takeaway}
-                />
-              );
-            })}
+            {comparisons.map((c) => (
+              <ComparisonSlider key={c.id} left={c.left} right={c.right} takeaway={c.takeaway} />
+            ))}
           </div>
         </section>
 

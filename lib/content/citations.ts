@@ -8,6 +8,19 @@
 
 export type CitationMatcher = { id: string; author: string; year: string; re: RegExp; narrative: RegExp };
 
+/**
+ * The APA in-text form of a reference: "Kennedy et al., 2025", "Simon & Newell, 1958", "IBM, n.d.".
+ * Null for placeholders and entries without an author and year.
+ */
+export function inTextCitation(apa: string): string | null {
+  const m = apa.match(/^(.+?)\.?\s\((n\.d\.|\d{4})/);
+  if (!m || apa.startsWith("TODO")) return null;
+  const authors = m[1]!.split(/, & |, (?=[A-Z][^,]+, [A-Z]\.)/);
+  const surname = (a: string) => a.replace(/,(\s[A-Z]\.?)+$/, "");
+  const more = authors.length === 2 ? ` & ${surname(authors[1]!)}` : authors.length > 2 ? " et al." : "";
+  return `${surname(authors[0]!)}${more}, ${m[2]}`;
+}
+
 /** A stretch of text that cites one source. `end` is exclusive. */
 export type CitationSpan = { start: number; end: number; id: string };
 
@@ -31,10 +44,7 @@ export function citationMatchers(sources: { id: string; apa: string }[]): Citati
       // Inside one parenthetical part: author, then the year within a short distance.
       re: new RegExp(`(?<![\\w-])${a}(?![\\w-])[^();]{0,60}?${y}`),
       // Narrative: "Bengio (2025)", "Simon and Newell (1958)", "McCarthy et al. (1955, p. 1)".
-      narrative: new RegExp(
-        `(?<![\\w-])${a}(?:\\s+(?:and|&)\\s+[A-Z][\\w'-]+|\\s+et al\\.)?\\s+\\(${y}[^()]*\\)`,
-        "g",
-      ),
+      narrative: new RegExp(`(?<![\\w-])${a}(?:\\s+(?:and|&)\\s+[A-Z][\\w'-]+|\\s+et al\\.)?\\s+\\(${y}[^()]*\\)`, "g"),
     });
   }
   return out;

@@ -16,7 +16,7 @@ import {
   Source,
   type EraId,
 } from "./schema";
-import { citationMatchers } from "./citations";
+import { citationMatchers, inTextCitation } from "./citations";
 import { site as rawSite } from "@/content/site";
 import { about as rawAbout } from "@/content/about";
 import { eras as rawEras } from "@/content/eras";
@@ -86,12 +86,18 @@ export function getSource(id: string) {
   return sources.find((s) => s.id === id);
 }
 
-/** The chart a building shows inside it (content `media.datasetId`), with its source; null when none. */
+/** A source as a linked in-text citation (<InTextCite>); undefined when it is missing or still a placeholder. */
+export function sourceRef(id: string | undefined) {
+  const s = id ? getSource(id) : undefined;
+  const cite = s && inTextCitation(s.apa);
+  return s && cite ? { id: s.id, cite } : undefined;
+}
+
+/** The chart a building shows inside it (content `media.datasetId`), with its citation; null when none. */
 export function buildingChart(b: Pick<Building, "media">) {
   const dataset = b.media.datasetId ? datasets.find((d) => d.id === b.media.datasetId) : undefined;
   if (!dataset) return null;
-  const s = dataset.sourceId ? getSource(dataset.sourceId) : undefined;
-  return { dataset, source: s ? { apa: s.apa, url: s.url } : undefined };
+  return { dataset, source: sourceRef(dataset.sourceId) };
 }
 
 export function getImage(id: string) {

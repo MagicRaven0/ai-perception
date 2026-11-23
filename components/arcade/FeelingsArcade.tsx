@@ -2,19 +2,13 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { FeelingsArcadeConfig } from "@/lib/content/arcades";
-import { SourceLine } from "@/components/data/SourceLine";
+import { InTextCite } from "@/components/content/InTextCite";
 
 /**
  * "How do you feel about AI?": a three-step slider for the visitor's own feeling, then their answer next to the
  * Pew results. The answer lives only in this component's state: nothing is stored, logged or sent.
  */
-export function FeelingsArcade({
-  config,
-  showSources = true,
-}: {
-  config: FeelingsArcadeConfig;
-  showSources?: boolean;
-}) {
+export function FeelingsArcade({ config }: { config: FeelingsArcadeConfig }) {
   const [choice, setChoice] = useState(1);
   const [compared, setCompared] = useState(false);
   const id = useId();
@@ -79,7 +73,8 @@ export function FeelingsArcade({
         {compared && (
           <div className="flex flex-col gap-4">
             <p ref={result} tabIndex={-1} className="text-lg focus:outline-none">
-              You: <strong className="font-semibold">{config.choices[choice].label}</strong>
+              You: <strong className="font-semibold">{config.choices[choice].label}</strong>. Here is how people
+              answered in the polls <InTextCite sources={config.sources} />.
             </p>
             <table className="w-full border-collapse text-left text-sm">
               <caption className="sr-only">Your answer compared with poll results</caption>
@@ -114,7 +109,6 @@ export function FeelingsArcade({
       </div>
 
       <p className="text-xs text-muted">Your answer stays on this page. Nothing is saved or sent.</p>
-      {showSources && config.sources.map((s) => <SourceLine key={s.url} source={s} tone="light" />)}
     </div>
   );
 }

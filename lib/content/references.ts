@@ -1,5 +1,5 @@
 import { buildings, citations, comparisons, datasets, eras, insights, sources } from "./index";
-import { citedSourceIds } from "./citations";
+import { citedSourceIds, inTextCitation } from "./citations";
 import { isPlaceholder } from "./placeholder";
 import type { EraId, Source } from "./schema";
 
@@ -50,13 +50,11 @@ export function referencesForEra(eraId: EraId): Source[] {
  */
 export function sourceRow(s: Pick<Source, "apa">): { who: string; title: string } {
   if (isPlaceholder(s.apa)) return { who: "Coming soon", title: "" };
-  const m = s.apa.match(/^(.+?)\.?\s\((n\.d\.|\d{4})[^)]*\)\.\s(.+)$/);
-  if (!m) return { who: s.apa, title: "" };
-  const authors = m[1]!.split(/, & |, (?=[A-Z][^,]+, [A-Z]\.)/);
-  const surname = (a: string) => a.replace(/,(\s[A-Z]\.?)+$/, "");
-  const more = authors.length === 2 ? ` & ${surname(authors[1]!)}` : authors.length > 2 ? " et al." : "";
-  const who = `${surname(authors[0]!)}${more} (${m[2]})`;
-  let title = m[3]!
+  const m = s.apa.match(/^.+?\.?\s\((?:n\.d\.|\d{4})[^)]*\)\.\s(.+)$/);
+  const cite = inTextCitation(s.apa);
+  if (!m || !cite) return { who: s.apa, title: "" };
+  const who = cite.replace(/, (n\.d\.|\d{4})$/, " ($1)");
+  let title = m[1]!
     .replace(/\s*https?:\/\/\S+$/, "")
     .replace(/\s*Retrieved\s.*$/, "")
     .replace(/\s*\[[^\]]*\]/g, "")

@@ -3,11 +3,11 @@ import { ContentText } from "@/components/content/ContentText";
 import { datasetContext } from "@/lib/content/format";
 import { ChartFigure } from "./ChartFigure";
 import { StatCard } from "./StatCard";
-import type { SourceRef } from "./SourceLine";
+import type { SourceRef } from "@/components/content/InTextCite";
 
 /**
  * One dataset as the right view: hatched "Data coming" (placeholder), a big stat, or a chart with its table twin
- * and source line. Client-safe (no server imports), so the era data band, the 3D drawer and the 2D building
+ * and in-text citation. Client-safe (no server imports), so the era data band, the 3D drawer and the 2D building
  * section all draw a dataset the same way. Colours are for a dark surface: put it on bg-night (see EmbeddedChart).
  */
 export function DatasetView({ dataset: d, source }: { dataset: Dataset; source?: SourceRef }) {
@@ -34,7 +34,7 @@ export function EmbeddedChart({ dataset, source }: { dataset: Dataset; source?: 
 function statContext(d: Dataset): string {
   const c = datasetContext(d.questionWording);
   const lead = c.kind === "note" ? `Note: ${c.text}` : `Question: “${c.text}”`;
-  return `${lead} ${d.population}${d.sampleSize ? `, n = ${d.sampleSize.toLocaleString()}` : ""}, ${d.fieldDates}.`;
+  return `${lead} ${d.population}${d.sampleSize ? `, n = ${d.sampleSize.toLocaleString()}` : ""}, ${d.fieldDates}`;
 }
 
 function DataComing({ title }: { title: string }) {

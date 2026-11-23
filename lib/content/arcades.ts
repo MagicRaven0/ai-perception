@@ -1,6 +1,6 @@
 import "server-only";
-import { datasets, getSource } from "@/lib/content";
-import type { SourceRef } from "@/components/data/SourceLine";
+import { datasets, sourceRef } from "@/lib/content";
+import type { SourceRef } from "@/components/content/InTextCite";
 
 /**
  * The two "experience" buildings that are interactive (docs/NOTES_FROM_PROJECT_CLAUDE.md, round 2 note 2).
@@ -37,8 +37,8 @@ export type FeelingsArcadeConfig = {
 export type ArcadeConfig = PredictionsArcadeConfig | FeelingsArcadeConfig;
 
 const ref = (id: string): SourceRef[] => {
-  const s = getSource(id);
-  return s ? [{ apa: s.apa, url: s.url }] : [];
+  const s = sourceRef(id);
+  return s ? [s] : [];
 };
 
 const CHOICES = ["More concerned than excited", "Equally concerned and excited", "More excited than concerned"];

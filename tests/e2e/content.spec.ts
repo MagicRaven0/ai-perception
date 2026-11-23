@@ -59,6 +59,28 @@ test("each era page ends with its references, and citations link to /sources", a
   await expect(page.locator(href!.replace("/sources", ""))).toBeVisible();
 });
 
+test("full references only appear in the sources areas; charts carry an in-text citation", async ({ page }) => {
+  await page.goto("/read");
+  await expect(page.getByText(/^Source:/)).toHaveCount(0);
+  // No outside link to a source, and no full APA entry, anywhere above the reference lists.
+  const strayLinks = await page.evaluate(
+    (urls) =>
+      [...document.querySelectorAll("main a")].filter(
+        (a) =>
+          urls.includes(a.getAttribute("href") ?? "") &&
+          !a.closest("[data-reference-group]") &&
+          a.textContent !== "Open the document",
+      ).length,
+    sources.filter((s) => /^https?:/.test(s.url)).map((s) => s.url),
+  );
+  expect(strayLinks).toBe(0);
+  const chart = page.locator("#experts-vs-public [data-embedded-chart='experts-vs-public']");
+  await expect(chart.getByRole("link", { name: "McClain et al., 2025" })).toHaveAttribute(
+    "href",
+    "/sources#mcclain-2025",
+  );
+});
+
 test("round 5: buildings show their own charts as grouped bars with a table twin, not twice on the page", async ({
   page,
 }) => {
@@ -117,7 +139,9 @@ test("videos in the long-read: controls, loop, credited, and nothing downloads b
   }
   expect(asked).toEqual([]);
   await page.goto("/about");
-  await expect(page.getByText("made with Claude (Anthropic)")).toHaveCount(credits.filter((c) => c.kind === "video").length);
+  await expect(page.getByText("made with Claude (Anthropic)")).toHaveCount(
+    credits.filter((c) => c.kind === "video").length,
+  );
 });
 
 test("every photo is shown with its credit line, and all are in the About credits", async ({ page }) => {

@@ -2,19 +2,13 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { PredictionsArcadeConfig } from "@/lib/content/arcades";
-import { SourceLine } from "@/components/data/SourceLine";
+import { InTextCite } from "@/components/content/InTextCite";
 
 /**
  * "Guess the year": the visitor picks the year a computer first beat the world chess champion, then sees the
  * answer next to the 1958 prediction. Native range input + button, so it works with keyboard only.
  */
-export function PredictionsArcade({
-  config,
-  showSources = true,
-}: {
-  config: PredictionsArcadeConfig;
-  showSources?: boolean;
-}) {
+export function PredictionsArcade({ config }: { config: PredictionsArcadeConfig }) {
   const { predictedIn, withinYears, answerYear } = config;
   const promised = predictedIn + withinYears;
   const min = predictedIn;
@@ -101,7 +95,8 @@ export function PredictionsArcade({
               max={max}
             />
             <p className="text-muted">
-              {config.answerText} The prediction allowed {withinYears} years; it took {answerYear - predictedIn}.
+              {config.answerText} The prediction allowed {withinYears} years; it took {answerYear - predictedIn}{" "}
+              <InTextCite sources={config.sources} />.
             </p>
             <button
               type="button"
@@ -113,8 +108,6 @@ export function PredictionsArcade({
           </div>
         )}
       </div>
-
-      {showSources && config.sources.map((s) => <SourceLine key={s.url} source={s} tone="light" />)}
     </div>
   );
 }

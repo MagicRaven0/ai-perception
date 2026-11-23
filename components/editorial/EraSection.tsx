@@ -7,7 +7,6 @@ import {
   episodesForEra,
   eras,
   getEpisode,
-  getSource,
   insightsForEra,
 } from "@/lib/content";
 import { BUILDING_LABEL, INSIGHT_LABEL, eraYears } from "@/lib/content/labels";
@@ -209,7 +208,6 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
   const comingSoon = isPlaceholder(b.long);
   const episode = b.media.episodeId ? getEpisode(b.media.episodeId) : undefined;
   const track = episode ? toTrack(episode, eras) : null;
-  const sources = b.sourceIds.map(getSource).filter((s) => s !== undefined);
   const summaryText = b.summarizable ? itemText(b.id) : null;
   const arcade = arcadeFor(b.id);
   const chart = buildingChart(b);
@@ -234,7 +232,7 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
         {/* Interactive first: the text below gives the answer away. */}
         {arcade && (
           <div className="max-w-[68ch]">
-            <Arcade config={arcade} showSources={false} />
+            <Arcade config={arcade} />
           </div>
         )}
         {comingSoon ? (
@@ -291,20 +289,8 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
           </ul>
         )}
 
-        {(sources.length > 0 || b.groupCommentary) && (
-          <p className="font-mono text-xs leading-relaxed wrap-anywhere text-muted">
-            {b.groupCommentary && sources.length === 0
-              ? "Group commentary"
-              : sources.map((s, i) => (
-                  <span key={s.id}>
-                    {i > 0 && "; "}
-                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
-                      {s.apa}
-                    </a>
-                  </span>
-                ))}
-          </p>
-        )}
+        {/* Full references are only in "References for this era"; the text carries its in-text citations. */}
+        {b.groupCommentary && b.sourceIds.length === 0 && <p className="text-sm text-muted">Group commentary</p>}
       </div>
     </article>
   );
@@ -350,9 +336,9 @@ function InsightGrid({ insights }: { insights: Insight[] }) {
             <span className="text-lg leading-snug">
               <ContentText value={i.text} />
             </span>
-            <span className="mt-auto font-mono text-xs text-muted">
-              {i.groupCommentary && i.sourceIds.length === 0 ? "Group commentary" : `${i.sourceIds.length} source(s)`}
-            </span>
+            {i.groupCommentary && i.sourceIds.length === 0 && (
+              <span className="mt-auto text-sm text-muted">Group commentary</span>
+            )}
           </li>
         ))}
       </ul>

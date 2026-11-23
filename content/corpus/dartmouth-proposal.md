@@ -9,4 +9,4 @@ The proposal asked for a two-month study by about ten people, to be held in the 
 
 The proposal also covered topics such as how computers could be programmed to use language, networks of artificial neurons, self-improvement, abstraction, and the role of randomness in creative thinking. It asked the Rockefeller Foundation to pay for the participants who were not funded by their own organisations (McCarthy et al., 1955).
 
-The workshop took place in 1956 and was organised by McCarthy. Dartmouth College describes it as the birth of artificial intelligence as a field of research and credits the proposal with coining the term (Dartmouth College, n.d.).
+The workshop took place in 1956 and was organised by McCarthy. Dartmouth College describes it as the birth of artificial intelligence as a field of research and credits the proposal with coining the term (Dartmouth College, n.d.). The term therefore comes from a proposal with four authors; our research does not say which of the four chose the words.

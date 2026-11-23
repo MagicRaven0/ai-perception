@@ -5,7 +5,8 @@
  * verdict is a person's (or a reviewing Claude's) judgement against the expected answer, written into
  * docs/CHATBOT_TEST_RESULTS.md afterwards.
  *
- * Run: npm run test:chatbot -- [out.json] [persona]   (needs AI credentials, like npm run gen-ai)
+ * Run: npm run test:chatbot -- [out.json] [persona | tests]   (needs AI credentials, like npm run gen-ai)
+ * `tests` picks single questions, e.g. guide:4,guide:5,analyst-2026:25
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -55,9 +56,10 @@ async function main() {
     process.exit(1);
   }
   const [outArg, only] = process.argv.slice(2);
+  const picked = only?.split(",");
   const out = outArg ?? join(process.cwd(), "chatbot-test-results.json");
   const tests = parseTests(readFileSync(join(process.cwd(), "docs", "CHATBOT_TESTS.md"), "utf8")).filter(
-    (t) => !only || t.persona === only,
+    (t) => !picked || picked.includes(t.persona) || picked.includes(`${t.persona}:${t.n}`),
   );
   const corpus = new Map(getCorpus().map((c) => [c.id, c]));
   const results = [];

@@ -28,7 +28,7 @@
 
 ### What the three fixes did
 1. **1956 researcher:** all five refusals are in character. Later events are mostly told as news from the future, but **the rule is still broken twice**: researcher 2 (the 1958 Perceptron in "my day") and 14 (the 1958 chess prediction among "our predictions").
-2. **[NONE]:** every re-run answer that says something is not in our research ends with it. Researcher 14 also ends with it although it answers the question.
+2. **[NONE]:** every re-run answer that says something is not in our research ends with it. Researcher 14 also ends with it although it answers the question. Since the run, the page ignores a stray [NONE] on an answer that cites sources and does not say in words that something is missing (`lib/ai/not-found.ts`), so researcher 14 would no longer show "Not found". The verdict is unchanged.
 3. **Yes/no questions:** analyst 25 now says no. Other answers can still say more than the cited note (guide 5, analyst 10).
 
 ### Still wrong or incomplete

@@ -5,9 +5,9 @@ import { isPlaceholder } from "@/lib/content/placeholder";
 import { corpusForPrompt } from "./corpus";
 import { PERSONAS, type PersonaId, type SummaryMode } from "./personas";
 import { INSTRUCTIONS_SUFFIX } from "./models";
+import { NOT_FOUND } from "./not-found";
 
-/** Marker the model must output when the answer is not in the corpus; the UI turns it into a label. */
-export const NOT_FOUND = "[NONE]";
+export { NOT_FOUND };
 
 const BASE = `You are the AI research guide on "${site.title}", a WRI-101 student project at the American University of Sharjah.
 

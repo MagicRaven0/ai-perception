@@ -13,8 +13,8 @@ The prompts in `docs/CONTENT_PROMPTS.md` produce most of the text items in the r
 | 3 | Rhetorical situation answers (Purpose especially) | `content/about.ts` | 2 | **Drafted:** all six + genre rationale (updated for three essays) |
 | 4 | Era titles, 2–3 essay paragraphs each, "supports our argument" paragraph | `content/eras.ts` | 3 | **Drafted:** all three eras; era 3 now uses all three essays |
 | 5 | Roles + views for McCarthy, Jobs, Bengio, Professor Aqeel | `content/eras.ts` | 3 | **Drafted:** McCarthy, Jobs, Bengio, Jensen Huang (new, from Abdulrahman's essay). **Missing:** Aqeel (after the interview) |
-| 6 | 4–6 buildings per island: title, teaser, full text, sources | `content/buildings.ts` | 4 | **Drafted:** 20 buildings (5 / 5 / 10). 4 still "coming soon" until recorded: 3 podcasts + the interview |
-| 7 | Benefit / risk / danger points (previous project) | `content/insights.ts` | 5 | **Drafted:** 16 points (3 / 4 / 9); era 3 uses all three essays and the AI-and-jobs project |
+| 6 | 4–6 buildings per island: title, teaser, full text, sources | `content/buildings.ts` | 4 | **Drafted:** 22 buildings (6 / 6 / 10). 4 still "coming soon" until recorded: 3 podcasts + the interview |
+| 7 | Benefit / risk / danger points (previous project) | `content/insights.ts` | 5 | **Drafted:** 18 points (4 / 5 / 9); era 3 uses all three essays and the AI-and-jobs project |
 | 8 | Real poll numbers with exact question wording, sample, dates | `content/datasets.ts` | 6 | **Done:** 9 verified datasets (5 from Pew 2025, experts vs public from Pew 2024, 2 from Witt, 1 from Palisade via Live Science). Nothing estimated |
 | 9 | 1956 prediction vs today comparison(s) | `content/comparisons.ts` | 6 | **Drafted:** 4 comparisons |
 | 10 | Research notes for the chatbot | `content/corpus/*.md` | 8 | **Drafted:** 22 notes, including one per group essay |
@@ -33,7 +33,7 @@ The prompts in `docs/CONTENT_PROMPTS.md` produce most of the text items in the r
 | --- | --- | --- | --- |
 | 16 | Videos for "cinema" buildings | Upload to YouTube as **unlisted**, send the video id | **To film.** Storyboards, narration and legal image sources for all 3 cinemas in `docs/VIDEO_PLANS.md` |
 | 17 | Animations for "gallery" buildings | Short video (YouTube unlisted) or image sequence | **To make.** 60-second plan for `interface-gallery` in `docs/VIDEO_PLANS.md` (our own icons, no Apple designs) |
-| 18 | Photos for figure billboards (McCarthy, Jobs, Bengio, Huang, Professor Aqeel) | Licensed (e.g. Wikimedia Commons) with exact credit line, or Professor Aqeel's own photo with his OK | **Found:** 3 CC BY-SA photos with credit lines in `docs/PHOTOS.md` (Claude Code downloads them). Huang: no free photo found yet. Aqeel's photo: ask him |
+| 18 | Photos for figure billboards (McCarthy, Jobs, Bengio, Huang, Professor Aqeel) | Licensed (e.g. Wikimedia Commons) with exact credit line, or Professor Aqeel's own photo with his OK | **Found:** 3 CC BY-SA photos with credit lines in `docs/PHOTOS.md` (Claude Code downloads them). Round 6: Huang found, plus 3 building photos (IBM 704, Perceptron, Deep Blue); 7 files in total. Aqeel's photo: ask him |
 | 19 | Figure "looks" (outfit colours + one prop, faceless) | Comes from Prompts 3 and 7 | **Done:** in `content/eras.ts` and `content/episodes.ts` |
 | 20 | Reference images for the islands (optional) | Only if you want a specific look changed | Optional |
 

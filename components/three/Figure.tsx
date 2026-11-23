@@ -190,9 +190,12 @@ function Photo({ src, w, h }: { src: string; w: number; h: number }) {
   const texture = useTexture(src, (t) => {
     (Array.isArray(t) ? t : [t]).forEach((x) => (x.colorSpace = THREE.SRGBColorSpace));
   });
+  // Fitted inside the frame, never stretched or cropped (docs/PHOTOS.md: no further cropping).
+  const { width, height } = texture.image as { width: number; height: number };
+  const k = Math.min(w / width, h / height);
   return (
     <mesh>
-      <planeGeometry args={[w, h]} />
+      <planeGeometry args={[width * k, height * k]} />
       <meshBasicMaterial map={texture} toneMapped={false} />
     </mesh>
   );

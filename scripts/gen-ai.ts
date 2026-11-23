@@ -10,7 +10,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { generateText } from "ai";
+import { pacedGenerate } from "./ai-call";
 import { corpusForPrompt, itemText, summarizableItemIds } from "../lib/ai/corpus";
 import { chatInstructions, summaryInstructions } from "../lib/ai/prompts";
 import { CHAT_MODEL, chatModel, estimateCost, hasAiCredentials, stripThinking } from "../lib/ai/models";
@@ -44,7 +44,7 @@ async function main() {
     const hash = textHash(item.text);
     for (const mode of SUMMARY_MODES) {
       if (summaries[id]?.[mode]?.hash === hash) continue;
-      const { text, totalUsage } = await generateText({
+      const { text, totalUsage } = await pacedGenerate({
         model: chatModel(),
         instructions: summaryInstructions(mode),
         prompt: `TEXT (from the section "${item.title}"):\n${item.text}`,
@@ -63,6 +63,7 @@ async function main() {
         generatedAt: now,
         checked: false,
       };
+      write("summaries.json", summaries); // after each one: a failed run keeps what it has
       console.log(`summary  ${id} / ${mode}`);
     }
   }
@@ -84,7 +85,7 @@ async function main() {
         kept[q] = old;
         continue;
       }
-      const { text, totalUsage } = await generateText({
+      const { text, totalUsage } = await pacedGenerate({
         model: chatModel(),
         instructions: chatInstructions(persona),
         prompt: q,
@@ -97,6 +98,7 @@ async function main() {
         continue;
       }
       kept[q] = { answer: stripThinking(text), hash: corpusHash, model: CHAT_MODEL, generatedAt: now, checked: false };
+      write("answers.json", { ...answers, [persona]: kept });
       console.log(`answer   ${persona}: ${q}`);
     }
     answers[persona] = kept;

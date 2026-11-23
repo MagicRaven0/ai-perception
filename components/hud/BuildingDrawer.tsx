@@ -11,7 +11,10 @@ import { buildingName } from "./InteractPrompt";
 import { useDialog } from "./useDialog";
 import { SpeakerList } from "@/components/audio/SpeakerList";
 import { Arcade } from "@/components/arcade/Arcade";
-import { ReferenceList } from "@/components/content/ReferenceList";
+import { CreditedImage } from "@/components/content/CreditedImage";
+import { CreditLine } from "@/components/content/CreditLine";
+import { ReferenceGroups } from "@/components/content/ReferenceGroups";
+import { BuildingVideo } from "@/components/media/BuildingVideo";
 import { EmbeddedChart } from "@/components/data/DatasetView";
 
 /**
@@ -87,13 +90,22 @@ function Drawer({ b, era }: { b: ExploreBuilding; era?: ExploreEra }) {
           </p>
         )}
 
+        {b.video ? (
+          <div>
+            <BuildingVideo video={b.video} inside />
+            {b.image && <CreditLine credit={{ ...b.image.credit, text: `Poster: ${b.image.credit.text}` }} />}
+          </div>
+        ) : (
+          b.image && <CreditedImage image={b.image} sizes="(min-width: 768px) 372px, 100vw" />
+        )}
+
         {b.arcade && <Arcade config={b.arcade} />}
 
         {b.chart && <EmbeddedChart dataset={b.chart.dataset} source={b.chart.source} />}
 
         {b.references &&
           (b.references.length > 0 ? (
-            <ReferenceList items={b.references} size="sm" />
+            <ReferenceGroups items={b.references} heading="h3" size="sm" />
           ) : (
             <p className="text-muted">Sources for this island are being added.</p>
           ))}

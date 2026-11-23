@@ -49,3 +49,7 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /screenshots/
+
+# voice samples and generated lines: the repo is public, never commit these
+/tools/voices/samples/
+/tools/voices/out/

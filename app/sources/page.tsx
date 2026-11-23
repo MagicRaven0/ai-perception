@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { eras, sources } from "@/lib/content";
 import { TopNav } from "@/components/layout/TopNav";
 import { Footer } from "@/components/layout/Footer";
-import { ReferenceList } from "@/components/content/ReferenceList";
+import { ReferenceGroups } from "@/components/content/ReferenceGroups";
 import { isPlaceholder } from "@/lib/content/placeholder";
 
 export const metadata: Metadata = { title: "Works cited" };
 
 export default function SourcesPage() {
-  // One APA 7 reference list, alphabetical by first author. Placeholders go last as "coming soon" boxes.
+  // APA 7, our essays' sources first, then the added ones; alphabetical by first author inside each group.
+  // Placeholders go last as "coming soon" boxes.
   const list = [...sources].sort(
     (a, b) => Number(isPlaceholder(a.apa)) - Number(isPlaceholder(b.apa)) || a.apa.localeCompare(b.apa),
   );
@@ -31,8 +32,9 @@ export default function SourcesPage() {
           <p className="mt-12 border-t border-ink pt-6 text-muted">Sources are being added.</p>
         ) : (
           <div className="mt-14">
-            <ReferenceList
+            <ReferenceGroups
               items={list}
+              heading="h2"
               anchors
               extra={(s) => eraNames(sources.find((x) => x.id === s.id)?.eraIds ?? []) || null}
             />

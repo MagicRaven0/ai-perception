@@ -23,7 +23,11 @@ import { SpeakerList } from "@/components/audio/SpeakerList";
 import { Arcade } from "@/components/arcade/Arcade";
 import { arcadeFor } from "@/lib/content/arcades";
 import { referencesBuildingId, referencesForEra } from "@/lib/content/references";
-import { ReferenceList } from "@/components/content/ReferenceList";
+import { CreditedImage } from "@/components/content/CreditedImage";
+import { CreditLine } from "@/components/content/CreditLine";
+import { ReferenceGroups } from "@/components/content/ReferenceGroups";
+import { BuildingVideo } from "@/components/media/BuildingVideo";
+import { buildingVideo, creditedImage } from "@/lib/content/media";
 import { SummarizerChips } from "@/components/ai/SummarizerChips";
 import { itemText } from "@/lib/ai/corpus";
 import { storedSummariesFor } from "@/lib/ai/summaries";
@@ -86,6 +90,7 @@ export function EraSection({ era, headingLevel = 2 }: { era: Era; headingLevel?:
 
       {/* 3. People table (LCA "counterparts" rows) */}
       <div className="mx-auto max-w-[1280px] px-6 pb-16 md:px-12">
+        <PeoplePhotos era={era} />
         <PeopleTable era={era} />
       </div>
 
@@ -134,12 +139,30 @@ export function EraSection({ era, headingLevel = 2 }: { era: Era; headingLevel?:
           References for this era
         </h3>
         {references.length > 0 ? (
-          <ReferenceList items={references} />
+          <ReferenceGroups items={references} heading="h4" />
         ) : (
           <p className="border-t border-ink pt-6 text-muted">Sources for this era are being added.</p>
         )}
       </div>
     </section>
+  );
+}
+
+/** Licensed photos of this era's people, each with its credit. Nothing until photos exist. */
+function PeoplePhotos({ era }: { era: Era }) {
+  const photos = era.anchorFigures.flatMap((f) => {
+    const image = creditedImage(f.imageId);
+    return image ? [{ name: f.name, image }] : [];
+  });
+  if (photos.length === 0) return null;
+  return (
+    <ul className="mb-10 grid grid-cols-2 gap-6 md:grid-cols-4">
+      {photos.map((p) => (
+        <li key={p.name}>
+          <CreditedImage image={p.image} sizes="(min-width: 768px) 25vw, 50vw" />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -190,6 +213,8 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
   const summaryText = b.summarizable ? itemText(b.id) : null;
   const arcade = arcadeFor(b.id);
   const chart = buildingChart(b);
+  const video = buildingVideo(b);
+  const image = creditedImage(b.media.imageId);
 
   return (
     <article id={b.id} className="grid scroll-mt-4 gap-4 border-b border-ink py-8 md:grid-cols-12 md:gap-8">
@@ -198,6 +223,14 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
         <h4 className="text-2xl leading-snug font-medium tracking-headline md:text-[1.75rem]">
           <ContentText value={b.title} />
         </h4>
+        {video ? (
+          <div className="max-w-[68ch]">
+            <BuildingVideo video={video} />
+            {image && <CreditLine credit={{ ...image.credit, text: `Poster: ${image.credit.text}` }} />}
+          </div>
+        ) : (
+          image && <CreditedImage image={image} sizes="(min-width: 768px) 544px, 100vw" className="max-w-[34rem]" />
+        )}
         {/* Interactive first: the text below gives the answer away. */}
         {arcade && (
           <div className="max-w-[68ch]">

@@ -1,8 +1,9 @@
 import "server-only";
 import { arcadeFor } from "./arcades";
 import { referencesBuildingId, referencesForEra } from "./references";
-import { buildingChart, buildings, eras, getEpisode, getImage, insights } from "./index";
+import { buildingChart, buildings, eras, getEpisode, insights } from "./index";
 import { BUILDING_LABEL, eraYears, INSIGHT_LABEL } from "./labels";
+import { buildingVideo, creditedImage } from "./media";
 import { isPlaceholder } from "./placeholder";
 import { toTrack } from "@/lib/audio/track";
 import { layoutWorld } from "@/lib/three/layout";
@@ -25,7 +26,7 @@ export function buildExploreData(): ExploreData {
     eras: eras.map((e) => ({
       id: e.id,
       anchorFigures: e.anchorFigures.map((f) => {
-        const img = f.imageId ? getImage(f.imageId) : undefined;
+        const img = creditedImage(f.imageId);
         return { name: f.name, role: f.role, imageSrc: img?.src, imageAlt: img?.alt, look: f.look };
       }),
     })),
@@ -37,6 +38,7 @@ export function buildExploreData(): ExploreData {
       comingSoon: isPlaceholder(b.long),
       // Podcast studios show their speakers as faceless figures by the door (one per speaker look).
       hosts: b.kind === "podcast" ? hostLooks(b.media.episodeId) : [],
+      videoSrc: buildingVideo(b)?.src,
     })).concat(
       // One generated References building per island, after the content buildings (docs/VISION.md).
       eras.map((e) => ({
@@ -46,6 +48,7 @@ export function buildExploreData(): ExploreData {
         kind: "documents" as const,
         comingSoon: false,
         hosts: [],
+        videoSrc: undefined,
       })),
     ),
     insights: insights.map((i) => ({ id: i.id, eraId: i.eraId, kind: i.kind, buildingId: i.buildingId })),
@@ -83,6 +86,8 @@ export function buildExploreData(): ExploreData {
       documentUrl: b.media.documentUrl,
       arcade: arcadeFor(b.id),
       chart: buildingChart(b),
+      video: buildingVideo(b),
+      image: creditedImage(b.media.imageId),
     };
   }
   for (const e of eras) {
@@ -100,7 +105,7 @@ export function buildExploreData(): ExploreData {
       speakers: [],
       hasVideo: false,
       arcade: null,
-      references: referencesForEra(e.id).map((s) => ({ id: s.id, apa: s.apa, url: s.url })),
+      references: referencesForEra(e.id).map((s) => ({ id: s.id, apa: s.apa, url: s.url, origin: s.origin })),
     };
   }
   for (const i of insights) {
@@ -108,7 +113,13 @@ export function buildExploreData(): ExploreData {
   }
   for (const island of Object.values(world.islands)) {
     for (const f of island.figures) {
-      data.signs[f.id] = { id: f.id, kind: "figure", label: f.name, text: f.role };
+      data.signs[f.id] = {
+        id: f.id,
+        kind: "figure",
+        label: f.name,
+        text: f.role,
+        credit: creditedImage(eras.find((e) => e.id === f.eraId)?.anchorFigures[f.index]?.imageId)?.credit,
+      };
     }
   }
   return data;

@@ -55,6 +55,8 @@ type State = {
   renderer: string | null;
   /** World ambience (lo-fi music + ambient loops). Off until the visitor turns it on. Persisted. */
   ambienceOn: boolean;
+  /** A building's video is playing with sound (the island music is ducked meanwhile). Not persisted. */
+  videoSound: boolean;
   /** True while the car is a plane (set on take-off / landing; the HUD shows Land). Not persisted. */
   flying: boolean;
   /** Time of day in the 3D world (HUD button). Persisted. */
@@ -90,6 +92,7 @@ type Actions = {
   setAutoTier: (tier: Tier) => void;
   setRenderer: (renderer: string | null) => void;
   setAmbienceOn: (on: boolean) => void;
+  setVideoSound: (on: boolean) => void;
   toggleCameraMode: () => void;
   setFreeLook: (freeLook: boolean) => void;
   cycleTimeOfDay: () => void;
@@ -117,6 +120,7 @@ export const useStore = create<State & Actions>()(
       autoTier: "high",
       renderer: null,
       ambienceOn: false,
+      videoSound: false,
       cameraMode: "iso",
       freeLook: false,
       timeOfDay: "day",
@@ -153,6 +157,7 @@ export const useStore = create<State & Actions>()(
       setAutoTier: (autoTier) => set((s) => (s.autoTier === autoTier ? s : { autoTier })),
       setRenderer: (renderer) => set({ renderer }),
       setAmbienceOn: (ambienceOn) => set({ ambienceOn }),
+      setVideoSound: (videoSound) => set({ videoSound }),
       setFlying: (flying) => set((s) => (s.flying === flying ? s : { flying })),
       cycleTimeOfDay: () =>
         set((s) => ({ timeOfDay: s.timeOfDay === "day" ? "sunset" : s.timeOfDay === "sunset" ? "night" : "day" })),

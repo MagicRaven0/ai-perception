@@ -1,4 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { buildings } from "../../content/buildings";
+import { credits, images } from "../../content/credits";
+import { eras } from "../../content/eras";
+import { sources } from "../../content/sources";
 
 /**
  * Real content in 2D (22 Nov 2026): the two arcades work with the keyboard only and send nothing; each era page
@@ -76,4 +80,59 @@ test("round 5: buildings show their own charts as grouped bars with a table twin
   await expect(band.getByText("Are Americans more excited or more concerned about AI in daily life?")).toHaveCount(1);
   await expect(band.getByText("AI experts and U.S. adults: how they see AI")).toHaveCount(0);
   await expect(band.getByText(/Grok 4 resisted being shut down/)).toHaveCount(0);
+});
+
+test("reference lists show our essays' sources first, then the added ones", async ({ page }) => {
+  const essay = sources.filter((s) => s.origin === "essay").length;
+  await page.goto("/sources");
+  const groups = page.locator("[data-reference-group]");
+  await expect(groups.getByRole("heading")).toHaveText(["From our essays", "Added for the history"]);
+  await expect(groups.nth(0).locator("li")).toHaveCount(essay);
+  await expect(groups.nth(1).locator("li")).toHaveCount(sources.length - essay);
+  await page.goto("/read/the-future");
+  await expect(page.locator("#era-3-references [data-reference-group] h4").first()).toHaveText("From our essays");
+});
+
+test("round 5 comparison and the then-and-now buildings are on the page", async ({ page }) => {
+  await page.goto("/read");
+  await expect(page.getByText("What once appeared only in laboratory tests now shows up").first()).toBeVisible();
+  for (const id of ["era-1-then-and-now", "era-2-then-and-now"]) await expect(page.locator(`#${id}`)).toBeVisible();
+});
+
+test("videos in the long-read: controls, loop, credited, and nothing downloads before play", async ({ page }) => {
+  const asked: string[] = [];
+  page.on("request", (r) => {
+    if (r.url().includes(".mp4")) asked.push(r.url());
+  });
+  await page.goto("/read");
+  await page.waitForLoadState("networkidle");
+  for (const b of buildings.filter((x) => x.media?.videoSrc)) {
+    const figure = page.locator(`#${b.id} [data-building-video]`);
+    const video = figure.locator("video");
+    await expect(video).toHaveAttribute("src", b.media!.videoSrc!);
+    await expect(video).toHaveAttribute("preload", "none");
+    await expect(video).toHaveAttribute("controls", "");
+    await expect(video).toHaveAttribute("loop", "");
+    await expect(figure).toContainText("made with Claude (Anthropic)");
+  }
+  expect(asked).toEqual([]);
+  await page.goto("/about");
+  await expect(page.getByText("made with Claude (Anthropic)")).toHaveCount(credits.filter((c) => c.kind === "video").length);
+});
+
+test("every photo is shown with its credit line, and all are in the About credits", async ({ page }) => {
+  test.skip(images.length === 0, "no photos yet");
+  const credit = (imageId: string) => {
+    const c = credits.find((x) => x.id === images.find((i) => i.id === imageId)!.creditId)!;
+    return c.creditLine ?? c.author;
+  };
+  const used = [
+    ...eras.flatMap((e) => e.anchorFigures.map((f) => f.imageId)),
+    ...buildings.map((b) => b.media?.imageId),
+  ].filter((x): x is string => Boolean(x));
+  expect(used.length).toBe(images.length);
+  await page.goto("/read");
+  for (const id of used) await expect(page.locator("#main").getByText(credit(id)).first()).toBeVisible();
+  await page.goto("/about");
+  for (const id of used) await expect(page.getByText(credit(id)).first()).toBeVisible();
 });

@@ -13,6 +13,7 @@ import { playLofi, stopLofi } from "@/lib/audio/lofi";
  * by the HUD (not inside the canvas). Rules:
  * - off until the visitor turns it on (Options or the sound button), and remembered;
  * - crossfades when the active island changes;
+ * - ducks to a murmur while a building's video plays with sound;
  * - never fights the podcast player: fades out and pauses while an episode is playing or loading;
  * - files that do not exist yet are skipped silently (checked once with a HEAD request).
  */
@@ -72,15 +73,20 @@ function step() {
   }
 }
 
-function apply(era: EraId | null) {
+/** Music volume, and the share of it left while a building's video plays with sound. */
+const MUSIC = 0.5;
+const DUCK = 0.12;
+
+function apply(era: EraId | null, ducked: boolean) {
+  const share = ducked ? DUCK : 1;
   // Generated music, unless the group added a music file for this island (then the file plays instead).
   const musicFile = era ? slotFor(ambience[era].music) : null;
-  if (era && musicFile?.available !== true) playLofi(era);
+  if (era && musicFile?.available !== true) playLofi(era, MUSIC * share);
   else stopLofi();
   for (const [id, layers] of Object.entries(ambience) as [EraId, (typeof ambience)[EraId]][]) {
     for (const layer of [layers.music, layers.sounds]) {
       const slot = slotFor(layer);
-      slot.target = id === era ? layer.volume : 0;
+      slot.target = id === era ? layer.volume * share : 0;
       if (slot.target > 0) void ensure(slot).then(() => kick());
     }
   }
@@ -95,10 +101,11 @@ export function Ambience() {
   const on = useStore((s) => s.ambienceOn);
   const era = useStore((s) => s.activeEra);
   const episodeBusy = useStore((s) => s.status === "playing" || s.status === "loading");
+  const videoSound = useStore((s) => s.videoSound);
 
   useEffect(() => {
-    apply(on && !episodeBusy ? era : null);
-  }, [on, era, episodeBusy]);
+    apply(on && !episodeBusy ? era : null, videoSound);
+  }, [on, era, episodeBusy, videoSound]);
 
   // Leaving /explore: silence everything.
   useEffect(

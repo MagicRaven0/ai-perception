@@ -775,4 +775,74 @@ test.describe("world features", () => {
     await page.waitForTimeout(1500);
     await page.screenshot({ path: "screenshots/explore-era-3-podcast-hosts-1440.png" });
   });
+
+  test("round 7/8: the video loads only near its building, plays in the drawer, and ducks the music", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const asked: string[] = [];
+    page.on("request", (r) => {
+      if (r.url().includes(".mp4")) asked.push(new URL(r.url()).pathname);
+    });
+    await open3d(page, "/explore?era=era-2");
+    expect(asked).toEqual([]);
+    const open = (id: string) =>
+      page.evaluate(
+        (b) =>
+          (window as unknown as { __store: { getState: () => { openBuilding: (id: string) => void } } }).__store
+            .getState()
+            .openBuilding(b),
+        id,
+      );
+    await open("interface-gallery");
+    const video = visibleDialogs(page).locator("video");
+    await expect(video).toHaveAttribute("preload", "none");
+    await expect(visibleDialogs(page)).toContainText("made with Claude (Anthropic)");
+    await expect.poll(() => [...new Set(asked)]).toEqual(["/videos/interface-gallery.mp4"]);
+    await page.screenshot({ path: "screenshots/drawer-video-1440.png" });
+
+    // Audible video -> videoSound (Chromium here has no H.264, so the media events are simulated).
+    const videoSound = () =>
+      page.evaluate(
+        () =>
+          (window as unknown as { __store: { getState: () => { videoSound: boolean } } }).__store.getState().videoSound,
+      );
+    await video.evaluate((v: HTMLVideoElement) => {
+      Object.defineProperty(v, "paused", { value: false, configurable: true });
+      v.muted = false;
+      v.dispatchEvent(new Event("playing"));
+    });
+    await expect.poll(videoSound).toBe(true);
+    await visibleDialogs(page).getByRole("button", { name: "Close" }).click();
+    await expect.poll(videoSound).toBe(false);
+  });
+
+  test("screenshots: drawers with a video and a photo at 375px, and a chart and a photo at 1440px", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await open3d(page, "/explore?b=perceptron-cinema");
+    const open = (id: string) =>
+      page.evaluate(
+        (b) =>
+          (window as unknown as { __store: { getState: () => { openBuilding: (id: string) => void } } }).__store
+            .getState()
+            .openBuilding(b),
+        id,
+      );
+    await expect(visibleDialogs(page)).toBeVisible({ timeout: 15_000 });
+    await page.screenshot({ path: "screenshots/drawer-video-375.png" });
+    await open("mainframe-archive");
+    await expect(visibleDialogs(page).getByRole("heading", { level: 2 })).toContainText("Room-sized");
+    await page.waitForTimeout(1000);
+    await page.screenshot({ path: "screenshots/drawer-photo-375.png" });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: "screenshots/drawer-photo-1440.png" });
+    await open("experts-vs-public");
+    await expect(visibleDialogs(page).locator("[data-embedded-chart]")).toBeVisible();
+    await page.screenshot({ path: "screenshots/drawer-chart-1440.png" });
+    const wide = await visibleDialogs(page).evaluate((d) => {
+      const body = d.querySelector(".overflow-y-auto")!;
+      return body.scrollWidth - body.clientWidth;
+    });
+    expect(wide, "sideways overflow in the drawer").toBeLessThanOrEqual(0);
+  });
 });

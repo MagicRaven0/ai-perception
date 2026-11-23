@@ -297,7 +297,9 @@ function Answer({
           {invalid.length > 0 && <Label tone="warn">Some citations could not be matched and were removed</Label>}
           {meta?.stored && (
             <Label tone="muted">
-              {meta.checked ? "Pre-written answer · checked by our group" : "Pre-written AI answer · not yet checked"}
+              {meta.checked === true
+                ? "Pre-written answer · checked by our group"
+                : "Pre-written AI answer · not yet checked"}
             </Label>
           )}
         </>

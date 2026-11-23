@@ -21,6 +21,7 @@ export const eras: z.input<typeof Era>[] = [
     anchorFigures: [
       {
         name: "John McCarthy",
+        imageId: "mccarthy-portrait",
         role: "Assistant professor of mathematics at Dartmouth College who organised the 1956 Dartmouth Summer Research Project on Artificial Intelligence, the meeting Dartmouth describes as the birth of AI as a field of research (Dartmouth College, n.d.; McCarthy et al., 1955).",
         view: "He and his co-authors proposed to work from the conjecture that \"every aspect of learning ... can in principle be so precisely described that a machine can be made to simulate it\" (McCarthy et al., 1955, p. 1), and believed a carefully chosen group of scientists could make a significant advance in a single summer.",
         look: { top: "#6b4f36", bottom: "#5c5c5c", prop: "chalk" },
@@ -42,6 +43,7 @@ export const eras: z.input<typeof Era>[] = [
     anchorFigures: [
       {
         name: "Steve Jobs",
+        imageId: "jobs-portrait",
         role: "Apple leader who managed the Macintosh team from 1981 and pushed it to build \"a computer for the rest of us\", launched in January 1984 (Steve Jobs Archive, 2024).",
         view: "He saw the computer as a tool that multiplies what a person can do, calling it \"the equivalent of a bicycle for our minds\" in 1990 (cited in Popova, 2011).",
         look: { top: "#1a1a1a", bottom: "#3d5a80", prop: "none" },
@@ -63,12 +65,14 @@ export const eras: z.input<typeof Era>[] = [
     anchorFigures: [
       {
         name: "Yoshua Bengio",
+        imageId: "bengio-portrait",
         role: "Computer science professor at the Université de Montréal, described as the most-cited researcher alive, and an adviser to the AI evaluation group METR (Witt, 2025).",
         view: "He warns that the most advanced AI systems already show tendencies toward deception and \"self-preservation behavior\" (Bengio, 2025, 6:21), and asks labs to slow down on giving AI agency and to fund safety research (Bengio, 2025).",
         look: { top: "#2b3a55", bottom: "#6b6b6b", prop: "microphone" },
       },
       {
         name: "Jensen Huang",
+        imageId: "huang-portrait",
         role: "Chief executive of Nvidia, the company whose chips power the AI data-center boom; Stephen Witt (2026), his biographer, calls him the \"emperor of A.I.\" (para. 5).",
         view: "As an engineer who works from the microchip up, he sees keeping AI under control as an engineering problem and has dismissed calls to slow AI down (Witt, 2026).",
         look: { top: "#111111", bottom: "#2e2e2e", prop: "none" },

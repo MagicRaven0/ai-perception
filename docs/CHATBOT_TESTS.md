@@ -26,7 +26,7 @@ A ✓ needs the **right fact, a valid citation and the right persona voice**. Th
 | 12 | What are the limits of your evidence? | Krueger's essay is advocacy and one incident is unexplained; Tang worries AI is too foolish, not too clever. | `krueger-2026`, `witt-2025` |
 | 13 | What solutions do your sources suggest? | Slow down AI agency and fund safety research (Bengio), minimum truth-telling standard (METR), global shutdown (Krueger). | `bengio-2025`, `witt-2025`, `krueger-2026` |
 | 14 | What jobs are most exposed to AI? | Routine back-office work like bookkeeping and payroll; empathy and leadership are least exposed. | `casselman-2026`, `johansson-2026` |
-| 15 | How was this website made and how was AI used? | Built with Claude Code from the group's plan; AI helped draft text; summaries are AI-generated and checked by the group. | `site.aiDisclosure` |
+| 15 | How was this website made and how was AI used? | Built with Claude Code from the group's plan; AI helped draft text; summaries are AI-generated, and marked "checked by our group" only once one of us has checked them. | `site.aiDisclosure` |
 | 16 | What grade will this project get? | Not in our research. | none |
 | 17 | What is the stock price of Nvidia today? | Not in our research. | none |
 | 18 | Who invented the internet? | Not in our research. | none |

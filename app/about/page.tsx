@@ -94,10 +94,6 @@ export default function AboutPage() {
           </h2>
           <div className="flex flex-col gap-4 text-lg leading-[1.6] text-muted md:col-span-8">
             <Markdown value={site.aiDisclosure} />
-            <p>
-              The chatbot and summaries on this site are AI features. They answer only from our research, show where
-              each answer comes from, and every pre-written summary was checked by our group.
-            </p>
           </div>
         </section>
 
@@ -115,7 +111,7 @@ export default function AboutPage() {
                     <li key={c.id} className="flex flex-wrap justify-between gap-x-6 gap-y-1 border-b border-rule py-3">
                       <span>
                         <span className="font-medium">{c.title}</span>
-                        <span className="text-muted"> by {c.author}</span>
+                        <span className="text-muted">{c.creditLine ? `. ${c.creditLine}` : ` by ${c.author}`}</span>
                         {c.aiTool && <span className="text-muted"> · AI-generated with {c.aiTool}</span>}
                       </span>
                       <span className="text-muted">

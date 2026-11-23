@@ -94,6 +94,7 @@ export function InteractPrompt({
               <ContentText value={sign.text} />
             )}
           </span>
+          {sign.credit && <span className="mt-1 block text-xs text-muted">{sign.credit.text}</span>}
         </span>
       </PromptCard>
     );

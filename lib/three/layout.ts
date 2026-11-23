@@ -149,6 +149,8 @@ export type PlacedBuilding = {
   approach: Pose;
   /** Podcast studios: one faceless figure per episode speaker, dressed in that speaker's look (no names). */
   hosts: FigureLookInput[];
+  /** The building's own video, shown muted on a screen above it while the car is close. */
+  videoSrc?: string;
 };
 
 export type PlacedInsight = {
@@ -225,6 +227,7 @@ export type LayoutInput = {
     kind: BuildingKind;
     comingSoon: boolean;
     hosts?: FigureLookInput[];
+    videoSrc?: string;
   }[];
   insights: { id: string; eraId: EraId; kind: "benefit" | "risk" | "danger"; buildingId?: string }[];
 };
@@ -432,6 +435,7 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
       },
       approach: { x: road[0], y: road[1], z: road[2], heading: ringTangentHeading(angle) },
       hosts: b.hosts ?? [],
+      videoSrc: b.videoSrc,
     };
   });
 

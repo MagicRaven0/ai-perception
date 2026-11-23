@@ -24,6 +24,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "http://jmc.stanford.edu/articles/dartmouth/dartmouth.pdf",
     eraIds: ["era-1"],
     type: "report",
+    origin: "added",
   },
   {
     id: "dartmouth-nd",
@@ -31,6 +32,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://home.dartmouth.edu/about/artificial-intelligence-ai-coined-dartmouth",
     eraIds: ["era-1"],
     type: "website",
+    origin: "added",
   },
   {
     id: "simon-newell-1958",
@@ -38,6 +40,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://doi.org/10.1287/opre.6.1.1",
     eraIds: ["era-1", "era-2"],
     type: "journal",
+    origin: "added",
   },
   {
     id: "williams-2024",
@@ -45,6 +48,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://theconversation.com/weve-been-here-before-ai-promised-humanlike-machines-in-1958-222700",
     eraIds: ["era-1", "era-2"],
     type: "article",
+    origin: "added",
   },
 
   // ---- Era 2: 1984–2011 ----
@@ -54,6 +58,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://stevejobsarchive.com/stories/40-years-of-macintosh",
     eraIds: ["era-2"],
     type: "website",
+    origin: "added",
   },
   {
     id: "popova-2011",
@@ -61,6 +66,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.themarginalian.org/2011/12/21/steve-jobs-bicycle-for-the-mind-1990/",
     eraIds: ["era-2"],
     type: "article",
+    origin: "added",
   },
   {
     id: "ibm-nd",
@@ -68,6 +74,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.ibm.com/history/deep-blue",
     eraIds: ["era-1", "era-2"],
     type: "website",
+    origin: "added",
   },
   {
     id: "apple-2011",
@@ -75,6 +82,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.apple.com/newsroom/2011/10/04Apple-Launches-iPhone-4S-iOS-5-iCloud/",
     eraIds: ["era-2"],
     type: "website",
+    origin: "added",
   },
 
   // ---- Era 3: Rayyan's essay (also bengio-2025 in Waleed's) ----
@@ -84,6 +92,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.nytimes.com/2025/10/10/opinion/ai-destruction-technology-future.html",
     eraIds: ["era-3"],
     type: "article",
+    origin: "essay",
   },
   {
     id: "bengio-2025",
@@ -91,6 +100,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.ted.com/talks/yoshua_bengio_the_catastrophic_risks_of_ai_and_a_safer_path",
     eraIds: ["era-3"],
     type: "video",
+    origin: "essay",
   },
   {
     id: "krueger-2026",
@@ -98,6 +108,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://fortune.com/2026/03/27/rogue-ai-agents-autonomous-safety/",
     eraIds: ["era-3"],
     type: "article",
+    origin: "essay",
   },
 
   // ---- Era 3: our previous group project (AI and employment) ----
@@ -107,6 +118,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.nytimes.com/2026/06/10/business/economy/back-office-workers-ai.html",
     eraIds: ["era-3"],
     type: "article",
+    origin: "added",
   },
   {
     id: "johansson-2026",
@@ -114,6 +126,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.mckinsey.com/featured-insights/charts/human-skills-in-the-age-of-automation",
     eraIds: ["era-3"],
     type: "report",
+    origin: "added",
   },
   {
     id: "tenev-2025",
@@ -121,6 +134,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.ted.com/talks/vlad_tenev_ai_is_coming_for_your_job_now_what",
     eraIds: ["era-3"],
     type: "video",
+    origin: "added",
   },
 
   // ---- Era 3: public opinion polls (new, for content/datasets.ts) ----
@@ -130,6 +144,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.pewresearch.org/science/2025/09/17/how-americans-view-ai-and-its-impact-on-people-and-society/",
     eraIds: ["era-3"],
     type: "poll",
+    origin: "added",
   },
   {
     id: "pew-2025-global",
@@ -137,6 +152,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.pewresearch.org/global/2025/10/15/how-people-around-the-world-view-ai/",
     eraIds: ["era-3"],
     type: "poll",
+    origin: "added",
   },
 
   // ---- Era 3: Abdulrahman Ahmad's essay ("A.I.'s potential: Shaping up a united future") ----
@@ -146,6 +162,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.nytimes.com/2026/10/07/opinion/jensen-huang-ai-tech-nvidia.html",
     eraIds: ["era-3"],
     type: "article",
+    origin: "essay",
   },
   {
     id: "hastings-khan-2026",
@@ -153,6 +170,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.ted.com/talks/reed_hastings_and_sal_khan_why_ai_is_an_even_bigger_deal_than_you_think",
     eraIds: ["era-3"],
     type: "video",
+    origin: "essay",
   },
   {
     id: "mims-2026",
@@ -160,6 +178,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.wsj.com/tech/ai/when-ai-more-harm-than-good-519a83e7",
     eraIds: ["era-3"],
     type: "article",
+    origin: "essay",
   },
   {
     id: "mcclain-2025",
@@ -167,6 +186,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.pewresearch.org/internet/2025/04/03/how-the-us-public-and-ai-experts-view-artificial-intelligence/",
     eraIds: ["era-3"],
     type: "poll",
+    origin: "essay",
   },
 
   // ---- Era 3: Waleed's essay ("Is AI out of control, or badly trained?") ----
@@ -176,6 +196,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.theguardian.com/technology/2026/mar/27/number-of-ai-chatbots-ignoring-human-instructions-increasing-study-says",
     eraIds: ["era-3"],
     type: "article",
+    origin: "essay",
   },
   {
     id: "turner-2025",
@@ -183,6 +204,7 @@ export const sources: z.input<typeof Source>[] = [
     url: "https://www.livescience.com/technology/artificial-intelligence/ai-models-refuse-to-shut-themselves-down-when-prompted-they-might-be-developing-a-new-survival-drive-study-claims",
     eraIds: ["era-3"],
     type: "article",
+    origin: "essay",
   },
 
   // ---- Era 3: our own interview (placeholder until recorded) ----
@@ -192,5 +214,6 @@ export const sources: z.input<typeof Source>[] = [
     url: "TODO: link to the interview page on our site once it is published",
     eraIds: ["era-3"],
     type: "interview",
+    origin: "added",
   },
 ];

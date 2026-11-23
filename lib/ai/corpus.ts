@@ -73,6 +73,14 @@ function collectDocs(): Doc[] {
 
   if (real(site.thesis))
     docs.push({ title: "Our thesis", eraId: null, text: site.thesis, sourceIds: [], href: "/about" });
+  if (real(site.aiDisclosure))
+    docs.push({
+      title: "How we made this site and used AI",
+      eraId: null,
+      text: site.aiDisclosure,
+      sourceIds: [],
+      href: "/about",
+    });
   if (real(about.genreRationale))
     docs.push({
       title: "Why this site is built this way",

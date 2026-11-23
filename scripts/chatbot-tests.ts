@@ -9,7 +9,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { generateText } from "ai";
+import { pacedGenerate } from "./ai-call";
 import { getCorpus } from "../lib/ai/corpus";
 import { chatInstructions, NOT_FOUND } from "../lib/ai/prompts";
 import { CHAT_MODEL, chatModel, hasAiCredentials, stripThinking } from "../lib/ai/models";
@@ -63,7 +63,7 @@ async function main() {
   const results = [];
   for (const t of tests) {
     const t0 = Date.now();
-    const { text } = await generateText({
+    const { text } = await pacedGenerate({
       model: chatModel(),
       instructions: chatInstructions(t.persona),
       messages: [{ role: "user", content: t.question }],

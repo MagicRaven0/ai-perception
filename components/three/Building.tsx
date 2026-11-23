@@ -12,6 +12,7 @@ import { BUILDING_MODELS, MODEL_HEIGHT, type BuildingModel } from "./buildings/r
 import { BuildingSensor } from "./BuildingSensor";
 import { StaticMerge } from "./kit/StaticMerge";
 import { FacelessFigure } from "./Figure";
+import { VideoScreen } from "./VideoScreen";
 
 /**
  * SHARED. One building from content/buildings.ts, already positioned by lib/three/layout.ts.
@@ -60,6 +61,8 @@ export function Building({
         </StaticMerge>
         <Beacon id={placed.id} y={top + 2.2} accent={pal.accent} />
         {placed.hosts.length > 0 && <Hosts id={placed.id} looks={placed.hosts} plot={plot} />}
+        {/* Above the beacon */}
+        {placed.videoSrc && <VideoScreen id={placed.id} src={placed.videoSrc} y={top + 5.6} />}
       </group>
       <BuildingSensor id={placed.id} position={placed.sensor.position} radius={placed.sensor.radius} />
     </>

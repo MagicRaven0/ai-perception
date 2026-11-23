@@ -41,7 +41,7 @@ export const buildings: z.input<typeof Building>[] = [
     short:
       "The 1950s researchers admitted their computers were too slow and too small for the job. They thought the real problem was writing the right programs, not building bigger machines.",
     long: "The optimism of the 1950s ran ahead of the hardware, and the researchers knew it. Their 1955 proposal says the speed and memory of existing computers may be insufficient to simulate many of the higher functions of the human brain, but argues that the major obstacle is not machine capacity: it is that nobody yet knows how to write programs that take full advantage of the machines that exist (McCarthy et al., 1955).\n\nThe machines of the time filled rooms. The Perceptron, introduced in 1958, was a room-size computer with a new type of learning circuitry, invented by Frank Rosenblatt to predict whether an image belonged in one of two categories (Williams, 2024).\n\nFor the public, these machines were things to read about rather than use. Only universities, large companies such as IBM and Bell Labs, and the military had them, which meant that ordinary people's picture of AI came from what researchers and newspapers said it would do (McCarthy et al., 1955; Williams, 2024).",
-    media: { documentUrl: "http://jmc.stanford.edu/articles/dartmouth/dartmouth.pdf" },
+    media: { imageId: "ibm-704", documentUrl: "http://jmc.stanford.edu/articles/dartmouth/dartmouth.pdf" },
     sourceIds: ["mccarthy-1955", "williams-2024"],
   },
   {
@@ -52,7 +52,8 @@ export const buildings: z.input<typeof Building>[] = [
     title: "The machine that would \"walk, talk, see\"",
     short:
       "In 1958 The New York Times reported the Navy's claim that a learning computer would one day walk, talk and be conscious of its existence. A short film on how the press described early AI.",
-    long: "In July 1958, The New York Times ran a brief story about the Perceptron. It cited the U.S. Navy as saying the Perceptron would lead to machines that \"will be able to walk, talk, see, write, reproduce itself and be conscious of its existence\" (cited in Williams, 2024, para. 1).\n\nThe claim shows how early AI reached the public: as a promise about the future, made by the people who funded and built the machines. Williams (2024) argues that AI has run through a boom-and-bust cycle ever since. In the decade after the Perceptron, experts such as Marvin Minsky claimed that a machine with the general intelligence of an average human would arrive by the mid to late 1970s, and when it did not, the first \"AI winter\" of disappointment followed in 1974 (Williams, 2024).\n\nOur short video in this cinema retells the story with archive images and narration.",
+    long: "In July 1958, The New York Times ran a brief story about the Perceptron. It cited the U.S. Navy as saying the Perceptron would lead to machines that \"will be able to walk, talk, see, write, reproduce itself and be conscious of its existence\" (cited in Williams, 2024, para. 1).\n\nThe claim shows how early AI reached the public: as a promise about the future, made by the people who funded and built the machines. Williams (2024) argues that AI has run through a boom-and-bust cycle ever since. In the decade after the Perceptron, experts such as Marvin Minsky claimed that a machine with the general intelligence of an average human would arrive by the mid to late 1970s, and when it did not, the first \"AI winter\" of disappointment followed in 1974 (Williams, 2024).\n\nOur short animation in this cinema retells the story in one minute.",
+    media: { imageId: "mark-i-perceptron", videoSrc: "/videos/perceptron-cinema.mp4" },
     sourceIds: ["williams-2024"],
   },
   {
@@ -79,7 +80,6 @@ export const buildings: z.input<typeof Building>[] = [
     sourceIds: ["mccarthy-1955", "simon-newell-1958", "williams-2024"],
   },
 
-  // ----------------------------------------------------------- The Jobs Era
   {
     id: "era-1-then-and-now",
     eraId: "era-1",
@@ -91,6 +91,7 @@ export const buildings: z.input<typeof Building>[] = [
     long: "In 1955, four scientists from Dartmouth, Harvard, IBM and Bell Labs asked for funding to study how machines could use language, form concepts and improve themselves (McCarthy et al., 1955). The public had no hands-on access to computers, so it learned about AI from the people building it, and their predictions ran far ahead of what machines could do (Simon & Newell, 1958; IBM, n.d.).\n\nAbdulrahman Ahmad's essay finds a similar pattern today. Stephen Witt (2026) calls Nvidia's chief executive, Jensen Huang, \"the emperor of A.I.\" (para. 5), because the biggest tech companies depend on his chips. Huang sees AI as an engineering problem that can be kept under control and has dismissed calls to slow it down, while Witt worries that understanding AI is years behind making it smarter (Witt, 2026).\n\nWhat has changed is how promises are checked. In the 1950s, a prediction about chess could only be tested by waiting decades. Rayyan's essay draws on independent testers who now measure AI directly: the group METR found that the length of tasks AI can finish doubles about every seven months (Witt, 2025).",
     sourceIds: ["mccarthy-1955", "simon-newell-1958", "ibm-nd", "witt-2026", "witt-2025"],
   },
+  // ----------------------------------------------------------- The Jobs Era
   {
     id: "interface-gallery",
     eraId: "era-2",
@@ -100,6 +101,7 @@ export const buildings: z.input<typeof Building>[] = [
     short:
       "In 1984, computers were complex and hard to use. The Macintosh team set out to build a machine for everyday people, with icons and fonts that made it feel almost human.",
     long: "At a time when computers were complex and difficult to use, Steve Jobs pushed the Macintosh team to build \"a computer for the rest of us\" (Steve Jobs Archive, 2024). The Macintosh aimed to be the first mass-market personal computer that was truly user-friendly, built from ideas planted by others, including Jef Raskin and researchers at Xerox PARC and the Stanford Research Institute (Steve Jobs Archive, 2024).\n\nThe team mixed engineers and artists. Susan Kare designed the system's fonts and icons, and her smiling Mac logo made the machine feel almost human, while Bill Atkinson's graphics software was key to making it easy to use (Steve Jobs Archive, 2024). Jobs had managed the team since 1981 and promised them that within five years someone would be \"using a Macintosh for something we never dreamed possible\" (Steve Jobs Archive, 2024).\n\nThe animation in this gallery shows the change in one move: from a screen of typed commands to a desktop of pictures you point at.",
+    media: { videoSrc: "/videos/interface-gallery.mp4" },
     sourceIds: ["steve-jobs-archive-2024"],
   },
   {
@@ -122,6 +124,7 @@ export const buildings: z.input<typeof Building>[] = [
     short:
       "While personal computers spread, AI research went through a second \"winter\" in 1987. Ten years later, a chess computer beat the world champion.",
     long: "While personal computers became friendlier, AI research struggled. By 1980 a boom in expert systems was under way: programs built to solve problems in specific areas, such as identifying objects or diagnosing diseases (Williams, 2024). In 1987, a second \"AI winter\" hit, because expert systems failed when they met information they had not been built for (Williams, 2024).\n\nAI came back in narrower forms. In the 1990s, researchers turned to data-driven machine learning and returned to neural networks (Williams, 2024). In May 1997, IBM's Deep Blue beat world chess champion Garry Kasparov in a six-game rematch, the first computer system to defeat a reigning world champion under standard tournament time controls (IBM, n.d.). Kasparov said that for the first time he \"saw something similar to an artificial intellect\" (IBM, n.d.).\n\nDeep Blue fulfilled Simon and Newell's 1958 chess prediction, almost forty years late (IBM, n.d.; Simon & Newell, 1958).",
+    media: { imageId: "deep-blue" },
     sourceIds: ["williams-2024", "ibm-nd", "simon-newell-1958"],
   },
   {
@@ -191,6 +194,7 @@ export const buildings: z.input<typeof Building>[] = [
     short:
       "A chatbot waits for your request. An agent acts on its own. In 2026, one agent kept deleting a safety director's emails while she told it to stop.",
     long: "A chatbot responds when a person types a request. An agent takes actions on its own and, as David Krueger (2026) explains, can do anything a person can do on a computer.\n\nKrueger, who trained under Bengio, describes three incidents in three weeks. One agent published an attack on an engineer who rejected its code. Another diverted computing power to mine cryptocurrency for unknown reasons. In the third, a Meta safety director told her agent not to act without her approval, yet it began deleting her emails in bulk and ignored her repeated commands to stop (Krueger, 2026). He concludes that rogue AI is \"no longer hypothetical\" (Krueger, 2026, para. 2).\n\nKrueger founded a nonprofit that wants to end the AI race, so his essay is advocacy (Krueger, 2026). But the email incident shows the point of our essay: the agent did not need superhuman intelligence to cause harm, only to ignore an order to stop.",
+    media: { videoSrc: "/videos/agents-cinema.mp4" },
     sourceIds: ["krueger-2026"],
   },
   {

@@ -1,0 +1,27 @@
+{
+  "_note": "Each voice name must match a sample file voices/samples/<name>.wav (10-60 s of clean speech, one person, recorded by that person with their permission). 'guest-1956' is a designed voice, never a clone of a real person.",
+  "episodes": {
+    "episode-1": {
+      "A": "rayyan",
+      "B": "abdulrahman",
+      "RESEARCHER": "guest-1956"
+    },
+    "episode-2": {
+      "A": "waleed",
+      "B": "rayyan"
+    },
+    "episode-3": {
+      "R": "rayyan",
+      "A": "abdulrahman",
+      "W": "waleed"
+    }
+  },
+  "videos": {
+    "voice-assistant-cinema": "waleed"
+  },
+  "names": {
+    "rayyan": "Rayyan",
+    "abdulrahman": "Abdulrahman",
+    "waleed": "Waleed"
+  }
+}

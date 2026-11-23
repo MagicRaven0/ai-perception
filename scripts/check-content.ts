@@ -99,6 +99,12 @@ for (const b of buildings) {
   ref(label, "episodeId", b.media?.episodeId, episodeIds);
   ref(label, "imageId", b.media?.imageId, imageIds);
   ref(label, "datasetId", b.media?.datasetId, datasetIds);
+  if (b.media?.videoSrc) {
+    if (!existsSync(join(ROOT, "public", b.media.videoSrc))) {
+      errors.push(`${label}: video public${b.media.videoSrc} not found`);
+    }
+    if (!creditIds.has(`video-${b.id}`)) errors.push(`${label}: its video needs a credit "video-${b.id}"`);
+  }
   const key = `${b.eraId}#${b.order}`;
   if (orders.has(key)) errors.push(`${label}: order ${b.order} is already used on ${b.eraId}`);
   orders.set(key, 1);

@@ -1,6 +1,6 @@
 import { convertToModelMessages, createUIMessageStreamResponse, streamText, toUIMessageStream, type UIMessage } from "ai";
 import { chatInstructions } from "@/lib/ai/prompts";
-import { CHAT_MODEL, chatModel, estimateCost } from "@/lib/ai/models";
+import { CHAT_MODEL, chatModel, REASONING, estimateCost } from "@/lib/ai/models";
 import { PERSONA_IDS, type PersonaId } from "@/lib/ai/personas";
 import { addSpend, checkLimits, getHealth, isHardFailure, tripBreaker } from "@/lib/ai/limits";
 import { cleanInput, clientIp, json, visitorId } from "@/lib/ai/request";
@@ -42,6 +42,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: chatModel(),
+    reasoning: REASONING,
     instructions: chatInstructions(persona),
     messages: await convertToModelMessages(safeHistory),
     temperature: 0.2,

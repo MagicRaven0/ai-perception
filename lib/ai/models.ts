@@ -37,6 +37,12 @@ export function chatModel(): LanguageModel {
   return CHAT_MODEL;
 }
 
+/**
+ * Thinking off on the Gateway: Claude Haiku 5.5 thinks by default and spends the whole answer limit on it, which
+ * leaves an empty answer.
+ */
+export const REASONING = PROVIDER === "gateway" ? ("none" as const) : undefined;
+
 export const hasAiCredentials = () =>
   PROVIDER === "local"
     ? true

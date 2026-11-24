@@ -1,7 +1,7 @@
 import { generateText } from "ai";
 import { Redis } from "@upstash/redis";
 import { itemText } from "@/lib/ai/corpus";
-import { CHAT_MODEL, chatModel, estimateCost, stripThinking } from "@/lib/ai/models";
+import { CHAT_MODEL, chatModel, REASONING, estimateCost, stripThinking } from "@/lib/ai/models";
 import { SUMMARY_MODES, type SummaryMode } from "@/lib/ai/personas";
 import { summaryInstructions } from "@/lib/ai/prompts";
 import { storedSummary, textHash } from "@/lib/ai/summaries";
@@ -43,6 +43,7 @@ export async function POST(req: Request) {
   try {
     const { text, totalUsage } = await generateText({
       model: chatModel(),
+      reasoning: REASONING,
       instructions: summaryInstructions(mode),
       prompt: `TEXT (from the section "${item.title}"):\n${item.text}`,
       temperature: 0.2,

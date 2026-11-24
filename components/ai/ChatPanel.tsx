@@ -279,16 +279,19 @@ function Answer({
       {done && (
         <>
           {cited.length > 0 && (
-            <ol className="flex flex-col gap-1 text-xs text-muted">
-              {cited.map((id, i) => (
-                <li key={id}>
-                  {i + 1}.{" "}
-                  <Link href={refs[id].href} className="underline underline-offset-2">
-                    {refs[id].title}
-                  </Link>
-                </li>
-              ))}
-            </ol>
+            <details className="text-xs text-muted">
+              <summary className="w-fit cursor-pointer py-1 font-semibold">Sources ({cited.length})</summary>
+              <ol className="mt-1 flex flex-col gap-1">
+                {cited.map((id, i) => (
+                  <li key={id}>
+                    {i + 1}.{" "}
+                    <Link href={refs[id].href} className="underline underline-offset-2">
+                      {refs[id].title}
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            </details>
           )}
           {notFound && <Label tone="muted">Not found in our research</Label>}
           {!notFound && cited.length === 0 && !meta?.stored && (
@@ -297,7 +300,9 @@ function Answer({
           {invalid.length > 0 && <Label tone="warn">Some citations could not be matched and were removed</Label>}
           {meta?.stored && (
             <Label tone="muted">
-              {meta.checked ? "Pre-written answer · checked by our group" : "Pre-written AI answer · not yet checked"}
+              {meta.checked === true
+                ? "Pre-written answer · checked by our group"
+                : "Pre-written AI answer · not yet checked"}
             </Label>
           )}
         </>

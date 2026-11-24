@@ -16,6 +16,7 @@ import {
   Source,
   type EraId,
 } from "./schema";
+import { citationMatchers, inTextCitation } from "./citations";
 import { site as rawSite } from "@/content/site";
 import { about as rawAbout } from "@/content/about";
 import { eras as rawEras } from "@/content/eras";
@@ -46,6 +47,8 @@ export const comparisons = z.array(Comparison).parse(rawComparisons);
 export const datasets = z.array(Dataset).parse(rawDatasets);
 export const episodes = z.array(Episode).parse(rawEpisodes);
 export const sources = z.array(Source).parse(rawSources);
+/** Matchers that turn APA in-text citations in prose into source ids (and /sources#<id> links). */
+export const citations = citationMatchers(sources);
 export const credits = z.array(Credit).parse(rawCredits);
 export const images = z.array(Image).parse(rawImages);
 
@@ -81,6 +84,20 @@ export function getEpisode(id: string) {
 
 export function getSource(id: string) {
   return sources.find((s) => s.id === id);
+}
+
+/** A source as a linked in-text citation (<InTextCite>); undefined when it is missing or still a placeholder. */
+export function sourceRef(id: string | undefined) {
+  const s = id ? getSource(id) : undefined;
+  const cite = s && inTextCitation(s.apa);
+  return s && cite ? { id: s.id, cite } : undefined;
+}
+
+/** The chart a building shows inside it (content `media.datasetId`), with its citation; null when none. */
+export function buildingChart(b: Pick<Building, "media">) {
+  const dataset = b.media.datasetId ? datasets.find((d) => d.id === b.media.datasetId) : undefined;
+  if (!dataset) return null;
+  return { dataset, source: sourceRef(dataset.sourceId) };
 }
 
 export function getImage(id: string) {

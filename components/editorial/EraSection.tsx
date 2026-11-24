@@ -1,11 +1,12 @@
 import type { Building, Era, Insight } from "@/lib/content/schema";
 import {
+  buildingChart,
   buildingsForEra,
+  citations,
   datasetsForEra,
   episodesForEra,
   eras,
   getEpisode,
-  getSource,
   insightsForEra,
 } from "@/lib/content";
 import { BUILDING_LABEL, INSIGHT_LABEL, eraYears } from "@/lib/content/labels";
@@ -14,8 +15,18 @@ import { toTrack } from "@/lib/audio/track";
 import { ContentText } from "@/components/content/ContentText";
 import { Markdown } from "@/components/content/Markdown";
 import { DataBand } from "@/components/data/DataBand";
+import { EmbeddedChart } from "@/components/data/DatasetView";
 import { PlayButton } from "@/components/audio/PlayButton";
 import { YouTubeEmbed } from "./YouTubeEmbed";
+import { SpeakerList } from "@/components/audio/SpeakerList";
+import { Arcade } from "@/components/arcade/Arcade";
+import { arcadeFor } from "@/lib/content/arcades";
+import { referencesBuildingId, referencesForEra } from "@/lib/content/references";
+import { CreditedImage } from "@/components/content/CreditedImage";
+import { CreditLine } from "@/components/content/CreditLine";
+import { ReferenceGroups } from "@/components/content/ReferenceGroups";
+import { BuildingVideo } from "@/components/media/BuildingVideo";
+import { buildingVideo, creditedImage } from "@/lib/content/media";
 import { SummarizerChips } from "@/components/ai/SummarizerChips";
 import { itemText } from "@/lib/ai/corpus";
 import { storedSummariesFor } from "@/lib/ai/summaries";
@@ -25,8 +36,11 @@ export function EraSection({ era, headingLevel = 2 }: { era: Era; headingLevel?:
   const H = headingLevel === 1 ? "h1" : "h2";
   const buildings = buildingsForEra(era.id);
   const insights = insightsForEra(era.id);
-  const datasets = datasetsForEra(era.id);
+  // A dataset a building already shows (media.datasetId) is drawn there, not again in the era's data band.
+  const shownInBuildings = new Set(buildings.map((b) => b.media.datasetId).filter(Boolean));
+  const datasets = datasetsForEra(era.id).filter((d) => !shownInBuildings.has(d.id));
   const episodes = episodesForEra(era.id);
+  const references = referencesForEra(era.id);
 
   return (
     <section id={era.slug} data-era={era.id} aria-labelledby={`${era.slug}-title`} className="scroll-mt-4">
@@ -63,18 +77,19 @@ export function EraSection({ era, headingLevel = 2 }: { era: Era; headingLevel?:
       {/* 2. Editorial block */}
       <div className="mx-auto grid max-w-[1280px] gap-10 px-6 py-16 md:grid-cols-12 md:px-12 md:py-20">
         <div className="flex flex-col gap-5 text-lg leading-[1.6] text-muted md:col-span-7">
-          <Markdown value={era.perceptionSummary} />
+          <Markdown value={era.perceptionSummary} citations={citations} />
         </div>
         <aside className="md:col-span-4 md:col-start-9">
           <h3 className="border-b border-ink pb-2 font-semibold">How this era supports our argument</h3>
           <div className="mt-4 flex flex-col gap-4 leading-relaxed text-muted">
-            <Markdown value={era.thesisLink} />
+            <Markdown value={era.thesisLink} citations={citations} />
           </div>
         </aside>
       </div>
 
       {/* 3. People table (LCA "counterparts" rows) */}
       <div className="mx-auto max-w-[1280px] px-6 pb-16 md:px-12">
+        <PeoplePhotos era={era} />
         <PeopleTable era={era} />
       </div>
 
@@ -116,7 +131,37 @@ export function EraSection({ era, headingLevel = 2 }: { era: Era; headingLevel?:
           </ul>
         </div>
       )}
+
+      {/* 8. References for this era: the same list as the island's References building */}
+      <div id={referencesBuildingId(era.id)} className="mx-auto max-w-[1280px] scroll-mt-4 px-6 pb-16 md:px-12">
+        <h3 className="mb-6 font-display text-3xl font-medium tracking-headline md:text-4xl">
+          References for this era
+        </h3>
+        {references.length > 0 ? (
+          <ReferenceGroups items={references} heading="h4" />
+        ) : (
+          <p className="border-t border-ink pt-6 text-muted">Sources for this era are being added.</p>
+        )}
+      </div>
     </section>
+  );
+}
+
+/** Licensed photos of this era's people, each with its credit. Nothing until photos exist. */
+function PeoplePhotos({ era }: { era: Era }) {
+  const photos = era.anchorFigures.flatMap((f) => {
+    const image = creditedImage(f.imageId);
+    return image ? [{ name: f.name, image }] : [];
+  });
+  if (photos.length === 0) return null;
+  return (
+    <ul className="mb-10 grid grid-cols-2 gap-6 md:grid-cols-4">
+      {photos.map((p) => (
+        <li key={p.name}>
+          <CreditedImage image={p.image} sizes="(min-width: 768px) 25vw, 50vw" />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -163,8 +208,11 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
   const comingSoon = isPlaceholder(b.long);
   const episode = b.media.episodeId ? getEpisode(b.media.episodeId) : undefined;
   const track = episode ? toTrack(episode, eras) : null;
-  const sources = b.sourceIds.map(getSource).filter((s) => s !== undefined);
   const summaryText = b.summarizable ? itemText(b.id) : null;
+  const arcade = arcadeFor(b.id);
+  const chart = buildingChart(b);
+  const video = buildingVideo(b);
+  const image = creditedImage(b.media.imageId);
 
   return (
     <article id={b.id} className="grid scroll-mt-4 gap-4 border-b border-ink py-8 md:grid-cols-12 md:gap-8">
@@ -173,11 +221,47 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
         <h4 className="text-2xl leading-snug font-medium tracking-headline md:text-[1.75rem]">
           <ContentText value={b.title} />
         </h4>
+        {video ? (
+          <div className="max-w-[68ch]">
+            <BuildingVideo video={video} />
+            {image && <CreditLine credit={{ ...image.credit, text: `Poster: ${image.credit.text}` }} />}
+          </div>
+        ) : (
+          image && <CreditedImage image={image} sizes="(min-width: 768px) 544px, 100vw" className="max-w-[34rem]" />
+        )}
+        {/* Interactive first: the text below gives the answer away. */}
+        {arcade && (
+          <div className="max-w-[68ch]">
+            <Arcade config={arcade} />
+          </div>
+        )}
         {comingSoon ? (
-          <p className="text-muted">Coming soon. This part of the story is still being written.</p>
+          <>
+            {/* A finished teaser stays readable; only the missing long text is "coming soon". */}
+            {!isPlaceholder(b.short) && (
+              <p className="max-w-[68ch] text-lg leading-[1.6] text-muted">
+                <ContentText value={b.short} />
+              </p>
+            )}
+            <p
+              className="max-w-[68ch] rounded-[12px] border border-dashed border-rule px-4 py-3 text-muted"
+              data-placeholder="true"
+            >
+              {episode
+                ? "Coming soon: this recording has not been made yet."
+                : "Coming soon: this part is still being written."}
+            </p>
+          </>
         ) : (
           <div className="flex max-w-[68ch] flex-col gap-4 text-lg leading-[1.6] text-muted">
-            <Markdown value={b.long} />
+            <Markdown value={b.long} citations={citations} />
+          </div>
+        )}
+
+        {/* After the text: the text introduces the chart ("Compare the two groups in the chart"). */}
+        {chart && (
+          <div className="max-w-[68ch]">
+            <EmbeddedChart dataset={chart.dataset} source={chart.source} />
           </div>
         )}
 
@@ -194,6 +278,7 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
             Open the document
           </a>
         )}
+        {episode && episode.speakers.length > 0 && <SpeakerList speakers={episode.speakers} />}
         {track && <PlayButton track={track} startAt={b.media.startAt} />}
 
         {insights.length > 0 && (
@@ -204,20 +289,8 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
           </ul>
         )}
 
-        {(sources.length > 0 || b.groupCommentary) && (
-          <p className="font-mono text-xs leading-relaxed text-muted">
-            {b.groupCommentary && sources.length === 0
-              ? "Group commentary"
-              : sources.map((s, i) => (
-                  <span key={s.id}>
-                    {i > 0 && "; "}
-                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
-                      {s.apa}
-                    </a>
-                  </span>
-                ))}
-          </p>
-        )}
+        {/* Full references are only in "References for this era"; the text carries its in-text citations. */}
+        {b.groupCommentary && b.sourceIds.length === 0 && <p className="text-sm text-muted">Group commentary</p>}
       </div>
     </article>
   );
@@ -263,9 +336,9 @@ function InsightGrid({ insights }: { insights: Insight[] }) {
             <span className="text-lg leading-snug">
               <ContentText value={i.text} />
             </span>
-            <span className="mt-auto font-mono text-xs text-muted">
-              {i.groupCommentary && i.sourceIds.length === 0 ? "Group commentary" : `${i.sourceIds.length} source(s)`}
-            </span>
+            {i.groupCommentary && i.sourceIds.length === 0 && (
+              <span className="mt-auto text-sm text-muted">Group commentary</span>
+            )}
           </li>
         ))}
       </ul>

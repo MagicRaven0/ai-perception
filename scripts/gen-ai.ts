@@ -10,10 +10,19 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { generateText } from "ai";
+import { pacedGenerate } from "./ai-call";
 import { corpusForPrompt, itemText, summarizableItemIds } from "../lib/ai/corpus";
 import { chatInstructions, summaryInstructions } from "../lib/ai/prompts";
-import { CHAT_MODEL, chatModel, estimateCost, hasAiCredentials, stripThinking } from "../lib/ai/models";
+import {
+  CHAT_MAX_TOKENS,
+  CHAT_MODEL,
+  CHAT_REASONING,
+  chatModel,
+  estimateCost,
+  hasAiCredentials,
+  stripThinking,
+  SUMMARY_REASONING,
+} from "../lib/ai/models";
 import { PERSONA_IDS, SUMMARY_MODES } from "../lib/ai/personas";
 import { textHash, type AnswerFile, type SummaryFile } from "../lib/ai/summaries";
 import { suggestedQuestions } from "../content/suggested-questions";
@@ -31,6 +40,9 @@ async function main() {
   }
 
   let cost = 0;
+  // A model that spends its whole token budget "thinking" (or never sees the prompt) returns nothing: never
+  // store that as a finished summary or answer; leave it missing so the next run tries again.
+  const empty: string[] = [];
   const now = new Date().toISOString();
 
   // Summaries
@@ -41,14 +53,19 @@ async function main() {
     const hash = textHash(item.text);
     for (const mode of SUMMARY_MODES) {
       if (summaries[id]?.[mode]?.hash === hash) continue;
-      const { text, totalUsage } = await generateText({
+      const { text, totalUsage } = await pacedGenerate({
         model: chatModel(),
+        reasoning: SUMMARY_REASONING,
         instructions: summaryInstructions(mode),
         prompt: `TEXT (from the section "${item.title}"):\n${item.text}`,
         temperature: 0.2,
         maxOutputTokens: 250,
       });
       cost += estimateCost(CHAT_MODEL, totalUsage.inputTokens, totalUsage.outputTokens);
+      if (!stripThinking(text)) {
+        empty.push(`summary ${id} / ${mode}`);
+        continue;
+      }
       (summaries[id] ??= {})[mode] = {
         text: stripThinking(text),
         hash,
@@ -56,11 +73,15 @@ async function main() {
         generatedAt: now,
         checked: false,
       };
+      write("summaries.json", summaries); // after each one: a failed run keeps what it has
       console.log(`summary  ${id} / ${mode}`);
     }
   }
-  // Drop summaries for items that no longer exist
+  // Drop summaries for items that no longer exist, and any empty ones left by an earlier run
   for (const id of Object.keys(summaries)) if (!ids.includes(id)) delete summaries[id];
+  for (const per of Object.values(summaries)) {
+    for (const [mode, sum] of Object.entries(per)) if (!sum?.text.trim()) delete per[mode as keyof typeof per];
+  }
   write("summaries.json", summaries);
 
   // Answers to suggested questions (tied to the whole corpus: any content change makes them stale)
@@ -70,25 +91,35 @@ async function main() {
     const kept: NonNullable<AnswerFile[typeof persona]> = {};
     for (const q of suggestedQuestions[persona]) {
       const old = answers[persona]?.[q];
-      if (old?.hash === corpusHash) {
+      if (old?.hash === corpusHash && old.answer.trim()) {
         kept[q] = old;
         continue;
       }
-      const { text, totalUsage } = await generateText({
+      const { text, totalUsage } = await pacedGenerate({
         model: chatModel(),
+        reasoning: CHAT_REASONING,
         instructions: chatInstructions(persona),
         prompt: q,
         temperature: 0.2,
-        maxOutputTokens: 350,
+        maxOutputTokens: CHAT_MAX_TOKENS,
       });
       cost += estimateCost(CHAT_MODEL, totalUsage.inputTokens, totalUsage.outputTokens);
+      if (!stripThinking(text)) {
+        empty.push(`answer ${persona}: ${q}`);
+        continue;
+      }
       kept[q] = { answer: stripThinking(text), hash: corpusHash, model: CHAT_MODEL, generatedAt: now, checked: false };
+      write("answers.json", { ...answers, [persona]: kept });
       console.log(`answer   ${persona}: ${q}`);
     }
     answers[persona] = kept;
   }
   write("answers.json", answers);
 
+  if (empty.length) {
+    console.warn(`\n${empty.length} empty response(s), not saved (the model returned no text):`);
+    for (const e of empty) console.warn(`  ${e}`);
+  }
   console.log(`\nDone. Estimated cost: $${cost.toFixed(4)}. Review content/generated/*.json and set "checked": true.`);
 }
 

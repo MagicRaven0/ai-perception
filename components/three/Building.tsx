@@ -1,22 +1,25 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import { useStore } from "@/lib/store";
-import type { PlacedBuilding } from "@/lib/three/layout";
+import { SOURCE_BOARD, type FigureLookInput, type PlacedBuilding } from "@/lib/three/layout";
 import { motion } from "@/lib/three/motion";
 import { ERA_PALETTE, SHARED, type EraPalette } from "@/lib/three/palette";
 import { BUILDING_MODELS, MODEL_HEIGHT, type BuildingModel } from "./buildings/registry";
 import { BuildingSensor } from "./BuildingSensor";
 import { StaticMerge } from "./kit/StaticMerge";
+import { FacelessFigure } from "./Figure";
+import { SourcesBoards } from "./SourcesBoards";
+import { VideoScreen } from "./VideoScreen";
 
 /**
  * SHARED. One building from content/buildings.ts, already positioned by lib/three/layout.ts.
  * Renders: box collider (so any model drives the same), the model for its kind (registry, or the `Model`
  * override an island passes), a floating beacon (brightens when the car is close, turns into a tick once
- * opened) and the proximity sensor. Opening is always the visitor's choice (E / tap), never automatic.
+ * opened), the hosts of a podcast studio (one faceless figure per episode speaker) and the proximity sensor. Opening is always the visitor's choice (E / tap), never automatic.
  */
 export function Building({
   placed,
@@ -40,6 +43,19 @@ export function Building({
   const { plot } = placed;
   const top = height ?? MODEL_HEIGHT[placed.kind];
 
+  // The References building: boards in the island's centre instead of a house on the ring road.
+  if (placed.sources) {
+    return (
+      <>
+        <SourcesBoards placed={placed} rows={placed.sources} accent={pal.accent} />
+        <group position={placed.position}>
+          <Beacon id={placed.id} y={SOURCE_BOARD.height + 2.6} accent={pal.accent} />
+        </group>
+        <BuildingSensor id={placed.id} position={placed.sensor.position} radius={placed.sensor.radius} />
+      </>
+    );
+  }
+
   return (
     <>
       <group position={placed.position} rotation-y={placed.rotationY}>
@@ -58,9 +74,45 @@ export function Building({
           />
         </StaticMerge>
         <Beacon id={placed.id} y={top + 2.2} accent={pal.accent} />
+        {placed.hosts.length > 0 && <Hosts id={placed.id} looks={placed.hosts} plot={plot} />}
+        {/* Above the beacon */}
+        {placed.videoSrc && <VideoScreen id={placed.id} src={placed.videoSrc} y={top + 5.6} />}
       </group>
       <BuildingSensor id={placed.id} position={placed.sensor.position} radius={placed.sensor.radius} />
     </>
+  );
+}
+
+/**
+ * A podcast studio's speakers standing together by the door, left of it (the "coming soon" barrier is on the
+ * right), just outside the collider. Faceless figures in each speaker's content look: no names, no likeness.
+ * Built from the episode's speakers, so a third host (or a fictional guest) appears without a code change.
+ * Static, so the group merges into one draw call.
+ */
+function Hosts({ id, looks, plot }: { id: string; looks: FigureLookInput[]; plot: { width: number; depth: number } }) {
+  // Development only: lets the e2e tests count the figures at each studio.
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    const w = window as unknown as { __hostCounts?: Record<string, number> };
+    (w.__hostCounts ??= {})[id] = looks.length;
+  }, [id, looks.length]);
+  const gap = 1.15;
+  const cx = -plot.width * 0.28;
+  const z = plot.depth * 0.34 + 0.9;
+  const mid = (looks.length - 1) / 2;
+  return (
+    <StaticMerge>
+      {looks.map((look, i) => (
+        // Turned slightly towards each other, as if talking, while still facing the road.
+        <group
+          key={i}
+          position={[cx + (i - mid) * gap, 0, z - Math.abs(i - mid) * 0.25]}
+          rotation-y={(i - mid) * -0.35}
+        >
+          <FacelessFigure position={[0, 0, 0]} look={look} />
+        </group>
+      ))}
+    </StaticMerge>
   );
 }
 

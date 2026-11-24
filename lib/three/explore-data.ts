@@ -1,4 +1,7 @@
-import type { BuildingKind, EraId } from "@/lib/content/schema";
+import type { ArcadeConfig } from "@/lib/content/arcades";
+import type { BuildingKind, Dataset, EraId, Source } from "@/lib/content/schema";
+import type { SourceRef } from "@/components/content/InTextCite";
+import type { BuildingVideoData, CreditedMedia, CreditText } from "@/lib/content/media";
 import type { Track } from "@/lib/store";
 import type { WorldLayout } from "./layout";
 
@@ -32,8 +35,20 @@ export type ExploreBuilding = {
   /** Episode id even when it cannot play yet (drawer shows "Episode coming"). */
   episodeId?: string;
   startAt?: number;
+  /** The episode's speakers (names and roles), so a fictional guest's "not a real person" role is visible. */
+  speakers: { name: string; role: string }[];
   hasVideo: boolean;
+  /** Our own video, played inside the drawer (content `media.videoSrc`). */
+  video?: BuildingVideoData | null;
+  /** Photo with its credit (content `media.imageId`); the video's poster when there is a video. */
+  image?: CreditedMedia | null;
   documentUrl?: string;
+  /** Interactive "experience" (arcade) shown inside the drawer. */
+  arcade: ArcadeConfig | null;
+  /** Chart shown inside the drawer (content `media.datasetId`), with its in-text citation. */
+  chart?: { dataset: Dataset; source?: SourceRef } | null;
+  /** Only on an island's generated References building: that island's APA references, sorted. */
+  references?: { id: string; apa: string; url: string; origin?: Source["origin"] }[];
 };
 
 export type ExploreSign = {
@@ -42,6 +57,10 @@ export type ExploreSign = {
   /** "Benefit", "Risk", "Danger", or the person's name for figures. */
   label: string;
   text: string;
+  /** Small line above a figure's name (default "Person"). */
+  person?: string;
+  /** Credit of the figure's billboard photo. */
+  credit?: CreditText;
 };
 
 export type ExploreData = {

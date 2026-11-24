@@ -1,11 +1,11 @@
 "use client";
 
-import { memo, Suspense, useEffect, useState } from "react";
+import { memo, Suspense, useEffect, useRef, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { PerformanceMonitor } from "@react-three/drei";
 import { useStore } from "@/lib/store";
 import type { Pose, WorldLayout } from "@/lib/three/layout";
-import { dprFor, initialAutoTier, selectTier, TIERS, type Tier } from "@/lib/three/quality";
+import { dprFor, initialAutoTier, RES_STEPS, selectTier, startResStep, TIERS, type Tier } from "@/lib/three/quality";
 import World from "./World";
 
 /**
@@ -31,7 +31,7 @@ function Experience({ world, start, onReady, onLost }: Props) {
     <Canvas
       shadows="percentage"
       flat
-      dpr={dprFor(startTier)}
+      dpr={dprFor(startTier, startResStep())}
       gl={{ antialias: TIERS[startTier].antialias, powerPreference: "high-performance", alpha: false }}
       frameloop="always"
       onCreated={({ gl }) => {
@@ -77,8 +77,11 @@ function QualityController({ startTier }: { startTier: Tier }) {
   const setDpr = useThree((s) => s.setDpr);
   const get = useThree((s) => s.get);
 
+  // How far below Low's full resolution the picture is drawn (RES_STEPS).
+  const resStep = useRef(startResStep());
+
   useEffect(() => {
-    setDpr(dprFor(tier));
+    setDpr(dprFor(tier, resStep.current));
     const { gl, scene } = get();
     const shadows = TIERS[tier].shadows;
     if (gl.shadowMap.enabled !== shadows) {
@@ -93,21 +96,39 @@ function QualityController({ startTier }: { startTier: Tier }) {
     }
   }, [tier, setDpr, get]);
 
-  const auto = (next: "high" | "low") => {
+  // Real drops from High to Low so far. drei's own `flipflops` limit is NOT used: it counts every "still fast"
+  // reading as a flip too, so a machine at a steady 165 fps hit the limit after 10 s and was sent to Low for good.
+  const drops = useRef(0);
+  const onDecline = () => {
     const s = useStore.getState();
-    if (s.quality === "auto") s.setAutoTier(next);
+    if (selectTier(s) === "low") {
+      // Still slow on Low: fewer pixels, which costs nothing to switch.
+      if (s.quality !== "auto" || resStep.current >= RES_STEPS.length - 1) return;
+      setDpr(dprFor("low", ++resStep.current));
+      return;
+    }
+    if (s.quality !== "auto") return;
+    drops.current++;
+    s.setAutoTier("low");
+  };
+  const onIncline = () => {
+    const s = useStore.getState();
+    // Each switch rebuilds every merged model and shader: one second chance, then stay on Low.
+    if (s.quality !== "auto" || s.autoTier === "high" || drops.current >= MAX_DROPS || startResStep() > 0) return;
+    s.setAutoTier("high");
   };
 
   return (
     <PerformanceMonitor
       bounds={(refresh) => (refresh > 90 ? [50, 80] : [38, 55])}
-      flipflops={3}
-      onDecline={() => auto("low")}
-      onIncline={() => auto("high")}
-      onFallback={() => auto("low")}
+      onDecline={onDecline}
+      onIncline={onIncline}
     />
   );
 }
+
+/** After this many drops to Low, Auto stays on Low for the visit. */
+const MAX_DROPS = 2;
 
 /**
  * Stops rendering while the browser tab is hidden. (Leaving /explore for another route unmounts the whole

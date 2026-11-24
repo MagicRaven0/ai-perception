@@ -414,7 +414,7 @@ export function buildPastDecor(layout: IslandLayout, low: boolean): PastDecor {
 
   const extras = new Geo({ withGeometry: false });
   extras.bakeReels = low;
-  layout.buildings.forEach((b: PlacedBuilding) => pastBuildingExtras(b, extras));
+  layout.buildings.filter((b) => !b.sources).forEach((b: PlacedBuilding) => pastBuildingExtras(b, extras));
 
   return {
     cast: cast.build(),

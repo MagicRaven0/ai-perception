@@ -1,4 +1,5 @@
 import type { Dataset } from "@/lib/content/schema";
+import { datasetContext, formatValue } from "@/lib/content/format";
 
 /** Accessible twin of every chart: the same numbers as a table. */
 export function DataTable({ dataset }: { dataset: Dataset }) {
@@ -13,7 +14,11 @@ export function DataTable({ dataset }: { dataset: Dataset }) {
         <thead>
           <tr className="border-b border-snow">
             <th scope="col" className="mono-label py-2 pr-4 font-normal text-chart-text">
-              {dataset.chartType === "line" ? "Year" : "Answer"}
+              {dataset.chartType === "line"
+                ? "Year"
+                : datasetContext(dataset.questionWording).kind === "note"
+                  ? "Measure"
+                  : "Answer"}
             </th>
             {dataset.series.map((s) => (
               <th key={s.label} scope="col" className="mono-label py-2 pr-4 text-right font-normal text-chart-text">
@@ -32,7 +37,7 @@ export function DataTable({ dataset }: { dataset: Dataset }) {
                 const v = value(s.label, x);
                 return (
                   <td key={s.label} className="py-2 pr-4 text-right tabular-nums">
-                    {v === undefined ? "–" : `${v}${dataset.unit}`}
+                    {v === undefined ? "–" : formatValue(v, dataset.unit)}
                   </td>
                 );
               })}

@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { Fragment } from "react";
 import type { ChunkRef } from "@/lib/ai/corpus";
+import { isNotFound, NOT_FOUND } from "@/lib/ai/not-found";
 
-export const NOT_FOUND = "[NONE]";
 const CITE = /\[(C\d{3})\]/g;
 
 /** Splits an answer into text and citation chips. Returns the chunk ids it cited (valid ones only). */
 export function parseAnswer(text: string, refs: Record<string, ChunkRef>) {
-  const notFound = text.includes(NOT_FOUND);
   // Hide any model "thinking" block (local thinking models) and the not-found marker.
   const clean = text
     .replace(/<think>[\s\S]*?(<\/think>|$)/g, "")
@@ -22,7 +21,7 @@ export function parseAnswer(text: string, refs: Record<string, ChunkRef>) {
       if (!cited.includes(m[1])) cited.push(m[1]);
     } else if (!invalid.includes(m[1])) invalid.push(m[1]);
   }
-  return { clean, notFound, cited, invalid };
+  return { clean, notFound: isNotFound(text, cited.length > 0), cited, invalid };
 }
 
 /** Renders answer text with numbered citation chips that link to the 2D section they came from. */

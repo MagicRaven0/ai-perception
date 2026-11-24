@@ -3,9 +3,8 @@
 import { useState } from "react";
 import type { Comparison } from "@/lib/content/schema";
 import { ContentText } from "@/components/content/ContentText";
-import { SourceLine, type SourceRef } from "./SourceLine";
 
-type Side = Comparison["left"] & { source?: SourceRef };
+type Side = Comparison["left"];
 
 /**
  * Ceros-style before/after: drag (or arrow keys) to move between "then" and "now".
@@ -18,12 +17,13 @@ export function ComparisonSlider({ left, right, takeaway }: { left: Side; right:
 
   return (
     <figure className="flex flex-col gap-4">
-      <div className="relative min-h-[320px] overflow-hidden rounded-[4px] border border-ink md:min-h-[280px]">
-        {/* Right ("now") underneath */}
+      <div className="relative grid min-h-[320px] overflow-hidden rounded-[4px] border border-ink md:min-h-[280px]">
+        {/* Both panels share one grid cell, so the box grows to the longer text and nothing is cut off on phones.
+            Right ("now") underneath */}
         <Panel side={right} tone="now" />
         {/* Left ("then") on top, clipped */}
         <div
-          className="absolute inset-0 transition-[clip-path] duration-250 ease-calm motion-reduce:transition-none"
+          className="col-start-1 row-start-1 grid transition-[clip-path] duration-250 ease-calm motion-reduce:transition-none"
           style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
         >
           <Panel side={left} tone="then" />
@@ -53,10 +53,6 @@ export function ComparisonSlider({ left, right, takeaway }: { left: Side; right:
       <figcaption className="max-w-3xl text-lg">
         <ContentText value={takeaway} />
       </figcaption>
-      <div className="grid gap-1 md:grid-cols-2">
-        <SourceLine source={left.source} tone="light" />
-        <SourceLine source={right.source} tone="light" />
-      </div>
     </figure>
   );
 }
@@ -66,7 +62,7 @@ function Panel({ side, tone }: { side: Side; tone: "then" | "now" }) {
   // Each side keeps its text inside its own half, so at the 50% resting point both are fully readable.
   return (
     <div
-      className={`absolute inset-0 flex flex-col justify-end gap-2 p-4 md:gap-3 md:p-10 ${
+      className={`col-start-1 row-start-1 flex flex-col justify-end gap-2 p-4 md:gap-3 md:p-10 ${
         then ? "bg-era1-base text-coal" : "items-end bg-night text-right text-snow"
       }`}
     >

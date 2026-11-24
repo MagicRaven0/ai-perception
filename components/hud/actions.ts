@@ -2,7 +2,7 @@
 
 import type { EraId } from "@/lib/content/schema";
 import { useStore } from "@/lib/store";
-import { nearestEra, type WorldLayout } from "@/lib/three/layout";
+import { nearestEra, type Pose, type WorldLayout } from "@/lib/three/layout";
 import { player, requestTeleport } from "@/lib/three/transient";
 
 /** "I'm stuck" (R key / Options): back to the spawn of the island you are on. */
@@ -20,11 +20,16 @@ const reducedMotion = () =>
  * `fade` is the overlay element (opacity transition in CSS); with reduced motion it cuts instantly.
  */
 export function fastTravel(world: WorldLayout, era: EraId, fade: HTMLElement | null) {
+  fastTravelTo(world.islands[era].spawn, fade, era);
+}
+
+/** The same, to any pose (the team island belongs to no era: the current one stays active). */
+export function fastTravelTo(pose: Pose, fade: HTMLElement | null, era?: EraId) {
   const s = useStore.getState();
   s.closeBuilding();
   const go = () => {
-    requestTeleport(world.islands[era].spawn);
-    s.setActiveEra(era);
+    requestTeleport(pose);
+    if (era) s.setActiveEra(era);
   };
   if (!fade || reducedMotion()) {
     go();

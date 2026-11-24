@@ -28,10 +28,12 @@ export function AudioDock() {
   const total = duration || track?.durationSec || 0;
 
   return (
+    // Not fully opaque: when the CPU draws the page (no graphics acceleration), Brave/Chromium cuts the wrong edge off
+    // a canvas lying under a fully opaque bar. No blur either: it is redrawn on every 3D frame.
     <div
       role="region"
       aria-label="Audio player"
-      className="fixed inset-x-0 bottom-0 z-audio h-14 border-t border-rule bg-paper/95 backdrop-blur md:h-[72px]"
+      className="fixed inset-x-0 bottom-0 z-audio h-14 border-t border-rule bg-paper/95 md:h-[72px]"
     >
       <div className="mx-auto flex h-full max-w-[1280px] items-center gap-3 px-4 md:gap-5 md:px-12">
         {track ? (

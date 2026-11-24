@@ -11,11 +11,13 @@ import {
   getSource,
   getTranscript,
   insights,
+  citations,
   site,
 } from "@/lib/content";
 import type { EraId } from "@/lib/content/schema";
 import { isPlaceholder } from "@/lib/content/placeholder";
 import { formatTime } from "@/lib/audio/vtt";
+import { citedSourceIds } from "@/lib/content/citations";
 
 /**
  * The research corpus the AI may use (PLAN.md 8.2). Built from content/ at request time (cached in memory):
@@ -71,6 +73,14 @@ function collectDocs(): Doc[] {
 
   if (real(site.thesis))
     docs.push({ title: "Our thesis", eraId: null, text: site.thesis, sourceIds: [], href: "/about" });
+  if (real(site.aiDisclosure))
+    docs.push({
+      title: "How we made this site and used AI",
+      eraId: null,
+      text: site.aiDisclosure,
+      sourceIds: [],
+      href: "/about",
+    });
   if (real(about.genreRationale))
     docs.push({
       title: "Why this site is built this way",
@@ -232,9 +242,12 @@ let cached: Chunk[] | null = null;
 export function getCorpus(): Chunk[] {
   if (cached && process.env.NODE_ENV === "production") return cached;
   const chunks: Chunk[] = [];
+  // Prose carries APA in-text citations ("(Witt, 2025, para. 57)"): each chunk also gets the ids of the sources
+  // it cites, so the chatbot's answers can name the works behind them, not only the section.
   for (const doc of collectDocs()) {
     for (const text of splitText(doc.text)) {
-      chunks.push({ ...doc, text, id: `C${String(chunks.length + 1).padStart(3, "0")}` });
+      const sourceIds = [...new Set([...doc.sourceIds, ...citedSourceIds(text, citations)])];
+      chunks.push({ ...doc, text, sourceIds, id: `C${String(chunks.length + 1).padStart(3, "0")}` });
     }
   }
   cached = chunks;

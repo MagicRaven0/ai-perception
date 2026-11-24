@@ -15,6 +15,8 @@ export const Id = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "IDs are kebab-ca
 const Hex = z.string().regex(/^#[0-9a-f]{6}$/i);
 /** A URL, or a "TODO:" placeholder until the real one exists. */
 const UrlOrTodo = z.union([z.url(), z.string().startsWith(PLACEHOLDER_PREFIX)]);
+/** Credits may also point at one of our own files under /public (our own videos). */
+const UrlPathOrTodo = z.union([UrlOrTodo, z.string().regex(/^\/[^/]/)]);
 
 export const EraId = z.enum(["era-1", "era-2", "era-3"]);
 export type EraId = z.infer<typeof EraId>;
@@ -24,6 +26,8 @@ export type EraId = z.infer<typeof EraId>;
 export const TeamMember = z.object({
   name: z.string().min(1),
   role: z.string().min(1),
+  /** What this person's statue sits with on the 3D team island (default: a book). */
+  statue: z.enum(["stop-button", "light-bulb", "robot", "book"]).optional(),
 });
 
 export const Site = z.object({
@@ -126,6 +130,13 @@ export const Building = z
           .optional(),
         /** Link to a document or PDF. */
         documentUrl: z.url().optional(),
+        /** A dataset from content/datasets.ts to show inside this building (3D drawer and 2D section). */
+        datasetId: Id.optional(),
+        /** Our own looping video under /public, e.g. "/videos/x.mp4". Needs a credit `video-<building id>`. */
+        videoSrc: z
+          .string()
+          .regex(/^\/videos\/[\w-]+\.mp4$/)
+          .optional(),
       })
       .default({}),
     sourceIds: z.array(Id),
@@ -250,6 +261,8 @@ export const Source = z.object({
   url: UrlOrTodo,
   eraIds: z.array(EraId),
   type: z.enum(["book", "article", "journal", "report", "poll", "website", "video", "interview", "other"]),
+  /** "essay": a source of one of our three research essays (listed first). Anything else was added. */
+  origin: z.enum(["essay", "added"]).optional(),
 });
 export type Source = z.infer<typeof Source>;
 
@@ -261,7 +274,9 @@ export const Credit = z.object({
   title: z.string().min(1),
   author: z.string().min(1),
   licence: z.string().min(1),
-  url: UrlOrTodo,
+  url: UrlPathOrTodo,
+  /** Exact credit line to show under the asset; without it, "author, licence" is shown. */
+  creditLine: z.string().min(1).optional(),
   /** Set when the asset was made with AI: name the tool (class rule). */
   aiTool: z.string().optional(),
 });

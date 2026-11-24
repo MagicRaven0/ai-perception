@@ -1,5 +1,6 @@
 "use client";
 
+import { Npcs } from "./Npcs";
 import { lazy, memo, Suspense, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { CuboidCollider, CylinderCollider, Physics, RigidBody } from "@react-three/rapier";
@@ -13,6 +14,7 @@ import { Vehicle } from "./Vehicle";
 import { TapMarker } from "./TapMarker";
 import { Runway } from "./Runway";
 import { StaticMerge } from "./kit/StaticMerge";
+import { TeamIsland } from "./TeamIsland";
 import type { IslandProps } from "./islands/types";
 
 /**
@@ -44,6 +46,8 @@ function World({ world, start, onFirstFrame }: { world: WorldLayout; start: Pose
         {world.bridges.map((b) => (
           <Bridge key={b.id} bridge={b} />
         ))}
+        <Bridge bridge={world.team.bridge} />
+        <TeamIsland team={world.team} />
         {ERA_ORDER.map((id) => (
           <Runway key={`runway-${id}`} runway={world.runways[id]} />
         ))}
@@ -64,6 +68,9 @@ function World({ world, start, onFirstFrame }: { world: WorldLayout; start: Pose
               />
             );
           })}
+          {ERA_ORDER.map((id) => (
+            <Npcs key={`npcs-${id}`} island={world.islands[id]} />
+          ))}
           <FirstFrame onFirstFrame={onFirstFrame} />
         </Suspense>
       </Physics>

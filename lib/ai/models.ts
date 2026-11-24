@@ -37,6 +37,14 @@ export function chatModel(): LanguageModel {
   return CHAT_MODEL;
 }
 
+/**
+ * Claude Haiku 5.5 thinks by default and can spend the whole answer limit on it, which leaves an empty answer.
+ * Chat: a little thinking (it follows the rules better) with room for it. Summaries: no thinking needed.
+ */
+export const CHAT_REASONING = PROVIDER === "gateway" ? ("low" as const) : undefined;
+export const CHAT_MAX_TOKENS = PROVIDER === "gateway" ? 1500 : 350;
+export const SUMMARY_REASONING = PROVIDER === "gateway" ? ("none" as const) : undefined;
+
 export const hasAiCredentials = () =>
   PROVIDER === "local"
     ? true

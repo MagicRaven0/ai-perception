@@ -9,6 +9,13 @@ import { PlayButton } from "@/components/audio/PlayButton";
 import { isPlaceholder } from "@/lib/content/placeholder";
 import { buildingName } from "./InteractPrompt";
 import { useDialog } from "./useDialog";
+import { SpeakerList } from "@/components/audio/SpeakerList";
+import { Arcade } from "@/components/arcade/Arcade";
+import { CreditedImage } from "@/components/content/CreditedImage";
+import { CreditLine } from "@/components/content/CreditLine";
+import { ReferenceGroups } from "@/components/content/ReferenceGroups";
+import { BuildingVideo } from "@/components/media/BuildingVideo";
+import { EmbeddedChart } from "@/components/data/DatasetView";
 
 /**
  * Building drawer (PLAN 7.1 z-drawer): right panel 420px on desktop, bottom sheet at 70% height on phones.
@@ -77,13 +84,37 @@ function Drawer({ b, era }: { b: ExploreBuilding; era?: ExploreEra }) {
 
         {b.comingSoon && (
           <p className="rounded-[12px] border border-dashed border-rule px-4 py-3 text-muted" data-placeholder="true">
-            Coming soon: the group is still writing this part. The building is here so you can find it later.
+            {b.episodeId
+              ? "Coming soon: this recording has not been made yet."
+              : "Coming soon: the group is still writing this part. The building is here so you can find it later."}
           </p>
         )}
 
+        {b.video ? (
+          <div>
+            <BuildingVideo video={b.video} inside />
+            {b.image && <CreditLine credit={{ ...b.image.credit, text: `Poster: ${b.image.credit.text}` }} />}
+          </div>
+        ) : (
+          b.image && <CreditedImage image={b.image} sizes="(min-width: 768px) 372px, 100vw" />
+        )}
+
+        {b.arcade && <Arcade config={b.arcade} />}
+
+        {b.chart && <EmbeddedChart dataset={b.chart.dataset} source={b.chart.source} />}
+
+        {b.references &&
+          (b.references.length > 0 ? (
+            <ReferenceGroups items={b.references} heading="h3" size="sm" />
+          ) : (
+            <p className="text-muted">Sources for this island are being added.</p>
+          ))}
+
+        {b.speakers.length > 0 && <SpeakerList speakers={b.speakers} />}
+
         {b.track ? (
           <PlayButton track={b.track} startAt={b.startAt} label={b.startAt ? undefined : "Play episode"} />
-        ) : b.episodeId ? (
+        ) : b.episodeId && !b.comingSoon ? (
           <p className="text-sm text-muted">Episode coming soon.</p>
         ) : null}
 

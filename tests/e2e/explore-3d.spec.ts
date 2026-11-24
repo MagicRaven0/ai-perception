@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { buildings } from "../../content/buildings";
+import { site } from "../../content/site";
 
 /**
  * /explore in 3D (Phase 3): the ?b= deep link into a building drawer, driving, failure handling, leaving /
@@ -68,6 +69,8 @@ const visibleDialogs = (page: Page) => page.getByRole("dialog");
  */
 async function relaxLoadWatchdog(page: Page) {
   await page.addInitScript(() => {
+    // These browsers draw with software WebGL, but the tests are about the normal world (see capabilities.ts).
+    (window as unknown as { __exploreAssumeHardware: boolean }).__exploreAssumeHardware = true;
     (window as unknown as { __exploreLoadTimeoutMs: number }).__exploreLoadTimeoutMs = 45_000;
   });
 }
@@ -640,5 +643,276 @@ test.describe("explore on a phone", () => {
       await expect(page.getByRole("button", { name: /Tap to open/ })).toBeVisible();
       await page.screenshot({ path: "screenshots/explore-phone-375-prompt.png" });
     }
+  });
+});
+
+/** Features added 22 Nov 2026 (docs/VISION.md): References building, NPC figures, free-look camera. */
+test.describe("world features", () => {
+  test.describe.configure({ mode: "default" });
+  test.setTimeout(150_000);
+  test.beforeEach(async ({ page }) => {
+    await relaxLoadWatchdog(page);
+  });
+
+  test("every island has a generated References building that lists its sources", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore?b=era-1-references");
+    const drawer = visibleDialogs(page);
+    await expect(drawer).toBeVisible({ timeout: 15_000 });
+    await expect(drawer.getByRole("heading", { name: /^References/ })).toBeVisible();
+    const links = drawer.locator("li a[href^='http']");
+    expect(await links.count()).toBeGreaterThan(0);
+    await expect(drawer.getByRole("link", { name: "Read more" })).toHaveAttribute(
+      "href",
+      /\/read\/[a-z0-9-]+#era-1-references$/,
+    );
+    // The other two islands have one as well.
+    for (const id of ["era-2-references", "era-3-references"]) {
+      await page.evaluate(
+        (b) =>
+          (window as unknown as { __store: { getState: () => { openBuilding: (id: string) => void } } }).__store
+            .getState()
+            .openBuilding(b),
+        id,
+      );
+      await expect(visibleDialogs(page).locator("li a[href^='http']").first()).toBeVisible();
+    }
+  });
+
+  test("first person: a full turn all the way round, kept until C, and the car body is out of the way", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore?era=era-1");
+    await page.locator("body").press("v");
+    const yaw = () =>
+      page.evaluate(
+        () => (window as unknown as { __explore: { look: { yawTarget: number } } }).__explore.look.yawTarget,
+      );
+    // Drag right well past half a turn: no stop.
+    await page.mouse.move(200, 450);
+    await page.mouse.down();
+    await page.mouse.move(1300, 450, { steps: 10 });
+    await page.mouse.up();
+    expect(Math.abs(await yaw())).toBeGreaterThan(Math.PI * 1.5);
+    // Parked: the view stays where it was left.
+    const left = await yaw();
+    await page.waitForTimeout(3200);
+    expect(await yaw()).toBeCloseTo(left, 5);
+    await page.locator("body").press("c");
+    expect(await yaw()).toBe(0);
+  });
+
+  test("CPU-drawn 3D starts on Low with fewer pixels and shows the graphics acceleration tip", async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as unknown as { __exploreAssumeHardware: boolean }).__exploreAssumeHardware = false;
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore?era=era-1");
+    expect(
+      await page
+        .locator("canvas")
+        .first()
+        .evaluate((c: HTMLCanvasElement) => c.width),
+    ).toBeLessThan(1200);
+    const tip = page.locator("[data-software-notice]");
+    await expect(tip).toContainText("graphics acceleration");
+    await tip.getByRole("button", { name: "Close this tip" }).click();
+    await expect(tip).toBeHidden();
+  });
+
+  test("the team island: the Team button goes there, and each statue names its member", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await open3d(page, "/explore?era=era-2");
+    // Four island pills still fit a phone.
+    const team = page.getByRole("button", { name: "Team", exact: true }).filter({ visible: true });
+    const box = await team.boundingBox();
+    expect(box && box.x + box.width).toBeLessThanOrEqual(375);
+    await team.click();
+    await expect.poll(async () => (await playerPose(page)).z, { timeout: 15_000 }).toBeLessThan(-80);
+    // The middle statue stands straight ahead of the arrival point.
+    await page.evaluate(() =>
+      (window as unknown as { __explore: { requestTeleport: (p: object) => void } }).__explore.requestTeleport({
+        x: 0,
+        y: 1.2,
+        z: -101,
+        heading: Math.PI,
+      }),
+    );
+    await expect(page.locator("[data-interact-prompt]")).toContainText(site.team[1]!.name, { timeout: 15_000 });
+  });
+
+  test("faceless NPCs stand around every island", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore");
+    const counts = () =>
+      page.evaluate(() => (window as unknown as { __npcCounts?: Record<string, number> }).__npcCounts ?? {});
+    await expect.poll(async () => Object.keys(await counts()).sort()).toEqual(["era-1", "era-2", "era-3"]);
+    for (const n of Object.values(await counts())) expect(n).toBeGreaterThan(0);
+  });
+
+  test("free look: drag turns and tilts, the wheel zooms, Recenter and C bring the view back", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore");
+    type FreeLook = { __store: { getState: () => { freeLook: boolean } } };
+    const freeLook = () => page.evaluate(() => (window as unknown as FreeLook).__store.getState().freeLook);
+    const recenter = page.getByRole("button", { name: /^Recenter/ });
+    await expect(recenter).toHaveCount(0);
+
+    // Right-drag on the world turns and tilts the view.
+    const box = (await page.locator("canvas").first().boundingBox())!;
+    const cx = box.x + box.width * 0.6;
+    const cy = box.y + box.height * 0.6;
+    await page.mouse.move(cx, cy);
+    await page.mouse.down({ button: "right" });
+    await page.mouse.move(cx + 160, cy + 60, { steps: 8 });
+    await page.mouse.up({ button: "right" });
+    await expect.poll(freeLook).toBe(true);
+    await expect(recenter).toBeVisible();
+    await page.keyboard.press("c");
+    await expect.poll(freeLook).toBe(false);
+    await expect(recenter).toHaveCount(0);
+
+    // The wheel zooms out; the Recenter button brings it back.
+    await page.mouse.move(cx, cy);
+    await page.mouse.wheel(0, 600);
+    await expect.poll(freeLook).toBe(true);
+    await recenter.click();
+    await expect.poll(freeLook).toBe(false);
+  });
+
+  test("round 5: building charts, the long References list scrolls, and podcast hosts follow the speakers", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await open3d(page, "/explore?b=experts-vs-public");
+    const drawer = visibleDialogs(page);
+    await expect(drawer).toBeVisible({ timeout: 15_000 });
+    // Grouped bars: both series in the legend, the paraphrased wording as a note, population in the source line.
+    const chart = drawer.locator("[data-embedded-chart='experts-vs-public']");
+    await expect(chart.getByRole("list", { name: "Legend" })).toContainText("AI experts");
+    await expect(chart.getByRole("list", { name: "Legend" })).toContainText("U.S. adults");
+    await expect(chart.getByText("Note:", { exact: true })).toBeVisible();
+    await expect(chart).toContainText("1,013 AI experts");
+    await page.screenshot({ path: "screenshots/drawer-experts-vs-public-375.png" });
+
+    const open = (id: string) =>
+      page.evaluate(
+        (b) =>
+          (window as unknown as { __store: { getState: () => { openBuilding: (id: string) => void } } }).__store
+            .getState()
+            .openBuilding(b),
+        id,
+      );
+    await open("training-lab");
+    await expect(visibleDialogs(page).locator("[data-embedded-chart='shutdown-resistance']")).toContainText("97%");
+
+    // The Future's References list is long: its last entry scrolls into view inside the drawer.
+    await open("era-3-references");
+    const last = visibleDialogs(page).locator("li").last();
+    await last.scrollIntoViewIfNeeded();
+    await expect(last).toBeInViewport();
+    await page.screenshot({ path: "screenshots/drawer-era-3-references-375.png" });
+
+    // One faceless figure per episode speaker: 3 for episode 1 (with the fictional guest), 2 for episode 2,
+    // 3 for episode 3 (three hosts).
+    const want = Object.fromEntries(
+      buildings.filter((b) => b.kind === "podcast").map((b) => [b.id, b.media?.episodeId ?? ""]),
+    );
+    await expect
+      .poll(() =>
+        page.evaluate(() => (window as unknown as { __hostCounts?: Record<string, number> }).__hostCounts ?? {}),
+      )
+      .toEqual(Object.fromEntries(Object.keys(want).map((id) => [id, id === "era-2-podcast" ? 2 : 3])));
+  });
+
+  test("screenshot: the podcast studio on The Future with its three hosts (1440px)", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore?b=era-3-podcast");
+    await expect(visibleDialogs(page)).toBeVisible({ timeout: 15_000 });
+    await page.screenshot({ path: "screenshots/explore-era-3-podcast-drawer-1440.png" });
+    await visibleDialogs(page).getByRole("button", { name: "Close" }).click();
+    await page.waitForTimeout(1500);
+    await page.screenshot({ path: "screenshots/explore-era-3-podcast-1440.png" });
+    // Free look round to the road side, where the hosts stand by the door, and zoom in.
+    await page.mouse.move(720, 450);
+    await page.mouse.down({ button: "right" });
+    await page.mouse.move(1320, 450, { steps: 20 });
+    await page.mouse.up({ button: "right" });
+    await page.mouse.wheel(0, -500);
+    await page.waitForTimeout(1500);
+    await page.screenshot({ path: "screenshots/explore-era-3-podcast-hosts-1440.png" });
+  });
+
+  test("round 7/8: the video loads only near its building, plays in the drawer, and ducks the music", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const asked: string[] = [];
+    page.on("request", (r) => {
+      if (r.url().includes(".mp4")) asked.push(new URL(r.url()).pathname);
+    });
+    await open3d(page, "/explore?era=era-2");
+    expect(asked).toEqual([]);
+    const open = (id: string) =>
+      page.evaluate(
+        (b) =>
+          (window as unknown as { __store: { getState: () => { openBuilding: (id: string) => void } } }).__store
+            .getState()
+            .openBuilding(b),
+        id,
+      );
+    await open("interface-gallery");
+    const video = visibleDialogs(page).locator("video");
+    await expect(video).toHaveAttribute("preload", "none");
+    await expect(visibleDialogs(page)).toContainText("AI-generated animation and music");
+    await expect.poll(() => [...new Set(asked)]).toEqual(["/videos/interface-gallery.mp4"]);
+    await page.screenshot({ path: "screenshots/drawer-video-1440.png" });
+
+    // Audible video -> videoSound (Chromium here has no H.264, so the media events are simulated).
+    const videoSound = () =>
+      page.evaluate(
+        () =>
+          (window as unknown as { __store: { getState: () => { videoSound: boolean } } }).__store.getState().videoSound,
+      );
+    await video.evaluate((v: HTMLVideoElement) => {
+      Object.defineProperty(v, "paused", { value: false, configurable: true });
+      v.muted = false;
+      v.dispatchEvent(new Event("playing"));
+    });
+    await expect.poll(videoSound).toBe(true);
+    await visibleDialogs(page).getByRole("button", { name: "Close" }).click();
+    await expect.poll(videoSound).toBe(false);
+  });
+
+  test("screenshots: drawers with a video and a photo at 375px, and a chart and a photo at 1440px", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await open3d(page, "/explore?b=perceptron-cinema");
+    const open = (id: string) =>
+      page.evaluate(
+        (b) =>
+          (window as unknown as { __store: { getState: () => { openBuilding: (id: string) => void } } }).__store
+            .getState()
+            .openBuilding(b),
+        id,
+      );
+    await expect(visibleDialogs(page)).toBeVisible({ timeout: 15_000 });
+    await page.screenshot({ path: "screenshots/drawer-video-375.png" });
+    await open("mainframe-archive");
+    await expect(visibleDialogs(page).getByRole("heading", { level: 2 })).toContainText("Room-sized");
+    await page.waitForTimeout(1000);
+    await page.screenshot({ path: "screenshots/drawer-photo-375.png" });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: "screenshots/drawer-photo-1440.png" });
+    await open("experts-vs-public");
+    await expect(visibleDialogs(page).locator("[data-embedded-chart]")).toBeVisible();
+    await page.screenshot({ path: "screenshots/drawer-chart-1440.png" });
+    const wide = await visibleDialogs(page).evaluate((d) => {
+      const body = d.querySelector(".overflow-y-auto")!;
+      return body.scrollWidth - body.clientWidth;
+    });
+    expect(wide, "sideways overflow in the drawer").toBeLessThanOrEqual(0);
   });
 });

@@ -65,6 +65,7 @@ const quat = new THREE.Quaternion();
 const ZERO = { x: 0, y: 0, z: 0 };
 const vel = { x: 0, y: 0, z: 0 };
 const pos = { x: 0, y: 0, z: 0 };
+const view = new THREE.Vector3();
 
 export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
   const body = useRef<RapierRigidBody>(null);
@@ -123,6 +124,8 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
     const f = fly.current;
     f.swap = motion.reduced ? 1 : Math.min(1, f.swap + dt / 0.5);
     const pop = Math.max(0.05, Math.abs(Math.cos(Math.PI * f.swap)));
+    // First person: the camera is inside, so the body (nose, roof, leaning) would only block the view.
+    if (visual.current) visual.current.visible = useStore.getState().cameraMode !== "driver";
     if (carGroup.current) {
       carGroup.current.visible = !player.flying ? f.swap > 0.5 || f.swap === 1 : f.swap < 0.5;
       carGroup.current.scale.setScalar(pop);
@@ -182,6 +185,11 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
       player.z = pos.z;
       player.heading = s.heading;
       player.speed = f.speed;
+      player.pitch = f.pitch;
+      player.bank = f.bank;
+      player.viewX = pos.x;
+      player.viewY = pos.y;
+      player.viewZ = pos.z;
       // The island below decides the plane's era (island sensors are on the ground).
       const below = nearestEra(world, pos.x, pos.z);
       if (below !== useStore.getState().activeEra) useStore.getState().setActiveEra(below);
@@ -268,6 +276,16 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
     player.z = p.z;
     player.heading = s.heading;
     player.speed = Math.abs(s.speed);
+    player.pitch = player.bank = 0;
+    // Physics steps at 60 Hz; on a faster screen the raw position moves in jerks. The body's own object is
+    // drawn between steps, so the first-person camera follows that instead.
+    const drawn = visual.current?.parent;
+    if (drawn) {
+      drawn.getWorldPosition(view);
+      player.viewX = view.x;
+      player.viewY = view.y;
+      player.viewZ = view.z;
+    }
     // First frame: tell the camera to snap to the car instead of easing in from elsewhere.
     if (!player.ready) player.teleports++;
     player.ready = true;

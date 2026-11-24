@@ -1,7 +1,16 @@
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 /** Full-page screenshots at phone and desktop width, saved to screenshots/ for review. */
-const ROUTES = ["/", "/read", "/listen", "/sources", "/about"];
+const ROUTES = [
+  "/",
+  "/read",
+  "/read/the-past",
+  "/read/the-jobs-era",
+  "/read/the-future",
+  "/listen",
+  "/sources",
+  "/about",
+];
 const WIDTHS = [375, 1440];
 
 for (const route of ROUTES) {
@@ -18,6 +27,9 @@ for (const route of ROUTES) {
         }
         window.scrollTo(0, 0);
       });
+      // Nothing sticks out sideways (long chart labels, URLs, tables).
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      expect(overflow, "horizontal overflow in px").toBeLessThanOrEqual(0);
       const name = route === "/" ? "home" : route.slice(1).replaceAll("/", "-");
       await page.screenshot({ path: `screenshots/${name}-${width}.png`, fullPage: true });
     });

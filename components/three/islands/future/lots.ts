@@ -77,7 +77,10 @@ export function planLots(layout: IslandLayout): Lot[] {
     // Clear of the connector roads out to the bridges.
     if (g.bridgeAngles.some((b) => angleDiff(angle, b) * rLot < rw / 2 + halfWidth + 2.5)) continue;
     // Clear of building plots (and their signposts beside them).
-    if (layout.buildings.some((b) => angleDiff(angle, b.angle) * rLot < b.plot.width / 2 + halfWidth + 2.5)) continue;
+    if (
+      layout.buildings.some((b) => !b.sources && angleDiff(angle, b.angle) * rLot < b.plot.width / 2 + halfWidth + 2.5)
+    )
+      continue;
     const position = polar(center, angle, rLot);
     // Clear of any signpost or figure standing in the outer belt.
     const blocked = [...layout.insights.map((s) => s.position), ...layout.figures.map((f) => f.position)].some(

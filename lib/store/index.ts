@@ -55,12 +55,16 @@ type State = {
   renderer: string | null;
   /** World ambience (lo-fi music + ambient loops). Off until the visitor turns it on. Persisted. */
   ambienceOn: boolean;
+  /** A building's video is playing with sound (the island music is ducked meanwhile). Not persisted. */
+  videoSound: boolean;
   /** True while the car is a plane (set on take-off / landing; the HUD shows Land). Not persisted. */
   flying: boolean;
   /** Time of day in the 3D world (HUD button). Persisted. */
   timeOfDay: "day" | "sunset" | "night";
   /** Camera: high isometric overview (default) or the driver's seat. Not persisted. */
   cameraMode: "iso" | "driver";
+  /** The overview camera is turned, tilted, zoomed or panned away from the default (HUD shows Recenter). */
+  freeLook: boolean;
   // toasts (survive route changes, e.g. 3D -> reading mode)
   toast: Toast | null;
 };
@@ -88,7 +92,9 @@ type Actions = {
   setAutoTier: (tier: Tier) => void;
   setRenderer: (renderer: string | null) => void;
   setAmbienceOn: (on: boolean) => void;
+  setVideoSound: (on: boolean) => void;
   toggleCameraMode: () => void;
+  setFreeLook: (freeLook: boolean) => void;
   cycleTimeOfDay: () => void;
   setFlying: (flying: boolean) => void;
   showToast: (message: string) => void;
@@ -114,7 +120,9 @@ export const useStore = create<State & Actions>()(
       autoTier: "high",
       renderer: null,
       ambienceOn: false,
+      videoSound: false,
       cameraMode: "iso",
+      freeLook: false,
       timeOfDay: "day",
       flying: false,
       toast: null,
@@ -149,10 +157,12 @@ export const useStore = create<State & Actions>()(
       setAutoTier: (autoTier) => set((s) => (s.autoTier === autoTier ? s : { autoTier })),
       setRenderer: (renderer) => set({ renderer }),
       setAmbienceOn: (ambienceOn) => set({ ambienceOn }),
+      setVideoSound: (videoSound) => set({ videoSound }),
       setFlying: (flying) => set((s) => (s.flying === flying ? s : { flying })),
       cycleTimeOfDay: () =>
         set((s) => ({ timeOfDay: s.timeOfDay === "day" ? "sunset" : s.timeOfDay === "sunset" ? "night" : "day" })),
       toggleCameraMode: () => set((s) => ({ cameraMode: s.cameraMode === "iso" ? "driver" : "iso" })),
+      setFreeLook: (freeLook) => set((s) => (s.freeLook === freeLook ? s : { freeLook })),
       showToast: (message) => set({ toast: { id: Date.now(), message } }),
       clearToast: (id) => set((s) => (s.toast?.id === id ? { toast: null } : s)),
     }),

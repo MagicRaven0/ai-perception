@@ -74,7 +74,7 @@ export function InteractPrompt({
     );
   } else if (sign) {
     content = (
-      <PromptCard>
+      <PromptCard long>
         <span className="min-w-0">
           <span className="flex items-center gap-2 text-xs font-semibold text-muted">
             {sign.kind !== "figure" && (
@@ -83,17 +83,15 @@ export function InteractPrompt({
                 className={`size-2.5 rounded-full ${sign.kind === "benefit" ? "bg-benefit" : sign.kind === "risk" ? "bg-risk" : "bg-danger"}`}
               />
             )}
-            {sign.kind === "figure" ? "Person" : sign.label}
+            {sign.kind === "figure" ? (sign.person ?? "Person") : sign.label}
           </span>
-          <span className="block font-semibold">
-            {sign.kind === "figure" ? (
-              <>
-                {sign.label}: <ContentText value={sign.text} />
-              </>
-            ) : (
-              <ContentText value={sign.text} />
-            )}
+          {sign.kind === "figure" && (
+            <span className="mt-0.5 block text-lg leading-tight font-semibold">{sign.label}</span>
+          )}
+          <span className="mt-1 block text-[0.95rem] leading-snug">
+            <ContentText value={sign.text} />
           </span>
+          {sign.credit && <span className="mt-2 block text-xs text-muted">{sign.credit.text}</span>}
         </span>
       </PromptCard>
     );
@@ -113,9 +111,14 @@ export function InteractPrompt({
   );
 }
 
-function PromptCard({ children }: { children: React.ReactNode }) {
+/** A one-line pill with a button, or (`long`) a card for several lines of text. */
+function PromptCard({ children, long = false }: { children: React.ReactNode; long?: boolean }) {
   return (
-    <div className="pointer-events-auto flex max-w-[min(32rem,100%)] items-center gap-4 rounded-full bg-paper py-2 pr-2 pl-5 text-ink shadow-card-strong">
+    <div
+      className={`pointer-events-auto flex max-w-[min(32rem,100%)] items-center gap-4 bg-paper text-ink shadow-card-strong ${
+        long ? "rounded-[20px] px-5 py-4" : "rounded-full py-2 pr-2 pl-5"
+      }`}
+    >
       {children}
     </div>
   );

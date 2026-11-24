@@ -25,7 +25,7 @@ Later phases: three 0.187 · @react-three/fiber 9.8 · drei 10.7 · @react-three
 - Three font families only: Fustat (display), Inter Tight (text/UI), JetBrains Mono (labels). Colours only from theme tokens; z-index only from the `z-*` scale in `globals.css`.
 - Mono uppercase labels are for column/table headers only, not stacked above every heading.
 - Do not subscribe the R3F `<Canvas>` root to the store; player position goes through the transient channel (PLAN.md 5.2).
-- Every chart gets a table twin and a source line. Every image, model and track gets a credit entry. Every insight has a source or `groupCommentary: true`.
+- Every chart gets a table twin and an APA in-text citation in its caption (`<InTextCite>`). Full references appear only in the sources areas (era references, References buildings, `/sources`), never under text, charts or arcades. Every image, model and track gets a credit entry. Every insight has a source or `groupCommentary: true`.
 - Real people: faceless low-poly figures + licensed photo billboards only. No 3D face likenesses. No real-person impersonation in chatbot personas. No Apple/Siri logos or UI recreations.
 - AI: answers only from the corpus (`lib/ai/corpus.ts`), cites chunk ids, `[NONE]` when not found. Never send client-provided text to the summarizer (ids only). Interviews enter the corpus only with consent.
 - Dark mode: semantic tokens swap under `[data-theme="dark"]`; text on fixed dark bands uses `snow`, text on bright fills uses `coal`.

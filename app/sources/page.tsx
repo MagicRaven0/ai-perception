@@ -2,14 +2,22 @@ import type { Metadata } from "next";
 import { eras, sources } from "@/lib/content";
 import { TopNav } from "@/components/layout/TopNav";
 import { Footer } from "@/components/layout/Footer";
+import { ReferenceGroups } from "@/components/content/ReferenceGroups";
+import { isPlaceholder } from "@/lib/content/placeholder";
 
 export const metadata: Metadata = { title: "Works cited" };
 
 export default function SourcesPage() {
-  const groups = [
-    ...eras.map((e) => ({ id: e.id, title: e.islandName, items: sources.filter((s) => s.eraIds.includes(e.id)) })),
-    { id: "general", title: "General", items: sources.filter((s) => s.eraIds.length === 0) },
-  ].filter((g) => g.items.length > 0);
+  // APA 7, our essays' sources first, then the added ones; alphabetical by first author inside each group.
+  // Placeholders go last as "coming soon" boxes.
+  const list = [...sources].sort(
+    (a, b) => Number(isPlaceholder(a.apa)) - Number(isPlaceholder(b.apa)) || a.apa.localeCompare(b.apa),
+  );
+  const eraNames = (ids: string[]) =>
+    eras
+      .filter((e) => ids.includes(e.id))
+      .map((e) => e.islandName)
+      .join(" · ");
 
   return (
     <div className="flex flex-1 flex-col">
@@ -20,35 +28,17 @@ export default function SourcesPage() {
           APA 7. Every fact, number and quote on this site links back to one of these sources.
         </p>
 
-        {groups.length === 0 ? (
+        {list.length === 0 ? (
           <p className="mt-12 border-t border-ink pt-6 text-muted">Sources are being added.</p>
         ) : (
-          groups.map((g) => (
-            <section key={g.id} aria-labelledby={`src-${g.id}`} className="mt-14">
-              <h2 id={`src-${g.id}`} className="border-b border-ink pb-3 text-2xl font-medium">
-                {g.title}
-              </h2>
-              <ul>
-                {[...g.items]
-                  .sort((a, b) => a.apa.localeCompare(b.apa))
-                  .map((s) => (
-                    <li key={s.id} id={s.id} className="border-b border-rule py-4 pl-8 -indent-8 leading-relaxed">
-                      {s.apa}{" "}
-                      {/^https?:\/\//.test(s.url) && (
-                        <a
-                          href={s.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="break-all underline underline-offset-2"
-                        >
-                          {s.url}
-                        </a>
-                      )}
-                    </li>
-                  ))}
-              </ul>
-            </section>
-          ))
+          <div className="mt-14">
+            <ReferenceGroups
+              items={list}
+              heading="h2"
+              anchors
+              extra={(s) => eraNames(sources.find((x) => x.id === s.id)?.eraIds ?? []) || null}
+            />
+          </div>
         )}
       </main>
       <Footer />

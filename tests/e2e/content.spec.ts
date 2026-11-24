@@ -135,11 +135,11 @@ test("videos in the long-read: controls, loop, credited, and nothing downloads b
     await expect(video).toHaveAttribute("preload", "none");
     await expect(video).toHaveAttribute("controls", "");
     await expect(video).toHaveAttribute("loop", "");
-    await expect(figure).toContainText("made with Claude (Anthropic)");
+    await expect(figure).toContainText("AI-generated animation and music");
   }
   expect(asked).toEqual([]);
   await page.goto("/about");
-  await expect(page.getByText("made with Claude (Anthropic)")).toHaveCount(
+  await expect(page.getByText("AI-generated animation and music")).toHaveCount(
     credits.filter((c) => c.kind === "video").length,
   );
 });

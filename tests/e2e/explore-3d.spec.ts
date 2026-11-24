@@ -865,7 +865,7 @@ test.describe("world features", () => {
     await open("interface-gallery");
     const video = visibleDialogs(page).locator("video");
     await expect(video).toHaveAttribute("preload", "none");
-    await expect(visibleDialogs(page)).toContainText("made with Claude (Anthropic)");
+    await expect(visibleDialogs(page)).toContainText("AI-generated animation and music");
     await expect.poll(() => [...new Set(asked)]).toEqual(["/videos/interface-gallery.mp4"]);
     await page.screenshot({ path: "screenshots/drawer-video-1440.png" });
 

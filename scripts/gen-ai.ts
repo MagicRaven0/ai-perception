@@ -13,7 +13,16 @@ import { join } from "node:path";
 import { pacedGenerate } from "./ai-call";
 import { corpusForPrompt, itemText, summarizableItemIds } from "../lib/ai/corpus";
 import { chatInstructions, summaryInstructions } from "../lib/ai/prompts";
-import { CHAT_MODEL, chatModel, REASONING, estimateCost, hasAiCredentials, stripThinking } from "../lib/ai/models";
+import {
+  CHAT_MAX_TOKENS,
+  CHAT_MODEL,
+  CHAT_REASONING,
+  chatModel,
+  estimateCost,
+  hasAiCredentials,
+  stripThinking,
+  SUMMARY_REASONING,
+} from "../lib/ai/models";
 import { PERSONA_IDS, SUMMARY_MODES } from "../lib/ai/personas";
 import { textHash, type AnswerFile, type SummaryFile } from "../lib/ai/summaries";
 import { suggestedQuestions } from "../content/suggested-questions";
@@ -46,7 +55,7 @@ async function main() {
       if (summaries[id]?.[mode]?.hash === hash) continue;
       const { text, totalUsage } = await pacedGenerate({
         model: chatModel(),
-        reasoning: REASONING,
+        reasoning: SUMMARY_REASONING,
         instructions: summaryInstructions(mode),
         prompt: `TEXT (from the section "${item.title}"):\n${item.text}`,
         temperature: 0.2,
@@ -88,11 +97,11 @@ async function main() {
       }
       const { text, totalUsage } = await pacedGenerate({
         model: chatModel(),
-        reasoning: REASONING,
+        reasoning: CHAT_REASONING,
         instructions: chatInstructions(persona),
         prompt: q,
         temperature: 0.2,
-        maxOutputTokens: 350,
+        maxOutputTokens: CHAT_MAX_TOKENS,
       });
       cost += estimateCost(CHAT_MODEL, totalUsage.inputTokens, totalUsage.outputTokens);
       if (!stripThinking(text)) {

@@ -13,7 +13,14 @@ import { join } from "node:path";
 import { pacedGenerate } from "./ai-call";
 import { getCorpus } from "../lib/ai/corpus";
 import { chatInstructions, NOT_FOUND } from "../lib/ai/prompts";
-import { CHAT_MODEL, chatModel, REASONING, hasAiCredentials, stripThinking } from "../lib/ai/models";
+import {
+  CHAT_MAX_TOKENS,
+  CHAT_MODEL,
+  CHAT_REASONING,
+  chatModel,
+  hasAiCredentials,
+  stripThinking,
+} from "../lib/ai/models";
 import { PERSONA_IDS, type PersonaId } from "../lib/ai/personas";
 
 type Test = { persona: PersonaId; n: number; question: string; expected: string; sources: string; answerable: boolean };
@@ -67,11 +74,11 @@ async function main() {
     const t0 = Date.now();
     const { text } = await pacedGenerate({
       model: chatModel(),
-      reasoning: REASONING,
+      reasoning: CHAT_REASONING,
       instructions: chatInstructions(t.persona),
       messages: [{ role: "user", content: t.question }],
       temperature: 0.2,
-      maxOutputTokens: 350,
+      maxOutputTokens: CHAT_MAX_TOKENS,
     });
     const answer = stripThinking(text);
     const cited = [...new Set([...answer.matchAll(/\[(C\d{3})\]/g)].map((m) => m[1]))];

@@ -11,22 +11,20 @@ import { CAMPUS } from "./palette";
 import { Box } from "./parts";
 
 /**
- * Entrance sign: a low stone plinth with a sloped dark plate (tilted back so it faces the high camera), the
- * university name from content/site.ts drawn in the site's display font (Fustat, read from the page's CSS
- * variable, so no font file is fetched or bundled) onto a canvas texture, a thin accent strip, and the optional
- * logo slot (config.ts: renders nothing until a permitted, credited file is set).
- * Local frame: origin at the plinth centre on the ground, the face looks +Z.
+ * Entrance name: the university name from content/site.ts lying flat on the paving at the entrance, so nothing
+ * stands between the camera and the inside of the campus. A thin dark plate with a thin accent strip, the name
+ * drawn in the site's display font (Fustat, read from the page's CSS variable, so no font file is fetched or
+ * bundled) onto a canvas texture, and the optional logo slot (config.ts: renders nothing until a permitted,
+ * credited file is set). It has no collider: the car drives over it.
+ * Local frame: origin at the plate's centre on the ground, the top of the lettering points to -Z.
  *
- * The plinth and plate are plain Lambert meshes (merged by the parent); the text and logo planes have
- * textures, so they stay separate (1 draw call each, no shadows).
+ * The plate and strip are plain Lambert meshes (merged by the parent); the text and logo planes have textures,
+ * so they stay separate (1 draw call each, no shadows).
  */
 
-export const SIGN_HALF = { x: 7.0, z: 1.1, height: 1.7 } as const;
-
-const TILT = 0.45;
-const PLATE = { w: 13, h: 3.0, d: 0.35 } as const;
-const FACE = { w: 12.6, h: 2.7 } as const;
-const LOGO = 2.4;
+const PLATE = { w: 13, h: 0.12, d: 2.8 } as const;
+const FACE = { w: 12.6, h: 2.5 } as const;
+const LOGO = 2.2;
 /** Canvas pixels per metre of sign face. */
 const PX_PER_M = 190;
 
@@ -38,14 +36,13 @@ export function NameSign({ accent }: { accent: string }) {
 
   return (
     <group>
-      <Box size={[14, 0.5, 2.2]} position={[0, 0.25, 0]} color={CAMPUS.plinth} />
-      <Box size={[14.2, 0.1, 0.12]} position={[0, 0.5, 1.08]} color={accent} shade="glow" />
-      <group position={[0, 0.5, -0.1]} rotation-x={-TILT}>
-        <Box size={[PLATE.w, PLATE.h, PLATE.d]} position={[0, PLATE.h / 2, 0]} color={CAMPUS.signPlate} />
-        <NameText width={textW} height={FACE.h} position={[textX, PLATE.h / 2, PLATE.d / 2 + 0.01]} accent={accent} />
+      <Box size={[PLATE.w, PLATE.h, PLATE.d]} position={[0, PLATE.h / 2, 0]} color={CAMPUS.signPlate} />
+      <Box size={[PLATE.w, 0.06, 0.12]} position={[0, PLATE.h, PLATE.d / 2]} color={accent} shade="glow" />
+      <group position={[0, PLATE.h + 0.015, 0]} rotation-x={-Math.PI / 2}>
+        <NameText width={textW} height={FACE.h} position={[textX, 0, 0]} accent={accent} />
         {logo && (
           <Suspense fallback={null}>
-            <LogoPlane src={logo.src} position={[-FACE.w / 2 + LOGO / 2, PLATE.h / 2, PLATE.d / 2 + 0.012]} />
+            <LogoPlane src={logo.src} position={[-FACE.w / 2 + LOGO / 2, 0, 0.002]} />
           </Suspense>
         )}
       </group>

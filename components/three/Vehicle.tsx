@@ -221,7 +221,7 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
       } else {
         s.stuckFor = Math.abs(s.speed) < 1.2 ? s.stuckFor + dt : 0;
       }
-      if (dist < 2.5) {
+      if (dist < autoDrive.arrive) {
         // Arrived. A click on a building drove to its door: now open it (the click was the visitor's choice).
         const open = autoDrive.openId;
         autoDrive.active = false;

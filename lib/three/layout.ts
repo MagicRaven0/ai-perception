@@ -1,4 +1,6 @@
+import { AXIS_SKEW, DESIGN_RADIUS } from "@/components/three/campus/config";
 import type { BuildingKind, EraId } from "@/lib/content/schema";
+import { CAMERA_AZIMUTH } from "./camera";
 
 /**
  * World layout for /explore (docs/VISION.md: three separate islands joined by bridges).
@@ -100,6 +102,13 @@ const SOURCES_SPOT: Record<EraId, { angle: number; r: number; face: number }> = 
  */
 export const SOURCES_PAD = { radius: 3, sensorRadius: 4 };
 
+/**
+ * Where an interview is held on the island that has the campus: the entrance courtyard, between the reflecting pool
+ * and the name on the floor. `z` is metres along the campus axis (campus frame); `beside` is where the car stops,
+ * to the side of the table.
+ */
+export const CAMPUS_INTERVIEW = { z: 14.5, radius: 2.5, sensorRadius: 6.5, beside: 4.6, arrive: 4.8 };
+
 /* --------------------------------------------------------------- types */
 
 export type IslandGeometry = {
@@ -171,6 +180,8 @@ export type PlacedBuilding = {
   videoSrc?: string;
   /** Set on an island's References building (one row per source): a ground spot in the centre area, no house. */
   sources?: SourceRow[];
+  /** Held inside the campus: no house of its own, just the people (an interview in the courtyard). */
+  venue?: "campus";
 };
 
 /** One source in short form, taken from its APA entry (lib/content/references.ts). */
@@ -442,7 +453,11 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
   const reserveCentre = SPECS[eraId].reserveCentre;
 
   // Buildings: outer ring first, then the inner ring (not on The Future, whose centre is the campus).
-  const own = input.buildings.filter((b) => b.eraId === eraId && !b.sources).sort((a, b) => a.order - b.order);
+  // An interview on the campus island is held inside the campus (below), not on a plot by the road.
+  const inCampus = (b: LayoutInput["buildings"][number]) => reserveCentre && b.kind === "interview";
+  const own = input.buildings
+    .filter((b) => b.eraId === eraId && !b.sources && !inCampus(b))
+    .sort((a, b) => a.order - b.order);
   const spacing = plot.width + 4;
   const rOuter = rr + rw / 2 + 1.5 + plot.depth / 2;
   const rInner = rr - rw / 2 - 1.5 - plot.depth / 2;
@@ -523,6 +538,43 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
       approach: { x: position[0] + fx * 1.5, y: 1.2, z: position[2] + fz * 1.5, heading: headingOf(-fx, -fz) },
       hosts: [],
       sources: b.sources,
+    });
+  }
+
+  // The interview in the campus courtyard: same campus frame and scale as components/three/campus/AusCampus.tsx.
+  for (const b of input.buildings) {
+    if (b.eraId !== eraId || !inCampus(b)) continue;
+    const turn = CAMERA_AZIMUTH + AXIS_SKEW;
+    const k = Math.min(1, (rr - rw / 2 - 6) / DESIGN_RADIUS);
+    const at = (x: number, z: number, y = 0): Vec3 => [
+      center[0] + (x * Math.cos(turn) + z * Math.sin(turn)) * k,
+      y,
+      center[1] + (z * Math.cos(turn) - x * Math.sin(turn)) * k,
+    ];
+    const position = at(0, CAMPUS_INTERVIEW.z);
+    const beside = at(CAMPUS_INTERVIEW.beside, CAMPUS_INTERVIEW.z, 1.2);
+    buildings.push({
+      id: b.id,
+      eraId,
+      order: b.order,
+      kind: b.kind,
+      comingSoon: b.comingSoon,
+      colourIndex: buildings.length,
+      ring: "inner",
+      angle: Math.atan2(position[2] - center[1], position[0] - center[0]),
+      position,
+      // Side by side as the default camera sees them.
+      rotationY: CAMERA_AZIMUTH,
+      plot: { width: CAMPUS_INTERVIEW.radius * 2, depth: CAMPUS_INTERVIEW.radius * 2 },
+      sensor: { position: [position[0], 1.2, position[2]], radius: CAMPUS_INTERVIEW.sensorRadius },
+      approach: {
+        x: beside[0],
+        y: beside[1],
+        z: beside[2],
+        heading: headingOf(position[0] - beside[0], position[2] - beside[2]),
+      },
+      hosts: b.hosts ?? [],
+      venue: "campus",
     });
   }
 

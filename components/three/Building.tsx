@@ -7,7 +7,6 @@ import * as THREE from "three";
 import { useStore } from "@/lib/store";
 import type { FigureLookInput, PlacedBuilding } from "@/lib/three/layout";
 import { motion } from "@/lib/three/motion";
-import { CAMERA_AZIMUTH } from "@/lib/three/camera";
 import { ERA_PALETTE, SHARED, type EraPalette } from "@/lib/three/palette";
 import { BUILDING_MODELS, MODEL_HEIGHT, type BuildingModel } from "./buildings/registry";
 import { BuildingSensor } from "./BuildingSensor";
@@ -57,6 +56,22 @@ export function Building({
     );
   }
 
+  // Our interview, held inside the campus: no house, just the two of them at their table.
+  if (placed.venue === "campus") {
+    return (
+      <>
+        <group position={placed.position} rotation-y={placed.rotationY}>
+          <RigidBody type="fixed" colliders={false}>
+            <CuboidCollider args={[1.8, 1, 0.7]} position={[0, 1, 0]} />
+          </RigidBody>
+          <InterviewScene id={placed.id} looks={placed.hosts} />
+          <Beacon id={placed.id} y={4.4} accent={pal.accent} />
+        </group>
+        <BuildingSensor id={placed.id} position={placed.sensor.position} radius={placed.sensor.radius} />
+      </>
+    );
+  }
+
   return (
     <>
       <group position={placed.position} rotation-y={placed.rotationY}>
@@ -75,12 +90,7 @@ export function Building({
           />
         </StaticMerge>
         <Beacon id={placed.id} y={top + 2.2} accent={pal.accent} />
-        {placed.hosts.length > 0 &&
-          (placed.kind === "interview" ? (
-            <InterviewScene id={placed.id} looks={placed.hosts} plot={plot} rotationY={placed.rotationY} />
-          ) : (
-            <Hosts id={placed.id} looks={placed.hosts} plot={plot} />
-          ))}
+        {placed.hosts.length > 0 && <Hosts id={placed.id} looks={placed.hosts} plot={plot} />}
         {/* Above the beacon */}
         {placed.videoSrc && <VideoScreen id={placed.id} src={placed.videoSrc} y={top + 5.6} />}
       </group>
@@ -123,22 +133,12 @@ function Hosts({ id, looks, plot }: { id: string; looks: FigureLookInput[]; plot
 }
 
 /**
- * An interview building's two people (the guest first, then the interviewer), face to face across a small round
- * table, as if mid-interview. Faceless figures in each speaker's look (no names, no likeness). They stand on a
- * pale platform on the side of the booth that faces the default camera, side by side as the camera sees them, so
- * neither hides behind the booth or each other. Static, so the group merges into one draw call.
+ * An interview's two people (the guest first, then the interviewer), face to face across a small round table, as if
+ * mid-interview. Faceless figures in each speaker's look (no names, no likeness), on a pale platform in the campus
+ * courtyard. Local X runs side to side as the default camera sees it, so neither hides the other. Static, so the
+ * group merges into one draw call.
  */
-function InterviewScene({
-  id,
-  looks,
-  plot,
-  rotationY,
-}: {
-  id: string;
-  looks: FigureLookInput[];
-  plot: { width: number; depth: number };
-  rotationY: number;
-}) {
+function InterviewScene({ id, looks }: { id: string; looks: FigureLookInput[] }) {
   // Development only: lets the e2e tests count the figures at each studio.
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
@@ -146,12 +146,9 @@ function InterviewScene({
     (w.__hostCounts ??= {})[id] = looks.length;
   }, [id, looks.length]);
   const apart = 1.35;
-  // The camera's direction in the building's own frame.
-  const towards = CAMERA_AZIMUTH - rotationY;
-  const out = plot.depth / 2 + 1.6;
   return (
     <StaticMerge>
-      <group position={[Math.sin(towards) * out, 0, Math.cos(towards) * out]} rotation-y={towards}>
+      <group>
         <mesh position={[0, 0.06, 0]} receiveShadow>
           <cylinderGeometry args={[2.5, 2.6, 0.12, 14]} />
           <meshLambertMaterial color={SHARED.creamShade} flatShading />

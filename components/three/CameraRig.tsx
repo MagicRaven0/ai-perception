@@ -5,7 +5,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 import { useStore } from "@/lib/store";
-import { ERA_ORDER, findBuilding, nearestEra, type Pose, type WorldLayout } from "@/lib/three/layout";
+import { CAMPUS_INTERVIEW, ERA_ORDER, findBuilding, nearestEra, type Pose, type WorldLayout } from "@/lib/three/layout";
 import { motion } from "@/lib/three/motion";
 import { hover, isFreeLook, look, orbit, player, recenterLook, setAutoDrive, turnLook } from "@/lib/three/transient";
 import { pickWorldObject } from "@/lib/three/picking";
@@ -267,7 +267,9 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
       if (object?.kind === "building") {
         const b = object.building;
         // The sources spot never opens by itself: the car drives onto it and the visitor presses E.
-        setAutoDrive(b.approach.x, b.approach.z, b.sources ? null : b.id);
+        // The campus interview has its table in the middle: head for it and stop short, whichever side the car is on.
+        if (b.venue === "campus") setAutoDrive(b.position[0], b.position[2], b.id, CAMPUS_INTERVIEW.arrive);
+        else setAutoDrive(b.approach.x, b.approach.z, b.sources ? null : b.id);
         return;
       }
       if (object?.kind === "figure") {

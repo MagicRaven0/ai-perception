@@ -16,10 +16,11 @@
  * - the long rectangular mall in front of it, lined on both sides by square, domed academic buildings with
  *   the same arched face on every side, each in its own lawn;
  * - a reflecting pool with fountains down the middle, date palms, bougainvillea, lamps and benches;
- * - the university name (content/site.ts) on a sloped sign at the entrance, repeated as a DOM world label on
- *   small screens where the sign's lettering is too small to read (CampusLabel.tsx); an optional logo slot (config.ts);
+ * - the university name (content/site.ts) lying flat on the paving at the entrance, repeated as a DOM world label
+ *   on small screens where the lettering is too small to read (CampusLabel.tsx); an optional logo slot (config.ts).
+ *   Just inside it, the entrance courtyard is kept clear for our interview (lib/three/layout.ts places it);
  * - a marked pad with a blank plaque near the Main Building, reserved for the local expert.
- * The axis faces the camera (lib/three/camera), turned by AXIS_SKEW, so the entrance and name sign are nearest
+ * The axis faces the camera (lib/three/camera), turned by AXIS_SKEW, so the entrance and the name are nearest
  * the viewer and the tall dome stands on the far side where it never hides the ring road.
  *
  * DRAW CALLS: everything static is one <StaticMerge>, built from three "shades" only (parts.tsx): solid
@@ -27,7 +28,7 @@
  * animated fountain jets 1 (instanced). About 6 calls on High, 4 on Low.
  *
  * COLLIDERS: fixed cuboids for the Main Building footprint, the four academic halls (the inner lawn is open to
- * the car, so every solid building needs one), the name sign and the pool. Palms, lamps and benches have none.
+ * the car, so every solid building needs one) and the pool. Palms, lamps and benches have none.
  *
  * DEV: in development `window.__ausCampus` is the campus root group (hide it to measure its own cost:
  * compare window.__explore.gl.info.render with `__ausCampus.visible` true and false).
@@ -48,7 +49,7 @@ import { AXIS_SKEW, DESIGN_RADIUS } from "./config";
 import { FountainJets } from "./FountainJets";
 import { GROUNDS, Grounds } from "./Grounds";
 import { MAIN_HALF, MainBuilding } from "./MainBuilding";
-import { NameSign, SIGN_HALF } from "./NameSign";
+import { NameSign } from "./NameSign";
 import { CAMPUS } from "./palette";
 
 const HALLS: { x: number; z: number; tone: string }[] = [-1, 1].flatMap((s) =>
@@ -88,10 +89,6 @@ export function AusCampus({ position, radius, palette }: { position: Vec3; radiu
           />
         ))}
         <CuboidCollider
-          args={[SIGN_HALF.x * k, SIGN_HALF.height * k, SIGN_HALF.z * k]}
-          position={[0, SIGN_HALF.height * k, GROUNDS.sign.z * k]}
-        />
-        <CuboidCollider
           args={[(GROUNDS.pool.width / 2) * k, 0.45 * k, (GROUNDS.pool.length / 2) * k]}
           position={[0, 0.45 * k, GROUNDS.pool.z * k]}
         />
@@ -113,8 +110,8 @@ export function AusCampus({ position, radius, palette }: { position: Vec3; radiu
           </group>
         </StaticMerge>
         <FountainJets positions={jets} />
-        {/* The name as readable DOM text on small screens, over the entrance sign (no draw call). */}
-        <CampusLabel position={[0, SIGN_HALF.height * 2 + 1.5, GROUNDS.sign.z]} />
+        {/* The name as readable DOM text on small screens, just in front of the name on the floor (no draw call). */}
+        <CampusLabel position={[0, 0.6, GROUNDS.sign.z + 1.6]} />
       </group>
     </group>
   );

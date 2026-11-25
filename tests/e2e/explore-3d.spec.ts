@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { buildings } from "../../content/buildings";
 import { site } from "../../content/site";
+import { CAMPUS_INTERVIEW, layoutIsland } from "../../lib/three/layout";
 
 /**
  * /explore in 3D (Phase 3): the ?b= deep link into a building drawer, driving, failure handling, leaving /
@@ -740,6 +741,49 @@ test.describe("world features", () => {
       }),
     );
     await expect(page.locator("[data-interact-prompt]")).toContainText(site.team[1]!.name, { timeout: 15_000 });
+  });
+
+  test("the sky follows the theme: daytime in light mode, evening in dark mode", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const sky = () =>
+      page.evaluate(
+        () =>
+          (window as unknown as { __store: { getState: () => { timeOfDay: string } } }).__store.getState().timeOfDay,
+      );
+    await page.addInitScript(() => localStorage.setItem("theme", "light"));
+    await open3d(page, "/explore?era=era-3");
+    await expect.poll(sky).toBe("day");
+    await page.waitForTimeout(2500);
+    await page.screenshot({ path: "screenshots/explore-light-day-1440.png" });
+    await page.evaluate(() => (document.documentElement.dataset.theme = "dark"));
+    await expect.poll(sky).toBe("sunset");
+    await page.waitForTimeout(3500);
+    await page.screenshot({ path: "screenshots/explore-dark-evening-1440.png" });
+    await page.evaluate(() => (document.documentElement.dataset.theme = "light"));
+    await expect.poll(sky).toBe("day");
+  });
+
+  test("the interview is held on campus: the car drives in from the road and it opens", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore?era=era-3");
+    const spot = layoutIsland("era-3", {
+      eras: [],
+      buildings: [{ id: "aus-interview", eraId: "era-3", order: 9, kind: "interview", comingSoon: false }],
+      insights: [],
+      team: [],
+    }).buildings[0]!;
+    expect(spot.venue).toBe("campus");
+    // What a click on the table does (CameraRig): head for it and stop short.
+    await page.evaluate(
+      ({ x, z, arrive }) => {
+        const drive = (window as unknown as { __explore: { autoDrive: Record<string, unknown> } }).__explore.autoDrive;
+        Object.assign(drive, { x, z, arrive, openId: "aus-interview", retries: 0, active: true });
+      },
+      { x: spot.position[0], z: spot.position[2], arrive: CAMPUS_INTERVIEW.arrive },
+    );
+    await expect(visibleDialogs(page)).toBeVisible({ timeout: 40_000 });
+    await expect(visibleDialogs(page).getByRole("heading", { level: 2 })).toContainText("Professor Aqeel");
+    await page.screenshot({ path: "screenshots/explore-campus-interview-1440.png" });
   });
 
   test("faceless NPCs stand around every island", async ({ page }) => {

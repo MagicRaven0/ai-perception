@@ -17,7 +17,8 @@ export const GROUNDS = {
   hallZ: [-1.2, 8.0] as const,
   pool: { z: 4.6, length: 15, width: 3.8 },
   fountainZ: [0.5, 4.6, 8.7] as const,
-  sign: { z: 16.2 },
+  /** The name on the floor, at the very front. */
+  sign: { z: 18.2 },
   expert: { x: 6.7, z: -5.7 },
 } as const;
 

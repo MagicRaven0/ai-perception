@@ -130,14 +130,17 @@ export const autoDrive = {
   z: 0,
   /** A building to open when the car arrives (a click on a building drives to its door, then opens it). */
   openId: null as string | null,
+  /** How close (m) counts as arrived. */
+  arrive: 2.5,
   /** Unsticking: how many times the car has backed out of a blockage on this trip. */
   retries: 0,
 };
 
-export function setAutoDrive(x: number, z: number, openId: string | null = null) {
+export function setAutoDrive(x: number, z: number, openId: string | null = null, arrive = 2.5) {
   autoDrive.x = x;
   autoDrive.z = z;
   autoDrive.openId = openId;
+  autoDrive.arrive = arrive;
   autoDrive.retries = 0;
   autoDrive.active = true;
 }

@@ -88,15 +88,6 @@ export default function AboutPage() {
           </ul>
         </section>
 
-        <section aria-labelledby="ai" className="mt-16 grid gap-6 md:grid-cols-12">
-          <h2 id="ai" className="text-2xl font-medium md:col-span-4">
-            How we used AI
-          </h2>
-          <div className="flex flex-col gap-4 text-lg leading-[1.6] text-muted md:col-span-8">
-            <Markdown value={site.aiDisclosure} />
-          </div>
-        </section>
-
         <section aria-labelledby="credits" className="mt-16">
           <h2 id="credits" className="text-2xl font-medium">
             Credits
@@ -112,7 +103,6 @@ export default function AboutPage() {
                       <span>
                         <span className="font-medium">{c.title}</span>
                         <span className="text-muted">{c.creditLine ? `. ${c.creditLine}` : ` by ${c.author}`}</span>
-                        {c.aiTool && !c.author.includes("AI-generated") && <span className="text-muted"> · AI-generated</span>}
                       </span>
                       <span className="text-muted">
                         {/^https?:\/\//.test(c.url) ? (

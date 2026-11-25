@@ -82,7 +82,7 @@ export function ChatPanel({
     setInput("");
   };
 
-  const errorText = error ? (ERRORS[error.message] ?? "Something went wrong reaching the AI. Try again.") : null;
+  const errorText = error ? (ERRORS[error.message] ?? "Something went wrong reaching the guide. Try again.") : null;
 
   return (
     <section
@@ -122,11 +122,8 @@ export function ChatPanel({
           ))}
         </div>
         <p className="text-xs text-muted">
-          AI{p.roleplay ? " roleplay" : ""} · answers only from our research and shows its sources · can still make
-          mistakes.{" "}
-          <Link href="/about#ai" className="underline">
-            How we use AI
-          </Link>
+          {p.roleplay ? "Roleplay · answers" : "Answers"} only from our research and shows its sources · can still make
+          mistakes.
         </p>
       </header>
 

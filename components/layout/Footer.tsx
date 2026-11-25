@@ -24,7 +24,7 @@ export function Footer() {
             Works cited
           </Link>
           <Link href="/about" className="hover:text-ink hover:underline">
-            About and AI disclosure
+            About
           </Link>
         </nav>
       </div>

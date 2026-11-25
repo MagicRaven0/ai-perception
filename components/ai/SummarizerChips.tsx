@@ -48,7 +48,7 @@ export function SummarizerChips({
 
   return (
     <div className="flex flex-col gap-3">
-      <div role="group" aria-label="AI summaries" className="flex flex-wrap gap-2">
+      <div role="group" aria-label="Summaries" className="flex flex-wrap gap-2">
         {SUMMARY_MODES.map((m) => (
           <button
             key={m}

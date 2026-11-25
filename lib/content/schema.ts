@@ -59,6 +59,8 @@ export const FigureLook = z.object({
   top: Hex,
   bottom: Hex,
   prop: z.enum(["none", "microphone", "laptop", "book", "chalk", "headphones", "clipboard", "phone"]).default("none"),
+  /** A simple low-poly hair cap on the (still faceless) head: a plain shape, never a likeness. */
+  hair: z.object({ style: z.enum(["none", "short", "wild"]), color: Hex }).optional(),
 });
 export type FigureLook = z.infer<typeof FigureLook>;
 

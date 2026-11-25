@@ -823,7 +823,11 @@ test.describe("world features", () => {
       .poll(() =>
         page.evaluate(() => (window as unknown as { __hostCounts?: Record<string, number> }).__hostCounts ?? {}),
       )
-      .toEqual(Object.fromEntries(Object.keys(want).map((id) => [id, id === "era-2-podcast" ? 2 : 3])));
+      .toEqual({
+        ...Object.fromEntries(Object.keys(want).map((id) => [id, id === "era-2-podcast" ? 2 : 3])),
+        // The interview booth shows its two speakers across a table (round 9).
+        "aus-interview": 2,
+      });
   });
 
   test("screenshot: the podcast studio on The Future with its three hosts (1440px)", async ({ page }) => {
@@ -863,9 +867,12 @@ test.describe("world features", () => {
         id,
       );
     await open("interface-gallery");
-    const video = visibleDialogs(page).locator("video");
+    // The video opens by itself in a full-screen overlay (round 9).
+    const overlay = page.locator("[data-video-overlay]");
+    const video = overlay.locator("video");
+    await expect(overlay).toBeVisible();
     await expect(video).toHaveAttribute("preload", "none");
-    await expect(visibleDialogs(page)).toContainText("AI-generated animation and music");
+    await expect(overlay).toContainText("AI-generated animation and music");
     await expect.poll(() => [...new Set(asked)]).toEqual(["/videos/interface-gallery.mp4"]);
     await page.screenshot({ path: "screenshots/drawer-video-1440.png" });
 
@@ -881,8 +888,61 @@ test.describe("world features", () => {
       v.dispatchEvent(new Event("playing"));
     });
     await expect.poll(videoSound).toBe(true);
-    await visibleDialogs(page).getByRole("button", { name: "Close" }).click();
+    await overlay.getByRole("button", { name: "Close video" }).click();
     await expect.poll(videoSound).toBe(false);
+  });
+
+  test("round 9: the video overlay opens once on entering, is 75% wide, closes three ways and reopens on purpose", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open3d(page, "/explore?b=interface-gallery");
+    const overlay = page.locator("[data-video-overlay]");
+    await expect(overlay).toBeVisible({ timeout: 15_000 });
+
+    // About 75% of the viewport width, 16:9, with a big close button at the top right.
+    const box = (await overlay.locator("video").boundingBox())!;
+    expect(box.width).toBeGreaterThan(1440 * 0.7);
+    expect(box.width).toBeLessThan(1440 * 0.8);
+    expect(box.width / box.height).toBeCloseTo(16 / 9, 1);
+    const closeBox = (await overlay.getByRole("button", { name: "Close video" }).boundingBox())!;
+    expect(closeBox.width).toBeGreaterThanOrEqual(44);
+    expect(closeBox.height).toBeGreaterThanOrEqual(44);
+    expect(closeBox.x).toBeGreaterThan(1440 / 2);
+    // Backdrop is translucent: the world shows through (the canvas is still in the page behind it).
+    const backdrop = await overlay.evaluate((e) => getComputedStyle(e).backgroundColor);
+    expect(backdrop).toMatch(/rgba\(.*0?\.6\)|\/ 0?\.6/);
+    await page.screenshot({ path: "screenshots/video-overlay-1440.png" });
+
+    // Focus is trapped: Tab never leaves the overlay.
+    for (let i = 0; i < 6; i++) {
+      await page.keyboard.press("Tab");
+      expect(await page.evaluate(() => Boolean(document.activeElement?.closest("[data-video-overlay]")))).toBe(true);
+    }
+
+    // Esc closes the overlay only; the drawer stays. It does not come back by itself.
+    await page.keyboard.press("Escape");
+    await expect(overlay).toHaveCount(0);
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.waitForTimeout(1500);
+    await expect(overlay).toHaveCount(0);
+
+    // The visitor can bring it back, and the backdrop click closes it.
+    await page.getByRole("button", { name: "Watch the video" }).click();
+    await expect(overlay).toBeVisible();
+    await page.mouse.click(30, 450);
+    await expect(overlay).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Watch the video" })).toBeFocused();
+
+    // Leave and re-enter: it opens again by itself.
+    await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await page.evaluate(() =>
+      (window as unknown as { __store: { getState: () => { openBuilding: (id: string) => void } } }).__store
+        .getState()
+        .openBuilding("interface-gallery"),
+    );
+    await expect(overlay).toBeVisible();
   });
 
   test("screenshots: drawers with a video and a photo at 375px, and a chart and a photo at 1440px", async ({
@@ -898,8 +958,9 @@ test.describe("world features", () => {
             .openBuilding(b),
         id,
       );
-    await expect(visibleDialogs(page)).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator("[data-video-overlay]")).toBeVisible({ timeout: 15_000 });
     await page.screenshot({ path: "screenshots/drawer-video-375.png" });
+    await page.getByRole("button", { name: "Close video" }).click();
     await open("mainframe-archive");
     await expect(visibleDialogs(page).getByRole("heading", { level: 2 })).toContainText("Room-sized");
     await page.waitForTimeout(1000);

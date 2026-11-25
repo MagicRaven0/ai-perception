@@ -1,13 +1,15 @@
 """Join generated line audio into one MP3 per episode / video narration.
 Expects tools/voices/out/<line id>.wav for every line in lines.json (made by the TTS step).
 Run from the repo root:  python tools/voices/assemble.py   (needs ffmpeg on PATH)"""
-import json, pathlib, subprocess, collections
+import json, pathlib, subprocess, collections, sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / "tools/voices/out"; DEST = ROOT / "public/audio"; DEST.mkdir(parents=True, exist_ok=True)
 lines = json.loads((ROOT / "tools/voices/lines.json").read_text(encoding="utf-8"))
 groups = collections.OrderedDict()
 for l in lines: groups.setdefault(l["episode"], []).append(l)
+# Optional: only these episodes, e.g.  python tools/voices/assemble.py episode-1 episode-2
+if sys.argv[1:]: groups = collections.OrderedDict((k, v) for k, v in groups.items() if k in sys.argv[1:])
 
 def gap(sec, name):
     p = OUT / name

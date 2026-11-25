@@ -37,8 +37,9 @@ export function buildExploreData(): ExploreData {
         order: b.order,
         kind: b.kind,
         comingSoon: isPlaceholder(b.long),
-        // Podcast studios show their speakers as faceless figures by the door (one per speaker look).
-        hosts: b.kind === "podcast" ? hostLooks(b.media.episodeId) : [],
+        // Podcast studios show their speakers as faceless figures by the door (one per speaker look); an interview
+        // building shows its two speakers face to face across a table.
+        hosts: b.kind === "podcast" || b.kind === "interview" ? hostLooks(b.media.episodeId) : [],
         videoSrc: buildingVideo(b)?.src,
         sources: undefined as SourceRow[] | undefined,
       }))

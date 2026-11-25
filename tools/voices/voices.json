@@ -7,7 +7,7 @@
       "RESEARCHER": "guest-1956"
     },
     "episode-2": {
-      "A": "waleed",
+      "A": "abdulrahman",
       "B": "rayyan"
     },
     "episode-3": {
@@ -16,9 +16,7 @@
       "W": "waleed"
     }
   },
-  "videos": {
-    "voice-assistant-cinema": "waleed"
-  },
+  "videos": {},
   "names": {
     "rayyan": "Rayyan",
     "abdulrahman": "Abdulrahman",

@@ -73,7 +73,48 @@ export function FacelessFigure({
         <cylinderGeometry args={[0.3, 0.3, 0.24, 7]} />
         <meshLambertMaterial color={bottom} />
       </mesh>
+      {look?.hair && look.hair.style !== "none" && <Hair style={look.hair.style} color={look.hair.color} />}
       {look && look.prop !== "none" && <Prop kind={look.prop} />}
+    </group>
+  );
+}
+
+/** Tufts of the "wild" hair: [angle from the back of the head (rad), height, size]. Nothing at the front. */
+const TUFTS: [number, number, number][] = [
+  [0, 1.86, 0.2],
+  [0.75, 1.82, 0.19],
+  [-0.75, 1.82, 0.19],
+  [1.5, 1.78, 0.17],
+  [-1.5, 1.78, 0.17],
+  [2.2, 1.74, 0.14],
+  [-2.2, 1.74, 0.14],
+  [0.35, 1.99, 0.17],
+  [-0.4, 1.97, 0.16],
+  [0, 1.7, 0.18],
+];
+
+/**
+ * A simple hair shape on the faceless head (never a likeness; the face stays blank).
+ * short: a faceted cap tilted back, so the forehead stays bare. wild: puffy tufts round the sides and back of the head.
+ */
+function Hair({ style, color }: { style: "short" | "wild"; color: string }) {
+  if (style === "short") {
+    return (
+      <mesh position={[0, 1.83, -0.04]} rotation-x={-0.4}>
+        <sphereGeometry args={[0.395, 7, 4, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
+        <meshLambertMaterial color={color} flatShading />
+      </mesh>
+    );
+  }
+  return (
+    <group position={[0, 0, 0]}>
+      {TUFTS.map(([a, y, size], i) => (
+        // Angle 0 is straight behind the head (-Z); the front (+Z) is left bare.
+        <mesh key={i} position={[Math.sin(a) * 0.3, y, -Math.cos(a) * 0.3]} scale={[1, 0.9, 1]}>
+          <icosahedronGeometry args={[size, 0]} />
+          <meshLambertMaterial color={color} flatShading />
+        </mesh>
+      ))}
     </group>
   );
 }

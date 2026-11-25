@@ -10,6 +10,14 @@ import type { Era } from "@/lib/content/schema";
  * Professor Aqeel's role and view stay TODO until the interview is recorded.
  * Figure looks are faceless outfits only: clothing colours and one prop, never a face or likeness.
  */
+/** Professor Aqeel: a dark suit and wild white hair (a faceless figure; a plain outline, not a likeness). */
+export const aqeelLook = {
+  top: "#2e3136",
+  bottom: "#2e3136",
+  prop: "none",
+  hair: { style: "wild", color: "#f4f4f2" },
+} as const;
+
 export const eras: z.input<typeof Era>[] = [
   {
     id: "era-1",
@@ -81,7 +89,7 @@ export const eras: z.input<typeof Era>[] = [
         name: "Professor Aqeel",
         role: "TODO: role at the American University of Sharjah (confirm with him)",
         view: "TODO: key point from the recorded interview",
-        look: { top: "#f2efe6", bottom: "#3a3a3a", prop: "laptop" },
+        look: aqeelLook,
       },
     ],
     perceptionSummary:

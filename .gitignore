@@ -53,3 +53,9 @@ next-env.d.ts
 # voice samples and generated lines: the repo is public, never commit these
 /tools/voices/samples/
 /tools/voices/out/
+
+# raw interview recordings: never commit
+/tools/interview/raw/
+/tools/interview/work/
+/tools/voices/.venv/
+/tools/voices/work/

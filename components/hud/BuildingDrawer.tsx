@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import type { ExploreBuilding, ExploreEra } from "@/lib/three/explore-data";
 import { ContentText } from "@/components/content/ContentText";
@@ -14,7 +14,7 @@ import { Arcade } from "@/components/arcade/Arcade";
 import { CreditedImage } from "@/components/content/CreditedImage";
 import { CreditLine } from "@/components/content/CreditLine";
 import { ReferenceGroups } from "@/components/content/ReferenceGroups";
-import { BuildingVideo } from "@/components/media/BuildingVideo";
+import { VideoOverlay } from "./VideoOverlay";
 import { EmbeddedChart } from "@/components/data/DatasetView";
 
 /**
@@ -40,8 +40,14 @@ function Drawer({ b, era }: { b: ExploreBuilding; era?: ExploreEra }) {
   const ref = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const close = () => useStore.getState().closeBuilding();
+  // A building with a video opens it full-screen once, when the visitor goes in. This Drawer is keyed by building
+  // and unmounts when it closes, so it opens again only after the visitor leaves and re-enters.
+  const [videoOpen, setVideoOpen] = useState(Boolean(b.video));
   // No opener to return to (E key with focus on the page, or a ?b= deep link): the prompt's Open button.
-  const { onKeyDown } = useDialog(ref, true, close, heading, "interact-prompt-button");
+  // The drawer's own focus trap rests while the video overlay has the focus.
+  // With a video, the drawer only takes the focus after the overlay closes: it goes to "Watch the video".
+  const watch = useRef<HTMLButtonElement>(null);
+  const { onKeyDown } = useDialog(ref, !videoOpen, close, b.video ? watch : heading, "interact-prompt-button");
   const titleId = `drawer-title-${b.id}`;
 
   return (
@@ -82,7 +88,8 @@ function Drawer({ b, era }: { b: ExploreBuilding; era?: ExploreEra }) {
           <ContentText value={b.short} />
         </p>
 
-        {b.comingSoon && (
+        {/* A recorded episode is not "coming soon", even while the building's long text is still to be written. */}
+        {b.comingSoon && !b.track && (
           <p className="rounded-[12px] border border-dashed border-rule px-4 py-3 text-muted" data-placeholder="true">
             {b.episodeId
               ? "Coming soon: this recording has not been made yet."
@@ -92,8 +99,17 @@ function Drawer({ b, era }: { b: ExploreBuilding; era?: ExploreEra }) {
 
         {b.video ? (
           <div>
-            <BuildingVideo video={b.video} inside />
+            <button
+              ref={watch}
+              type="button"
+              id="watch-video-button"
+              onClick={() => setVideoOpen(true)}
+              className="rounded-full bg-ink px-5 py-2.5 font-semibold text-paper transition-transform duration-300 ease-calm hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            >
+              Watch the video
+            </button>
             {b.image && <CreditLine credit={{ ...b.image.credit, text: `Poster: ${b.image.credit.text}` }} />}
+            {videoOpen && <VideoOverlay video={b.video} onClose={() => setVideoOpen(false)} />}
           </div>
         ) : (
           b.image && <CreditedImage image={b.image} sizes="(min-width: 768px) 372px, 100vw" />

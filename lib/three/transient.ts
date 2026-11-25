@@ -124,17 +124,34 @@ export function isFreeLook(): boolean {
  * Tap-to-drive: tap (or click) a spot on the island and the car drives there by itself.
  * Set by CameraRig, followed by the vehicle, cancelled by any manual driving, a teleport, arrival or getting stuck.
  */
-export const autoDrive = { active: false, x: 0, z: 0 };
+export const autoDrive = {
+  active: false,
+  x: 0,
+  z: 0,
+  /** A building to open when the car arrives (a click on a building drives to its door, then opens it). */
+  openId: null as string | null,
+  /** Unsticking: how many times the car has backed out of a blockage on this trip. */
+  retries: 0,
+};
 
-export function setAutoDrive(x: number, z: number) {
+export function setAutoDrive(x: number, z: number, openId: string | null = null) {
   autoDrive.x = x;
   autoDrive.z = z;
+  autoDrive.openId = openId;
+  autoDrive.retries = 0;
   autoDrive.active = true;
 }
 
 export function cancelAutoDrive() {
   autoDrive.active = false;
+  autoDrive.openId = null;
 }
+
+/**
+ * What the pointer is over (a building or a figure): the ground highlight reads it every frame, so it lives here,
+ * not in React state. `w` / `d` are the footprint, `rot` the heading of the footprint.
+ */
+export const hover = { active: false, x: 0, z: 0, w: 0, d: 0, rot: 0 };
 
 /** Lift every touch button (when the touch controls unmount). */
 export function releaseInputs() {

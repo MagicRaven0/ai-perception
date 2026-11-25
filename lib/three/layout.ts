@@ -203,7 +203,12 @@ export type PlacedFigure = {
   sensorRadius: number;
 };
 
-export type FigureLookInput = { top: string; bottom: string; prop: string };
+export type FigureLookInput = {
+  top: string;
+  bottom: string;
+  prop: string;
+  hair?: { style: "none" | "short" | "wild"; color: string };
+};
 
 export type EdgeWall = { position: Vec3; rotationY: number; length: number };
 
@@ -227,8 +232,11 @@ export type IslandLayout = {
 /** One background NPC: where it stands, which way it faces, and a stable seed for outfit and idle timing. */
 export type PlacedNpc = { position: Vec3; rotationY: number; seed: number };
 
-/** NPCs per island (the low quality tier draws every other one). */
-export const NPCS_PER_ISLAND = 9;
+/**
+ * NPCs per island (the low quality tier draws every other one). Scaled to each island's area so no lawn feels
+ * empty (round 9): The Past 14, The Jobs Era 11, The Future 20.
+ */
+export const NPCS_PER_ISLAND: Record<EraId, number> = { "era-1": 14, "era-2": 11, "era-3": 20 };
 
 /** What a team member's statue sits with (content/site.ts `statue`). */
 export type StatueSymbol = "stop-button" | "light-bulb" | "robot" | "book";
@@ -637,7 +645,15 @@ function placeNpcs(island: IslandLayout): PlacedNpc[] {
   const g = island.geometry;
   const { center, roadRadius: rr, roadWidth: rw, radius } = g;
   const salt = ERA_ORDER.indexOf(island.eraId) + 1;
+  // Rings of candidate spots: just inside the road, near the rim, and (round 9) the wide empty bands: between the
+  // road and the campus on The Future, and between the outer plots and the rim.
   const rings = [rr - rw / 2 - 3.2, radius - 5];
+  if (island.campus) {
+    const mid = (island.campus.radius + (rr - rw / 2)) / 2;
+    if (rr - rw / 2 - island.campus.radius > 12) rings.push(mid);
+  }
+  const outerEdge = rr + rw / 2 + 1.5 + g.plot.depth + 3;
+  if (radius - 5 - outerEdge > 8) rings.push((outerEdge + radius - 5) / 2);
   const candidates: { angle: number; r: number; k: number }[] = [];
   let k = 0;
   for (const r of rings) {
@@ -659,13 +675,15 @@ function placeNpcs(island: IslandLayout): PlacedNpc[] {
     if (dist(p, [island.spawn.x, 0, island.spawn.z]) < 8) return false;
     return true;
   };
-  // Shuffle deterministically, then take the first free spots, keeping NPCs at least 4 m apart.
+  // Shuffle deterministically, then take the first free spots. Groups of two or three chat together (companions
+  // stand 1.3 m from the first and face it); separate groups stay at least 6 m apart.
+  const target = NPCS_PER_ISLAND[island.eraId];
   const order = [...candidates].sort((a, b) => hash01(a.k, salt) - hash01(b.k, salt));
   const out: PlacedNpc[] = [];
   for (const c of order) {
-    if (out.length >= NPCS_PER_ISLAND) break;
+    if (out.length >= target) break;
     const position = polar(center, c.angle, c.r);
-    if (!ok(position, c.angle, c.r) || out.some((n) => dist(n.position, position) < 4)) continue;
+    if (!ok(position, c.angle, c.r) || out.some((n) => dist(n.position, position) < 6)) continue;
     // Inner lawn: face the road (outwards). Edge lawn: face the island centre, with a little variety.
     const out_ = c.r < rr ? 1 : -1;
     const jitter = (hash01(c.k, salt + 7) - 0.5) * 1.2;
@@ -674,6 +692,17 @@ function placeNpcs(island: IslandLayout): PlacedNpc[] {
       rotationY: headingOf(Math.cos(c.angle) * out_, Math.sin(c.angle) * out_) + jitter,
       seed: c.k,
     });
+    const mates = hash01(c.k, salt + 3) < 0.4 ? 1 : 2;
+    for (let m = 0; m < mates && out.length < target; m++) {
+      const a = hash01(c.k, salt + 11 + m) * TAU;
+      const mate: Vec3 = [position[0] + Math.cos(a) * 1.3, position[1], position[2] + Math.sin(a) * 1.3];
+      if (!ok(mate, c.angle, c.r)) continue;
+      out.push({
+        position: mate,
+        rotationY: headingOf(position[0] - mate[0], position[2] - mate[2]) + (hash01(c.k, salt + 17 + m) - 0.5) * 0.5,
+        seed: c.k * 3 + m + 1,
+      });
+    }
   }
   return out;
 }

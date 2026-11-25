@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { Episode } from "@/lib/content/schema";
+import { aqeelLook } from "./eras";
 
 /**
  * Podcast episodes and interviews.
@@ -19,6 +20,13 @@ const hostLook = { top: "#2f4858", bottom: "#3a3a3a", prop: "headphones" } as co
 const coHostLook = { top: "#b5523b", bottom: "#3a3a3a", prop: "microphone" } as const;
 /** Episode 3 has a third host (Waleed Masri). */
 const thirdHostLook = { top: "#4f6d3a", bottom: "#3a3a3a", prop: "laptop" } as const;
+/** The interviewer in the Aqeel interview: beige and white, a microphone, short dark hair (faceless). */
+const interviewerLook = {
+  top: "#f3efe6",
+  bottom: "#cbb38c",
+  prop: "microphone",
+  hair: { style: "short", color: "#1e1a17" },
+} as const;
 
 export const episodes: z.input<typeof Episode>[] = [
   {
@@ -111,9 +119,9 @@ export const episodes: z.input<typeof Episode>[] = [
         name: "Professor Aqeel",
         role: "TODO: role at American University of Sharjah",
         consentConfirmed: false,
-        look: { top: "#f2efe6", bottom: "#3a3a3a", prop: "laptop" },
+        look: aqeelLook,
       },
-      { name: "TODO: interviewer name", role: "Interviewer", consentConfirmed: false, look: hostLook },
+      { name: "Rayyan", role: "Interviewer", consentConfirmed: false, look: interviewerLook },
     ],
     src: null,
     durationSec: null,

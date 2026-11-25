@@ -150,7 +150,7 @@ export const credits: z.input<typeof Credit>[] = [
   {
     id: "audio-interview-aqeel",
     kind: "audio",
-    title: "Interview: Professor Aqeel on how views of AI have changed",
+    title: "Interview: Professor Aqeel on the benefits and risks of AI",
     author: "Our group (recorded interview with Professor Aqeel Taher, published with permission)",
     licence: "All rights reserved by the authors (class project)",
     url: "/audio/interview-aqeel.mp3",

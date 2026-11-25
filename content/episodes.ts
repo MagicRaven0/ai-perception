@@ -108,11 +108,11 @@ export const episodes: z.input<typeof Episode>[] = [
   },
   {
     id: "interview-aqeel",
-    title: "Interview: Professor Aqeel on how views of AI have changed",
+    title: "Interview: Professor Aqeel on the benefits and risks of AI",
     kind: "interview",
     eraIds: ["era-3"],
     summary:
-      "Our conversation with Professor Aqeel of the American University of Sharjah about how people's views of AI have changed, AI at AUS and in the UAE, trust and fear, and what students should know.",
+      "Our conversation with Professor Aqeel, a civil engineering professor at the American University of Sharjah, about the benefits and risks of AI, the need for human oversight, why he does not see it replacing professionals, and the abilities he wants the young generation to develop.",
     speakers: [
       {
         name: "Professor Aqeel",

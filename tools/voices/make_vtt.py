@@ -28,6 +28,9 @@ for ep in sys.argv[1:]:
         info = sf.info(str(OUT / f"{l['id']}.wav"))
         length = info.frames / info.samplerate
         parts = [p.strip() for p in re.findall(r'.+?(?:[.!?]["\u201d]?(?=\s+[A-Z"\u201c])|$)', l["text"]) if p.strip()]
+        # "U.S." is not a sentence end: join a cue that stops there to the one after it.
+        for k in range(len(parts) - 2, -1, -1):
+            if parts[k].endswith("U.S."): parts[k:k + 2] = [parts[k] + " " + parts[k + 1]]
         total, at = sum(len(p) for p in parts), clock
         for p in parts:
             d = length * len(p) / total

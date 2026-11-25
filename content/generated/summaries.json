@@ -439,21 +439,21 @@
   "episode-1": {
     "tldr": {
       "text": "- In 1955, four researchers proposed a summer study at Dartmouth, which the college now calls the birth of AI.\n- Early AI was mostly a promise made by scientists, companies and the military, and the public could not test it.\n- Predictions like the 1958 chess forecast came true decades late, and disappointment led to the first AI winter in 1974.",
-      "hash": "3f10cc6499362012",
+      "hash": "0eee4ba0e4d0f940",
       "model": "anthropic/claude-haiku-5.5",
       "generatedAt": "2026-11-25T17:57:09.579Z",
       "checked": true
     },
     "stats": {
       "text": "- Two months, about ten people: the summer study the 1955 proposal asked for, held in 1956\n- Ten years: how soon Simon and Newell predicted, in 1958, that a computer would be world chess champion\n- 1997: Deep Blue beat Garry Kasparov, three and a half to two and a half, in six games\n- Mid to late 1970s: when experts claimed a machine with the general intelligence of an average person would arrive\n- 1974: the first \"AI winter\"",
-      "hash": "3f10cc6499362012",
+      "hash": "0eee4ba0e4d0f940",
       "model": "anthropic/claude-haiku-5.5",
       "generatedAt": "2026-11-25T17:57:09.579Z",
       "checked": true
     },
     "eli12": {
       "text": "In the 1950s, a few scientists had a big idea: machines could learn to do things only people could do. Newspapers described amazing machines, but almost no ordinary people could use one. So people had to go by what the experts and newspapers said. Some promises took far longer than expected: a computer was supposed to be the chess champion within ten years, and it took almost forty. Others did not happen on time, and in 1974 excitement about AI cooled down.",
-      "hash": "3f10cc6499362012",
+      "hash": "0eee4ba0e4d0f940",
       "model": "anthropic/claude-haiku-5.5",
       "generatedAt": "2026-11-25T17:57:09.579Z",
       "checked": true

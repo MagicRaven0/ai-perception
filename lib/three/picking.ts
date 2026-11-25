@@ -36,7 +36,7 @@ export function pickWorldObject(world: WorldLayout, eraId: (typeof ERA_ORDER)[nu
   let best: Pick | null = null;
 
   for (const b of island.buildings) {
-    // Boards in the island's centre (References) have no house; they are picked by their footprint too.
+    // The sources spot (References) is flat: only a click on or just above the marker counts.
     const halfW = b.plot.width / 2 + BUILDING_HIT_MARGIN;
     const halfD = b.plot.depth / 2 + BUILDING_HIT_MARGIN;
     position.set(b.position[0], b.position[1], b.position[2]);
@@ -45,7 +45,7 @@ export function pickWorldObject(world: WorldLayout, eraId: (typeof ERA_ORDER)[nu
     inverse.copy(matrix).invert();
     rayLocal.copy(ray).applyMatrix4(inverse);
     box.min.set(-halfW, 0, -halfD);
-    box.max.set(halfW, BUILDING_HIT_HEIGHT, halfD);
+    box.max.set(halfW, b.sources ? 1 : BUILDING_HIT_HEIGHT, halfD);
     if (!rayLocal.intersectBox(box, point)) continue;
     const distance = point.applyMatrix4(matrix).distanceTo(ray.origin);
     if (!best || distance < best.distance) best = { kind: "building", id: b.id, building: b, distance };

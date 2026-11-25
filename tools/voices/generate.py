@@ -24,8 +24,9 @@ DESIGN = "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign"
 
 # Respelled for the model only. Edit and re-run (delete the affected WAVs) if one still sounds wrong.
 PRONOUNCE = {
-    "Bengio": "Ben-joe",
-    "Krueger": "Kroo-ger",
+    "Bengio": "Ben-jee-oh",
+    "Rayyan": "Ray-yaan",
+    "Krueger": "Krooger",
     "Rosenblatt": "Rose-en-blat",
     "Kasparov": "Kass-pah-rov",
     "Kare": "Care",

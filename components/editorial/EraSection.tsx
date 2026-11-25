@@ -205,9 +205,12 @@ function PeopleTable({ era }: { era: Era }) {
 }
 
 function BuildingRow({ building: b, insights }: { building: Building; insights: Insight[] }) {
-  const comingSoon = isPlaceholder(b.long);
   const episode = b.media.episodeId ? getEpisode(b.media.episodeId) : undefined;
   const track = episode ? toTrack(episode, eras) : null;
+  // A recorded episode is not "coming soon", even while the building's long text is still to be written: its short
+  // text stands in, so no out-of-date "not recorded yet" note is shown.
+  const unwritten = isPlaceholder(b.long);
+  const comingSoon = unwritten && !track;
   const summaryText = b.summarizable ? itemText(b.id) : null;
   const arcade = arcadeFor(b.id);
   const chart = buildingChart(b);
@@ -254,7 +257,7 @@ function BuildingRow({ building: b, insights }: { building: Building; insights: 
           </>
         ) : (
           <div className="flex max-w-[68ch] flex-col gap-4 text-lg leading-[1.6] text-muted">
-            <Markdown value={b.long} citations={citations} />
+            <Markdown value={unwritten ? b.short : b.long} citations={citations} />
           </div>
         )}
 

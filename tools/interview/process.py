@@ -6,7 +6,7 @@ exit with 0.8 s gaps, loudness-normalised to -16 LUFS, written to public/audio/i
 Prints each clip's start time (the chapter times for content/episodes.ts) and writes a Whisper draft transcript to
 content/transcripts/interview-aqeel.vtt: read it and fix names and terms by hand.
 
-Run from the repo root with the voice venv:  tools/voices/.venv/Scripts/python tools/interview/process.py [--no-transcript]
+Run from the repo root with the voice venv:  tools/voices/.venv/Scripts/python tools/interview/process.py [--no-transcript] [--cpu]
 """
 import json, pathlib, re, subprocess, sys
 
@@ -22,8 +22,10 @@ def dur(f):
     return float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(f)],
                                 capture_output=True, text=True, check=True).stdout)
 
+def base(p): return p.name.split(".")[0]  # phones often export "Q1.m4a.mp4"
+
 def order(p):
-    s = p.stem.lower()
+    s = base(p).lower()
     if s == "exit": return (1, 0)
     m = re.fullmatch(r"q\s*0*(\d+)", s)
     if not m: raise SystemExit(f"unexpected file name: {p.name} (expected Q1, Q2, ... or exit)")
@@ -40,10 +42,10 @@ gap = WORK / "gap.wav"
 run("-f", "lavfi", "-i", f"anullsrc=r={SR}:cl=mono", "-t", GAP, gap)
 parts, starts, clock = [], [], 0.0
 for i, p in enumerate(clips):
-    out = WORK / f"{p.stem}.wav"
+    out = WORK / f"{base(p)}.wav"
     run("-i", p, "-vn", "-ac", 1, "-ar", SR, "-af", f"afftdn=nr=10:nf=-40,{TRIM},areverse,{TRIM},areverse", out)
     if i: parts.append(gap); clock += dur(gap)
-    starts.append((p.stem, clock)); parts.append(out); clock += dur(out)
+    starts.append((base(p), clock)); parts.append(out); clock += dur(out)
 lst = WORK / "list.txt"
 lst.write_text("".join(f"file '{p.as_posix()}'\n" for p in parts), encoding="utf-8")
 run("-f", "concat", "-safe", 0, "-i", lst, "-ac", 1, "-ar", SR, "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
@@ -54,10 +56,11 @@ for name, t in starts: print(f"   t: {int(t):4d}  {name}")
 
 if "--no-transcript" not in sys.argv:
     import whisper
-    model = whisper.load_model("medium.en")
-    res = model.transcribe(str(DEST), language="en",
+    model = whisper.load_model("medium.en", device="cpu" if "--cpu" in sys.argv else None)
+    res = model.transcribe(str(DEST), language="en", fp16="--cpu" not in sys.argv, word_timestamps=False,
                            initial_prompt="An interview at the American University of Sharjah (AUS), in the UAE, with "
                                           "Professor Aqeel Taher. Rayyan asks about AI, ChatGPT and students.")
     cues = [f"{stamp(s['start'])} --> {stamp(s['end'])}\n{s['text'].strip()}" for s in res["segments"] if s["text"].strip()]
+    (WORK / "whisper.json").write_text(json.dumps([[s["start"], s["end"], s["text"].strip()] for s in res["segments"]]), encoding="utf-8")
     VTT.write_text("WEBVTT\n\n" + "\n\n".join(cues) + "\n", encoding="utf-8")
     print(f"{VTT}  ({len(cues)} cues): check names and terms by hand")

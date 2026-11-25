@@ -872,7 +872,7 @@ test.describe("world features", () => {
     const video = overlay.locator("video");
     await expect(overlay).toBeVisible();
     await expect(video).toHaveAttribute("preload", "none");
-    await expect(overlay).toContainText("AI-generated animation and music");
+    await expect(overlay).not.toContainText("AI-generated");
     await expect.poll(() => [...new Set(asked)]).toEqual(["/videos/interface-gallery.mp4"]);
     await page.screenshot({ path: "screenshots/drawer-video-1440.png" });
 

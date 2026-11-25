@@ -7,7 +7,7 @@ import type { Era } from "@/lib/content/schema";
  *
  * Filled 22 Nov 2026 (CONTENT_PROMPTS Prompt 3). Era 3 comes from the research essay and its sources.
  * Eras 1 and 2 use the new sources in content/sources.ts (the essay does not cover those periods).
- * Professor Aqeel's role and view stay TODO until the interview is recorded.
+ * Professor Aqeel's role and view come from the recorded interview (content/transcripts/interview-aqeel.vtt).
  * Figure looks are faceless outfits only: clothing colours and one prop, never a face or likeness.
  */
 /** Professor Aqeel: a dark suit and wild white hair (a faceless figure; a plain outline, not a likeness). */
@@ -87,8 +87,8 @@ export const eras: z.input<typeof Era>[] = [
       },
       {
         name: "Professor Aqeel",
-        role: "TODO: role at the American University of Sharjah (confirm with him)",
-        view: "TODO: key point from the recorded interview",
+        role: "Civil Engineering Professor",
+        view: "He is enthusiastic about AI but warns against depending on it too much. \"I would rather have a student who knows how to question AI intelligently than one who knows how to copy from it efficiently\" (4:49).",
         look: aqeelLook,
       },
     ],

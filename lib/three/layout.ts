@@ -86,7 +86,7 @@ const BRIDGE_PAIRS: [EraId, EraId][] = [
 const TEAM = { host: "era-2" as EraId, angle: (Math.PI * 3) / 2, radius: 17, gap: 22 };
 
 /**
- * Where each island's Sources boards stand: inside the ring road, clear of the centre landmark (and of the AUS
+ * Where each island's sources spot is: inside the ring road, clear of the centre landmark (and of the AUS
  * campus), facing `face` (an angle from the island centre).
  */
 const SOURCES_SPOT: Record<EraId, { angle: number; r: number; face: number }> = {
@@ -94,11 +94,11 @@ const SOURCES_SPOT: Record<EraId, { angle: number; r: number; face: number }> = 
   "era-2": { angle: 1.36, r: 16.5, face: 2.0 },
   "era-3": { angle: 0.92, r: 25, face: 1.8 },
 };
-/** Sources board size (m) and how many rows fit on one. */
-export const SOURCE_BOARD = { width: 7.4, height: 6.4, gap: 0.7, rows: 6 };
-
-/** How many boards a list needs. */
-export const sourceBoardCount = (rows: number) => Math.max(1, Math.ceil(rows / SOURCE_BOARD.rows));
+/**
+ * The sources spot: a flat round marker (radius, m). The "Open" prompt shows only while the car is on or beside it
+ * (sensor radius), so visitors press E in the middle, not from across the lawn.
+ */
+export const SOURCES_PAD = { radius: 3, sensorRadius: 4 };
 
 /* --------------------------------------------------------------- types */
 
@@ -169,11 +169,11 @@ export type PlacedBuilding = {
   hosts: FigureLookInput[];
   /** The building's own video, shown muted on a screen above it while the car is close. */
   videoSrc?: string;
-  /** The island's Sources boards (its References building): one row per source. Stands in the island's centre. */
+  /** Set on an island's References building (one row per source): a ground spot in the centre area, no house. */
   sources?: SourceRow[];
 };
 
-/** One line on a Sources board, taken from the source's APA entry (lib/content/references.ts). */
+/** One source in short form, taken from its APA entry (lib/content/references.ts). */
 export type SourceRow = { who: string; title: string };
 
 export type PlacedInsight = {
@@ -499,17 +499,13 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
     };
   });
 
-  // Sources boards: the island's References building, in the centre area instead of on the ring.
+  // Sources spot: the island's References building, in the centre area instead of on the ring.
   for (const b of input.buildings) {
     if (b.eraId !== eraId || !b.sources) continue;
     const spot = SOURCES_SPOT[eraId];
     const position = polar(center, spot.angle, spot.r);
     const fx = Math.cos(spot.face);
     const fz = Math.sin(spot.face);
-    const n = sourceBoardCount(b.sources.length);
-    const width = n * SOURCE_BOARD.width + (n - 1) * SOURCE_BOARD.gap;
-    const at = (d: number): Vec3 => [position[0] + fx * d, 1.2, position[2] + fz * d];
-    const stop = at(9.5);
     buildings.push({
       id: b.id,
       eraId,
@@ -521,9 +517,10 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
       angle: spot.angle,
       position,
       rotationY: headingOf(fx, fz),
-      plot: { width, depth: 4 },
-      sensor: { position: at(5), radius: 7.5 },
-      approach: { x: stop[0], y: 1.2, z: stop[2], heading: headingOf(-fx, -fz) },
+      plot: { width: SOURCES_PAD.radius * 2, depth: SOURCES_PAD.radius * 2 },
+      sensor: { position: [position[0], 1.2, position[2]], radius: SOURCES_PAD.sensorRadius },
+      // A deep link or fast travel parks the car on the spot, facing across it.
+      approach: { x: position[0] + fx * 1.5, y: 1.2, z: position[2] + fz * 1.5, heading: headingOf(-fx, -fz) },
       hosts: [],
       sources: b.sources,
     });

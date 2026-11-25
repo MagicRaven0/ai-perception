@@ -1,0 +1,259 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.607
+<v Rayyan>In July 1958, The New York Times ran a short story about a new computer.
+
+00:00:03.607 --> 00:00:04.007
+<v Rayyan>The U.S.
+
+00:00:04.007 --> 00:00:10.720
+<v Rayyan>Navy said it would lead to machines that "will be able to walk, talk, see, write, reproduce itself and be conscious of its existence."
+
+00:00:11.070 --> 00:00:11.883
+<v Abdulrahman Ahmad>That was 1958.
+
+00:00:11.883 --> 00:00:18.910
+<v Abdulrahman Ahmad>Today we have chatbots on our phones, and people are still arguing about what AI can do and whether we should be worried.
+
+00:00:19.260 --> 00:00:26.045
+<v Rayyan>Welcome to The Evolution of AI Perception, a podcast from our WRI-101 group at the American University of Sharjah.
+
+00:00:26.045 --> 00:00:26.700
+<v Rayyan>I'm Rayyan.
+
+00:00:27.050 --> 00:00:28.305
+<v Abdulrahman Ahmad>And I'm Abdulrahman.
+
+00:00:28.305 --> 00:00:33.638
+<v Abdulrahman Ahmad>In three episodes we follow how people's view of AI changed, from the 1950s to today.
+
+00:00:33.638 --> 00:00:39.850
+<v Abdulrahman Ahmad>Our argument is that people's trust in AI has followed how much control they felt they had over it.
+
+00:00:40.200 --> 00:00:45.160
+<v Rayyan>Today, episode one: the 1950s, when AI was an idea held by a few scientists.
+
+00:00:46.160 --> 00:00:49.440
+<v Abdulrahman Ahmad>So where does the term "artificial intelligence" even come from?
+
+00:00:49.790 --> 00:00:52.830
+<v Rayyan>From a proposal written in 1955 by four researchers.
+
+00:00:52.830 --> 00:00:57.156
+<v Rayyan>John McCarthy, an assistant professor of mathematics at Dartmouth College.
+
+00:00:57.156 --> 00:00:58.735
+<v Rayyan>Marvin Minsky from Harvard.
+
+00:00:58.735 --> 00:01:00.430
+<v Rayyan>Nathaniel Rochester from IBM.
+
+00:01:00.430 --> 00:01:03.470
+<v Rayyan>And Claude Shannon from Bell Telephone Laboratories.
+
+00:01:03.820 --> 00:01:05.100
+<v Abdulrahman Ahmad>And what were they proposing?
+
+00:01:05.450 --> 00:01:10.187
+<v Rayyan>A two-month summer study, with about ten people, at Dartmouth in the summer of 1956.
+
+00:01:10.187 --> 00:01:12.274
+<v Rayyan>Their starting point was a bold idea.
+
+00:01:12.274 --> 00:01:19.210
+<v Rayyan>Quote: "every aspect of learning ... can in principle be so precisely described that a machine can be made to simulate it."
+
+00:01:19.560 --> 00:01:23.720
+<v Abdulrahman Ahmad>So if you can describe how learning works exactly, a machine can copy it.
+
+00:01:24.070 --> 00:01:24.480
+<v Rayyan>Exactly.
+
+00:01:24.480 --> 00:01:33.190
+<v Rayyan>They listed what they wanted machines to do: use language, form abstractions and concepts, solve kinds of problems "now reserved for humans," and even improve themselves.
+
+00:01:33.540 --> 00:01:34.420
+<v Abdulrahman Ahmad>In one summer?
+
+00:01:34.770 --> 00:01:41.730
+<v Rayyan>They thought a carefully selected group of scientists, working together for a summer, could make a significant advance on at least one of those problems.
+
+00:01:42.080 --> 00:01:43.280
+<v Abdulrahman Ahmad>That's optimistic.
+
+00:01:43.630 --> 00:01:43.977
+<v Rayyan>It is.
+
+00:01:43.977 --> 00:01:50.910
+<v Rayyan>But it worked in one way: Dartmouth College today describes that 1956 meeting as the birth of AI as a field of research.
+
+00:01:51.910 --> 00:01:55.441
+<v Abdulrahman Ahmad>We wanted to hear how someone at that workshop might have talked about it.
+
+00:01:55.441 --> 00:01:57.350
+<v Abdulrahman Ahmad>So we invited a guest who doesn't exist.
+
+00:01:57.700 --> 00:02:03.787
+<v Rayyan>Our 1956 Workshop Researcher is a fictional character, the same one you can chat with on our website.
+
+00:02:03.787 --> 00:02:06.740
+<v Rayyan>Everything they say comes from the 1955 proposal.
+
+00:02:07.090 --> 00:02:07.537
+<v Abdulrahman Ahmad>Welcome!
+
+00:02:07.537 --> 00:02:10.050
+<v Abdulrahman Ahmad>What are you hoping thinking machines can do?
+
+00:02:10.400 --> 00:02:11.016
+<v 1956 Workshop Researcher>Thank you!
+
+00:02:11.016 --> 00:02:18.044
+<v 1956 Workshop Researcher>We hope to make machines use language, form abstractions and concepts, and solve problems now reserved for humans.
+
+00:02:18.044 --> 00:02:20.880
+<v 1956 Workshop Researcher>Perhaps even machines that improve themselves.
+
+00:02:21.230 --> 00:02:23.070
+<v Rayyan>And are your computers ready for that?
+
+00:02:23.420 --> 00:02:24.030
+<v 1956 Workshop Researcher>Not quite.
+
+00:02:24.030 --> 00:02:31.224
+<v 1956 Workshop Researcher>Our proposal admits that today's machines may lack the speed and memory to simulate the higher functions of the brain.
+
+00:02:31.224 --> 00:02:34.516
+<v 1956 Workshop Researcher>But we believe the major obstacle is not the machines.
+
+00:02:34.516 --> 00:02:39.820
+<v 1956 Workshop Researcher>It is that we do not yet know how to write programs that make full use of what we have.
+
+00:02:40.170 --> 00:02:41.530
+<v Abdulrahman Ahmad>How long do you think it will take?
+
+00:02:41.880 --> 00:02:48.600
+<v 1956 Workshop Researcher>We believe a carefully chosen group, working together for one summer, can make a significant advance.
+
+00:02:48.950 --> 00:02:49.830
+<v Rayyan>Thank you for coming.
+
+00:02:49.830 --> 00:02:51.590
+<v Rayyan>We won't tell you how long it really took.
+
+00:02:52.590 --> 00:02:54.826
+<v Abdulrahman Ahmad>Our guest was honest about the hardware.
+
+00:02:54.826 --> 00:02:56.670
+<v Abdulrahman Ahmad>Computers then were big and rare.
+
+00:02:57.020 --> 00:03:00.337
+<v Rayyan>Take the Perceptron, the machine from that 1958 newspaper story.
+
+00:03:00.337 --> 00:03:03.913
+<v Rayyan>It was invented by Frank Rosenblatt, and it was a room-size computer.
+
+00:03:03.913 --> 00:03:08.163
+<v Rayyan>Its job was to look at an image and decide which of two categories it belonged to.
+
+00:03:08.163 --> 00:03:12.620
+<v Rayyan>When it got one wrong, it changed its own connections so it would do better next time.
+
+00:03:12.970 --> 00:03:17.690
+<v Abdulrahman Ahmad>Which is basically how neural networks still learn today, just on a tiny scale.
+
+00:03:18.040 --> 00:03:18.350
+<v Rayyan>Right.
+
+00:03:18.350 --> 00:03:24.966
+<v Rayyan>And this matters for our argument: only universities, big companies like IBM and Bell Labs, and the military had these machines.
+
+00:03:24.966 --> 00:03:27.240
+<v Rayyan>Ordinary people almost never got to use one.
+
+00:03:27.590 --> 00:03:32.150
+<v Abdulrahman Ahmad>So the public's idea of AI came from what experts and newspapers said it would become.
+
+00:03:33.150 --> 00:03:34.450
+<v Rayyan>And experts said a lot.
+
+00:03:34.450 --> 00:03:38.521
+<v Rayyan>In 1958, Herbert Simon and Allen Newell published a list of predictions.
+
+00:03:38.521 --> 00:03:45.870
+<v Rayyan>The first one: "within ten years a digital computer will be the world's chess champion, unless the rules bar it from competition."
+
+00:03:46.220 --> 00:03:47.363
+<v Abdulrahman Ahmad>Ten years.
+
+00:03:47.363 --> 00:03:48.620
+<v Abdulrahman Ahmad>So by 1968.
+
+00:03:48.970 --> 00:03:50.730
+<v Rayyan>Want to guess when it actually happened?
+
+00:03:51.080 --> 00:03:53.000
+<v Abdulrahman Ahmad>I'm going to say... the eighties?
+
+00:03:53.350 --> 00:03:53.683
+<v Rayyan>1997.
+
+00:03:53.683 --> 00:04:01.670
+<v Rayyan>IBM's Deep Blue beat world champion Garry Kasparov, three and a half to two and a half, in a six-game match in New York.
+
+00:04:02.020 --> 00:04:04.500
+<v Abdulrahman Ahmad>So almost forty years instead of ten.
+
+00:04:04.850 --> 00:04:06.284
+<v Rayyan>The prediction came true.
+
+00:04:06.284 --> 00:04:07.890
+<v Rayyan>It was just very, very late.
+
+00:04:08.890 --> 00:04:11.039
+<v Abdulrahman Ahmad>And chess wasn't the only big promise.
+
+00:04:11.039 --> 00:04:19.690
+<v Abdulrahman Ahmad>After the Perceptron, experts like Marvin Minsky claimed we'd have a machine with the general intelligence of an average person by the mid to late 1970s.
+
+00:04:20.040 --> 00:04:20.930
+<v Rayyan>Which didn't happen.
+
+00:04:20.930 --> 00:04:26.760
+<v Rayyan>Those early systems knew nothing about the world they were working in, and they couldn't handle the ambiguity of everyday language.
+
+00:04:27.110 --> 00:04:33.510
+<v Abdulrahman Ahmad>So in 1974 came what's called the first "AI winter": a period when disappointment cooled interest in the whole field.
+
+00:04:33.860 --> 00:04:35.940
+<v Rayyan>Big promises, then a big letdown.
+
+00:04:36.940 --> 00:04:40.220
+<v Abdulrahman Ahmad>So what was AI to the public in the 1950s?
+
+00:04:40.570 --> 00:04:41.046
+<v Rayyan>A promise.
+
+00:04:41.046 --> 00:04:45.144
+<v Rayyan>Something you read about in the newspaper, made by scientists, companies and the Navy.
+
+00:04:45.144 --> 00:04:47.050
+<v Rayyan>You couldn't use it or test it yourself.
+
+00:04:47.400 --> 00:04:52.693
+<v Abdulrahman Ahmad>And when you can't check something yourself, you judge it by what its makers say it will become.
+
+00:04:52.693 --> 00:04:55.560
+<v Abdulrahman Ahmad>That's why expectations ran so far ahead of reality.
+
+00:04:55.910 --> 00:05:03.430
+<v Rayyan>Next episode: 1984 to 2011, when computers came into people's homes and pockets, and AI showed up as something you could actually talk to.
+
+00:05:03.780 --> 00:05:04.922
+<v Abdulrahman Ahmad>Thanks for listening.
+
+00:05:04.922 --> 00:05:09.000
+<v Abdulrahman Ahmad>You can explore all of this on our website, The Evolution of AI Perception.
+
+00:05:09.000 --> 00:05:10.740
+<v Abdulrahman Ahmad>Sources are in the reading view.

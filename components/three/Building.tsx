@@ -5,7 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import { useStore } from "@/lib/store";
-import { SOURCE_BOARD, type FigureLookInput, type PlacedBuilding } from "@/lib/three/layout";
+import type { FigureLookInput, PlacedBuilding } from "@/lib/three/layout";
 import { motion } from "@/lib/three/motion";
 import { CAMERA_AZIMUTH } from "@/lib/three/camera";
 import { ERA_PALETTE, SHARED, type EraPalette } from "@/lib/three/palette";
@@ -13,7 +13,7 @@ import { BUILDING_MODELS, MODEL_HEIGHT, type BuildingModel } from "./buildings/r
 import { BuildingSensor } from "./BuildingSensor";
 import { StaticMerge } from "./kit/StaticMerge";
 import { FacelessFigure } from "./Figure";
-import { SourcesBoards } from "./SourcesBoards";
+import { SourcesSpot } from "./SourcesSpot";
 import { VideoScreen } from "./VideoScreen";
 
 /**
@@ -44,13 +44,13 @@ export function Building({
   const { plot } = placed;
   const top = height ?? MODEL_HEIGHT[placed.kind];
 
-  // The References building: boards in the island's centre instead of a house on the ring road.
+  // The References building: a ground spot in the island's centre instead of a house on the ring road.
   if (placed.sources) {
     return (
       <>
-        <SourcesBoards placed={placed} rows={placed.sources} accent={pal.accent} />
+        <SourcesSpot placed={placed} accent={pal.accent} />
         <group position={placed.position}>
-          <Beacon id={placed.id} y={SOURCE_BOARD.height + 2.6} accent={pal.accent} />
+          <Beacon id={placed.id} y={4.2} accent={pal.accent} />
         </group>
         <BuildingSensor id={placed.id} position={placed.sensor.position} radius={placed.sensor.radius} />
       </>

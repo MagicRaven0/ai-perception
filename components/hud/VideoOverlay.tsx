@@ -46,7 +46,7 @@ export function VideoOverlay({ video, onClose }: { video: BuildingVideoData; onC
       >
         <span aria-hidden="true">×</span>
       </button>
-      <div className="w-[min(95vw,calc(80dvh*16/9))] text-snow md:w-[min(75vw,calc(80dvh*16/9))] [&_a]:text-snow [&_figcaption_p]:text-sm [&_figcaption_p]:text-snow">
+      <div className="w-[min(95vw,calc(80dvh*16/9))] text-snow md:w-[min(75vw,calc(80dvh*16/9))] [&_figcaption]:text-sm [&_figcaption]:text-snow">
         <BuildingVideo video={video} inside />
       </div>
     </div>

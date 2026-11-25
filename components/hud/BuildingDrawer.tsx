@@ -88,8 +88,7 @@ function Drawer({ b, era }: { b: ExploreBuilding; era?: ExploreEra }) {
           <ContentText value={b.short} />
         </p>
 
-        {/* A recorded episode is not "coming soon", even while the building's long text is still to be written. */}
-        {b.comingSoon && !b.track && (
+        {b.comingSoon && (
           <p className="rounded-[12px] border border-dashed border-rule px-4 py-3 text-muted" data-placeholder="true">
             {b.episodeId
               ? "Coming soon: this recording has not been made yet."

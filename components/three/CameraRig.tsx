@@ -266,7 +266,8 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
       // The pointer is over a building or figure on this island: go to its door / to it.
       if (object?.kind === "building") {
         const b = object.building;
-        setAutoDrive(b.approach.x, b.approach.z, b.id);
+        // The sources spot never opens by itself: the car drives onto it and the visitor presses E.
+        setAutoDrive(b.approach.x, b.approach.z, b.sources ? null : b.id);
         return;
       }
       if (object?.kind === "figure") {

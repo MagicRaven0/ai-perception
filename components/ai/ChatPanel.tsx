@@ -302,7 +302,7 @@ function Answer({
             <Label tone="muted">
               {meta.checked === true
                 ? "Pre-written answer · Checked against our notes"
-                : "Pre-written AI answer · not yet checked"}
+                : "Pre-written answer · not yet checked"}
             </Label>
           )}
         </>

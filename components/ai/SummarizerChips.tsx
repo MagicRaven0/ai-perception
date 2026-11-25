@@ -73,7 +73,7 @@ export function SummarizerChips({
             <>
               <p className="leading-relaxed whitespace-pre-wrap">{result.text}</p>
               <p className="mt-3 text-xs font-semibold text-muted">
-                {result.checked === true ? "AI-generated · Checked against our notes" : "AI-generated · not yet checked"}
+                {result.checked === true ? "Checked against our notes" : "Not yet checked"}
               </p>
             </>
           ) : null}

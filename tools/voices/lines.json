@@ -372,7 +372,7 @@
   "episode": "episode-2",
   "section": "0:00 Intro: from labs to living rooms",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "Today we jump to 1984, when computers moved into homes, schools and offices, and the question changed from \"what will these machines become?\" to \"can normal people use them?\""
  },
  {
@@ -388,8 +388,8 @@
   "episode": "episode-2",
   "section": "0:00 Intro: from labs to living rooms",
   "label": "A",
-  "voice": "waleed",
-  "text": "And I'm Waleed. This is The Evolution of AI Perception, episode two."
+  "voice": "abdulrahman",
+  "text": "And I'm Abdulrahman. This is The Evolution of AI Perception, episode two."
  },
  {
   "id": "episode-2-049",
@@ -404,7 +404,7 @@
   "episode": "episode-2",
   "section": "0:25 The Macintosh, 1984",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "Complex and difficult to use. That's how the Steve Jobs Archive describes it. The Macintosh team set out to change that. Their goal was the first mass-market personal computer that was truly user-friendly."
  },
  {
@@ -420,7 +420,7 @@
   "episode": "episode-2",
   "section": "0:25 The Macintosh, 1984",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "He'd managed it since 1981. And he had a phrase for what they were building: \"a computer for the rest of us.\""
  },
  {
@@ -436,7 +436,7 @@
   "episode": "episode-2",
   "section": "0:25 The Macintosh, 1984",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "Right. And the team itself was unusual. Engineers, designers and programmers who were also sculptors, photographers and musicians. Susan Kare designed the fonts and icons, and her smiling Mac logo made the machine feel almost human. Bill Atkinson's graphics software was key to making it easy to use."
  },
  {
@@ -452,7 +452,7 @@
   "episode": "episode-2",
   "section": "0:25 The Macintosh, 1984",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "Yes: Jef Raskin, who'd been an Apple manager, and researchers at Xerox PARC and the Stanford Research Institute."
  },
  {
@@ -468,7 +468,7 @@
   "episode": "episode-2",
   "section": "0:25 The Macintosh, 1984",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "He told the team that within five years, somebody would be \"using a Macintosh for something we never dreamed possible.\""
  },
  {
@@ -484,7 +484,7 @@
   "episode": "episode-2",
   "section": "0:25 The Macintosh, 1984",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "In 2007, Jobs remembered the week before the launch. He said the team got together and agreed: every computer is going to work this way. You could argue about how long it would take, but not about whether it would happen."
  },
  {
@@ -500,7 +500,7 @@
   "episode": "episode-2",
   "section": "0:25 The Macintosh, 1984",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "Yes. And think about what that does to how people feel about a computer. Before, you had to learn its language. Now it was designed to learn yours."
  },
  {
@@ -516,7 +516,7 @@
   "episode": "episode-2",
   "section": "2:15 A bicycle for our minds",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "Scientists measured how efficiently different animals move. The condor used the least energy to travel a kilometre. Humans? About a third of the way down the list. Not great."
  },
  {
@@ -532,7 +532,7 @@
   "episode": "episode-2",
   "section": "2:15 A bicycle for our minds",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "And the human on a bicycle blew the condor away. Jobs said that's what a computer is to him: \"the most remarkable tool that we've ever come up with,\" and \"the equivalent of a bicycle for our minds.\""
  },
  {
@@ -548,7 +548,7 @@
   "episode": "episode-2",
   "section": "2:15 A bicycle for our minds",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "That's the image of this whole era. Computers were presented as tools that make you stronger while you stay in control."
  },
  {
@@ -564,7 +564,7 @@
   "episode": "episode-2",
   "section": "3:10 The second AI winter and Deep Blue",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "Struggling. Around 1980 there was a boom in \"expert systems,\" programs built for one specific area, like identifying objects or diagnosing diseases."
  },
  {
@@ -580,7 +580,7 @@
   "episode": "episode-2",
   "section": "3:10 The second AI winter and Deep Blue",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "In 1987, the second AI winter. Expert systems kept failing whenever they met information they hadn't been built for."
  },
  {
@@ -596,7 +596,7 @@
   "episode": "episode-2",
   "section": "3:10 The second AI winter and Deep Blue",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "And it came back in narrower forms. In the 1990s, researchers moved to data-driven machine learning. And in May 1997, IBM's Deep Blue beat Garry Kasparov at chess."
  },
  {
@@ -612,7 +612,7 @@
   "episode": "episode-2",
   "section": "3:10 The second AI winter and Deep Blue",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "Almost forty years late. And it wasn't easy. In their first match, Deep Blue won one game, but Kasparov won the match four to two."
  },
  {
@@ -628,7 +628,7 @@
   "episode": "episode-2",
   "section": "3:10 The second AI winter and Deep Blue",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "In New York, and IBM says it was widely seen as a symbolic test of whether supercomputers were catching up with human intelligence. Kasparov won the first game, Deep Blue the second, and Deep Blue won the deciding sixth game."
  },
  {
@@ -644,7 +644,7 @@
   "episode": "episode-2",
   "section": "3:10 The second AI winter and Deep Blue",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "He said that for the first time he \"saw something similar to an artificial intellect.\" After that, Deep Blue was retired to the Smithsonian museum."
  },
  {
@@ -668,7 +668,7 @@
   "episode": "episode-2",
   "section": "4:45 Siri, 2011",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "Apple described Siri as \"an intelligent assistant that helps you get things done just by asking.\""
  },
  {
@@ -684,7 +684,7 @@
   "episode": "episode-2",
   "section": "4:45 Siri, 2011",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "Right. Apple's example: ask \"Will I need an umbrella this weekend?\" and it understood you wanted the weather forecast. Or say \"Remind me to call Mom when I get home,\" and it found Mom in your contacts."
  },
  {
@@ -700,7 +700,7 @@
   "episode": "episode-2",
   "section": "4:45 Siri, 2011",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "Apple also said Siri was smart about the personal information you allow it to access. Ask \"What's the traffic like around here?\" and it worked out where \"here\" was from your location."
  },
  {
@@ -716,7 +716,7 @@
   "episode": "episode-2",
   "section": "4:45 Siri, 2011",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "It launched in beta, in English, French and German, and the iPhone 4S went on sale on October 14th in seven countries."
  },
  {
@@ -732,7 +732,7 @@
   "episode": "episode-2",
   "section": "5:55 Wrap-up: AI as a helper that waits",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "So compare this with the 1950s. Back then, AI was a promise you read about. Now it's in your phone."
  },
  {
@@ -748,7 +748,7 @@
   "episode": "episode-2",
   "section": "5:55 Wrap-up: AI as a helper that waits",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "Just like Jobs's bicycle. You do the steering."
  },
  {
@@ -764,7 +764,7 @@
   "episode": "episode-2",
   "section": "5:55 Wrap-up: AI as a helper that waits",
   "label": "A",
-  "voice": "waleed",
+  "voice": "abdulrahman",
   "text": "Thanks for listening to The Evolution of AI Perception. Explore the Jobs Era island on our website."
  },
  {
@@ -1174,45 +1174,5 @@
   "label": "A",
   "voice": "abdulrahman",
   "text": "Thanks for listening to The Evolution of AI Perception. Try our chatbot on the website, and compare yourself with the experts and the public on The Future island."
- },
- {
-  "id": "voice-assistant-cinema-147",
-  "episode": "voice-assistant-cinema",
-  "section": "0–10 s",
-  "label": "NARRATOR",
-  "voice": "waleed",
-  "text": "In October 2011, Apple introduced Siri, an intelligent assistant that helps you get things done just by asking."
- },
- {
-  "id": "voice-assistant-cinema-148",
-  "episode": "voice-assistant-cinema",
-  "section": "10–30 s",
-  "label": "NARRATOR",
-  "voice": "waleed",
-  "text": "You could speak naturally. Ask if you'll need an umbrella this weekend, and it understood you wanted the weather."
- },
- {
-  "id": "voice-assistant-cinema-149",
-  "episode": "voice-assistant-cinema",
-  "section": "30–45 s",
-  "label": "NARRATOR",
-  "voice": "waleed",
-  "text": "It could send messages, set reminders and find directions, using your contacts and your location."
- },
- {
-  "id": "voice-assistant-cinema-150",
-  "episode": "voice-assistant-cinema",
-  "section": "45–60 s",
-  "label": "NARRATOR",
-  "voice": "waleed",
-  "text": "But it only acted when you asked. AI arrived in people's pockets as a helper that waits for instructions."
- },
- {
-  "id": "voice-assistant-cinema-151",
-  "episode": "voice-assistant-cinema",
-  "section": "60–75 s",
-  "label": "NARRATOR",
-  "voice": "waleed",
-  "text": "Today's agents don't always wait. That's the next island."
  }
 ]

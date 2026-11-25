@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import type { BuildingVideoData } from "@/lib/content/media";
-import { CreditLine } from "@/components/content/CreditLine";
 import { pause as pauseEpisode } from "@/lib/audio/engine";
 import { useStore } from "@/lib/store";
 
@@ -12,7 +11,8 @@ const episodeBusy = () => {
 };
 
 /**
- * One of our own looping animations, with its credit (it names the AI tool) right under it.
+ * One of our own looping animations, with its title under it. Its credit (and how it was made) is listed in the
+ * credits on the About page, not here.
  * Nothing downloads until it plays (`preload="none"`).
  * - `inside` (3D drawer, i.e. the visitor went in): starts by itself, with sound. Muted if an episode is playing or
  *   the browser blocks sound; not started at all under reduced motion.
@@ -73,9 +73,7 @@ export function BuildingVideo({ video, inside = false }: { video: BuildingVideoD
         preload="none"
         className="aspect-video w-full rounded-[4px] bg-night object-contain"
       />
-      <figcaption>
-        <CreditLine credit={{ ...video.credit, text: `${video.title}. ${video.credit.text}` }} />
-      </figcaption>
+      <figcaption className="mt-1.5 text-xs leading-snug text-muted">{video.title}</figcaption>
     </figure>
   );
 }

@@ -84,6 +84,10 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
     lastSave: 0,
     prevSpeed: 0,
     stuckFor: 0,
+    /** Tap-to-drive unsticking: seconds left of backing out, and which way to swing round afterwards. */
+    backFor: 0,
+    detour: 0,
+    detourUntil: 0,
   });
 
   useEffect(() => attachKeyboard(), []);
@@ -208,13 +212,37 @@ export function Vehicle({ world, start }: { world: WorldLayout; start: Pose }) {
       const dx = autoDrive.x - player.x;
       const dz = autoDrive.z - player.z;
       const dist = Math.hypot(dx, dz);
-      // Stuck (blocked by a building or wall) for 2.5 s: give up rather than push forever.
-      s.stuckFor = Math.abs(s.speed) < 1.2 ? s.stuckFor + dt : 0;
-      if (dist < 2.5 || s.stuckFor > 2.5) {
-        autoDrive.active = false;
+      const now = performance.now();
+      if (s.backFor > 0) {
+        // Backed into something: reverse straight for a moment, then swing round it (see below).
+        s.backFor -= dt;
+        throttle = -0.8;
         s.stuckFor = 0;
       } else {
-        let diff = Math.atan2(dx, dz) - s.heading;
+        s.stuckFor = Math.abs(s.speed) < 1.2 ? s.stuckFor + dt : 0;
+      }
+      if (dist < autoDrive.arrive) {
+        // Arrived. A click on a building drove to its door: now open it (the click was the visitor's choice).
+        const open = autoDrive.openId;
+        autoDrive.active = false;
+        autoDrive.openId = null;
+        s.stuckFor = 0;
+        if (open) useStore.getState().openBuilding(open);
+      } else if (s.stuckFor > 1.1) {
+        // Blocked by a building or wall: back out and try again from a different angle, twice, then give up.
+        s.stuckFor = 0;
+        if (autoDrive.retries >= 2) {
+          autoDrive.active = false;
+          autoDrive.openId = null;
+          useStore.getState().showToast("The car could not get there. Tap a spot on the road instead.");
+        } else {
+          autoDrive.retries++;
+          s.backFor = 0.9;
+          s.detour = autoDrive.retries === 1 ? 0.9 : -0.9;
+          s.detourUntil = now + 2800;
+        }
+      } else if (s.backFor <= 0) {
+        let diff = Math.atan2(dx, dz) + (now < s.detourUntil ? s.detour : 0) - s.heading;
         diff = Math.atan2(Math.sin(diff), Math.cos(diff));
         steerIn = THREE.MathUtils.clamp(diff * 2.2, -1, 1);
         // Calm pace: slower in sharp turns and when arriving.

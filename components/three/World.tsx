@@ -12,6 +12,7 @@ import { CameraRig } from "./CameraRig";
 import { IslandSensor } from "./IslandSensor";
 import { Vehicle } from "./Vehicle";
 import { TapMarker } from "./TapMarker";
+import { HoverHighlight } from "./HoverHighlight";
 import { Runway } from "./Runway";
 import { StaticMerge } from "./kit/StaticMerge";
 import { TeamIsland } from "./TeamIsland";
@@ -76,6 +77,7 @@ function World({ world, start, onFirstFrame }: { world: WorldLayout; start: Pose
       </Physics>
       <CameraRig world={world} start={start} />
       <TapMarker />
+      <HoverHighlight />
     </>
   );
 }

@@ -5,9 +5,10 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 import { useStore } from "@/lib/store";
-import { ERA_ORDER, findBuilding, nearestEra, type Pose, type WorldLayout } from "@/lib/three/layout";
+import { CAMPUS_INTERVIEW, ERA_ORDER, findBuilding, nearestEra, type Pose, type WorldLayout } from "@/lib/three/layout";
 import { motion } from "@/lib/three/motion";
-import { isFreeLook, look, orbit, player, recenterLook, setAutoDrive, turnLook } from "@/lib/three/transient";
+import { hover, isFreeLook, look, orbit, player, recenterLook, setAutoDrive, turnLook } from "@/lib/three/transient";
+import { pickWorldObject } from "@/lib/three/picking";
 import { CAR_COLOURS } from "@/lib/three/palette";
 import { CAMERA_AZIMUTH, CAMERA_DISTANCE, CAMERA_ELEVATION_DEG, CAMERA_SPAN } from "@/lib/three/camera";
 
@@ -113,6 +114,8 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
     let startX = 0;
     let startY = 0;
     let startT = 0;
+    // Farthest the pointer got from where it went down: a gesture that wandered is a drag, even if it came back.
+    let travelled = 0;
     // Touch: every finger on the canvas, for two-finger pan / pinch / twist.
     const touches = new Map<number, { x: number; y: number }>();
     let pair: { cx: number; cy: number; dist: number; angle: number } | null = null;
@@ -150,6 +153,8 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
       startX = e.clientX;
       startY = e.clientY;
       startT = performance.now();
+      travelled = 0;
+      hover.active = false;
       dragging = true;
       panning = modeRef.current === "iso" && (e.button === 1 || e.shiftKey);
       look.dragging = modeRef.current === "driver";
@@ -177,6 +182,7 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
         }
       }
       if (!dragging) return;
+      travelled = Math.max(travelled, Math.hypot(e.clientX - startX, e.clientY - startY));
       const dx = e.clientX - lastX;
       const dy = e.clientY - lastY;
       lastX = e.clientX;
@@ -211,37 +217,83 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
     };
     // Right-drag turns the view: no browser menu on the canvas.
     const menu = (e: MouseEvent) => e.preventDefault();
-    // A short tap or click (not a drag) on the ground: drive there by itself (tap-to-drive).
-    const tap = (e: PointerEvent) => {
-      const wasTap =
-        touches.size <= 1 &&
-        Math.hypot(e.clientX - startX, e.clientY - startY) < 10 &&
-        performance.now() - startT < 400;
-      up(e);
-      if (!wasTap || e.button > 0) return;
+    /** Cast the pointer into the world: the building or figure under it on this island, else the ground spot. */
+    const aim = (e: PointerEvent) => {
       const { camera: cam } = getThree();
       const rect = el.getBoundingClientRect();
       ndc.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
       raycaster.setFromCamera(ndc, cam);
-      if (!raycaster.ray.intersectPlane(ground, hit)) return;
-      // Only spots on the island the car is on (driving straight to another island would miss the bridge).
-      const here = nearestEra(world, player.x, player.z);
       const onTeam = (x: number, z: number) =>
         Math.hypot(x - world.team.center[0], z - world.team.center[1]) < world.team.radius - 2;
-      const there = onTeam(hit.x, hit.z)
+      const here = onTeam(player.x, player.z) ? "team" : nearestEra(world, player.x, player.z);
+      const object = here === "team" ? null : pickWorldObject(world, here, raycaster.ray);
+      const ground_ = raycaster.ray.intersectPlane(ground, hit) ? hit : null;
+      return { object, ground: ground_, here, onTeam };
+    };
+    /** Pointer moved with nothing pressed: highlight what a click would walk to, and tell the cursor. */
+    const hoverMove = (e: PointerEvent) => {
+      if (dragging || e.pointerType === "touch") return;
+      const { object } = aim(e);
+      if (object?.kind === "building") {
+        const b = object.building;
+        hover.active = true;
+        hover.x = b.position[0];
+        hover.z = b.position[2];
+        hover.w = b.plot.width;
+        hover.d = b.plot.depth;
+        hover.rot = b.rotationY;
+      } else if (object?.kind === "figure") {
+        hover.active = true;
+        hover.x = object.figure.position[0];
+        hover.z = object.figure.position[2];
+        hover.w = hover.d = 3.2;
+        hover.rot = 0;
+      } else hover.active = false;
+      if (hover.active) el.dataset.hoverTarget = "";
+      else delete el.dataset.hoverTarget;
+    };
+    const hoverLeave = () => {
+      hover.active = false;
+      delete el.dataset.hoverTarget;
+    };
+    // A short tap or click (not a drag) in the world: a building drives to its door and opens, a figure drives to
+    // it, the ground drives there (tap-to-drive). Orbiting the camera never counts as a click.
+    const tap = (e: PointerEvent) => {
+      const wasTap = touches.size <= 1 && travelled < 8 && performance.now() - startT < 600;
+      up(e);
+      if (!wasTap || e.button > 0) return;
+      const { object, ground: spot, here, onTeam } = aim(e);
+      // The pointer is over a building or figure on this island: go to its door / to it.
+      if (object?.kind === "building") {
+        const b = object.building;
+        // The sources spot never opens by itself: the car drives onto it and the visitor presses E.
+        // The campus interview has its table in the middle: head for it and stop short, whichever side the car is on.
+        if (b.venue === "campus") setAutoDrive(b.position[0], b.position[2], b.id, CAMPUS_INTERVIEW.arrive);
+        else setAutoDrive(b.approach.x, b.approach.z, b.sources ? null : b.id);
+        return;
+      }
+      if (object?.kind === "figure") {
+        setAutoDrive(object.figure.position[0], object.figure.position[2]);
+        return;
+      }
+      if (!spot) return;
+      // Only spots on the island the car is on (driving straight to another island would miss the bridge).
+      const there = onTeam(spot.x, spot.z)
         ? "team"
         : ERA_ORDER.find((id) => {
             const g = world.islands[id].geometry;
-            return Math.hypot(hit.x - g.center[0], hit.z - g.center[1]) < g.radius - 3;
+            return Math.hypot(spot.x - g.center[0], spot.z - g.center[1]) < g.radius - 3;
           });
       if (!there) return;
-      if (there !== (onTeam(player.x, player.z) ? "team" : here)) {
+      if (there !== here) {
         useStore.getState().showToast("Tap a spot on this island, or use the island buttons to travel.");
         return;
       }
-      setAutoDrive(hit.x, hit.z);
+      setAutoDrive(spot.x, spot.z);
     };
     el.addEventListener("pointerdown", down);
+    el.addEventListener("pointermove", hoverMove);
+    el.addEventListener("pointerleave", hoverLeave);
     el.addEventListener("wheel", wheel, { passive: false });
     el.addEventListener("contextmenu", menu);
     window.addEventListener("pointermove", move);
@@ -250,6 +302,9 @@ export function CameraRig({ world, start }: { world: WorldLayout; start: Pose })
     window.addEventListener("pointercancel", up);
     return () => {
       el.removeEventListener("pointerdown", down);
+      el.removeEventListener("pointermove", hoverMove);
+      el.removeEventListener("pointerleave", hoverLeave);
+      hoverLeave();
       el.removeEventListener("pointerup", tap);
       el.removeEventListener("wheel", wheel);
       el.removeEventListener("contextmenu", menu);

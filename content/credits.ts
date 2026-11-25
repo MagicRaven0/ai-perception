@@ -3,7 +3,7 @@ import type { Credit, Image } from "@/lib/content/schema";
 
 /**
  * Credits for every image, 3D model, sound, font and video used on the site (class rule).
- * AI-generated assets must set aiTool to the tool's name.
+ * AI-generated assets set aiTool to "AI-generated" (the site names no AI product).
  */
 export const credits: z.input<typeof Credit>[] = [
   {
@@ -119,6 +119,41 @@ export const credits: z.input<typeof Credit>[] = [
     licence: "CC BY 2.0",
     url: "https://commons.wikimedia.org/wiki/File:IBM_Deep_Blue_at_Computer_History_Museum_(9361685537).jpg",
     creditLine: "Photo: Anton Chiang, Computer History Museum, 2011, CC BY 2.0, via Wikimedia Commons",
+  },
+  {
+    id: "audio-episode-1",
+    kind: "audio",
+    title: "Episode 1: A summer to build a mind",
+    author: "Our group (AI-generated voices from our own recordings)",
+    licence: "All rights reserved by the authors (class project)",
+    url: "/audio/ep-1.mp3",
+    aiTool: "AI-generated",
+  },
+  {
+    id: "audio-episode-2",
+    kind: "audio",
+    title: "Episode 2: A computer for the rest of us",
+    author: "Our group (AI-generated voices from our own recordings)",
+    licence: "All rights reserved by the authors (class project)",
+    url: "/audio/ep-2.mp3",
+    aiTool: "AI-generated",
+  },
+  {
+    id: "audio-episode-3",
+    kind: "audio",
+    title: "Episode 3: Three essays, one question",
+    author: "Our group (AI-generated voices from our own recordings)",
+    licence: "All rights reserved by the authors (class project)",
+    url: "/audio/ep-3.mp3",
+    aiTool: "AI-generated",
+  },
+  {
+    id: "audio-interview-aqeel",
+    kind: "audio",
+    title: "Interview: Professor Aqeel on the benefits and risks of AI",
+    author: "Our group (recorded interview with Professor Aqeel Taher, published with permission)",
+    licence: "All rights reserved by the authors (class project)",
+    url: "/audio/interview-aqeel.mp3",
   },
 ];
 

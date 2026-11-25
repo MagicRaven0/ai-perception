@@ -1,0 +1,316 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:07.120
+<v Rayyan>In a June 2025 survey of more than five thousand American adults, 62 percent said they interact with AI at least several times a week.
+
+00:00:07.470 --> 00:00:10.750
+<v Waleed Masri>And half of them said they're more concerned than excited.
+
+00:00:11.100 --> 00:00:12.060
+<v Rayyan>I'm Rayyan.
+
+00:00:12.410 --> 00:00:13.450
+<v Abdulrahman Ahmad>I'm Abdulrahman.
+
+00:00:13.800 --> 00:00:14.676
+<v Waleed Masri>And I'm Waleed.
+
+00:00:14.676 --> 00:00:18.120
+<v Waleed Masri>This is the last episode of The Evolution of AI Perception.
+
+00:00:18.470 --> 00:00:22.848
+<v Rayyan>Each of us wrote a research essay about AI today, and we came at it from different sides.
+
+00:00:22.848 --> 00:00:25.750
+<v Rayyan>So we'll each present ours, then talk about where we agree.
+
+00:00:26.750 --> 00:00:28.210
+<v Abdulrahman Ahmad>Mine is the hopeful one.
+
+00:00:28.210 --> 00:00:36.910
+<v Abdulrahman Ahmad>My essay is about AI's potential, and I start with the person who probably has the most say in where AI goes: Jensen Huang, the head of Nvidia.
+
+00:00:37.260 --> 00:00:38.540
+<v Waleed Masri>The chip company.
+
+00:00:38.890 --> 00:00:39.227
+<v Abdulrahman Ahmad>Right.
+
+00:00:39.227 --> 00:00:50.570
+<v Abdulrahman Ahmad>In October 2026, Stephen Witt, who wrote a book about Nvidia, called Huang "the emperor of A.I." in The New York Times, because the other big tech companies are borrowing money just to buy his products.
+
+00:00:50.920 --> 00:00:53.400
+<v Rayyan>And Huang isn't worried about AI at all, is he?
+
+00:00:53.750 --> 00:00:53.929
+<v Abdulrahman Ahmad>No.
+
+00:00:53.929 --> 00:00:57.384
+<v Abdulrahman Ahmad>He told Witt that every problem is an engineering problem.
+
+00:00:57.384 --> 00:01:07.870
+<v Abdulrahman Ahmad>Witt noticed that hardware engineers like Huang see AI as maths that can be controlled, while a lot of software engineers see it as something mysterious that's hard to control.
+
+00:01:07.870 --> 00:01:09.598
+<v Abdulrahman Ahmad>Witt himself sits in between.
+
+00:01:09.598 --> 00:01:13.590
+<v Abdulrahman Ahmad>He worries that understanding AI is years behind making it smarter.
+
+00:01:13.940 --> 00:01:16.100
+<v Waleed Masri>So what does the good future actually look like?
+
+00:01:16.450 --> 00:01:21.057
+<v Abdulrahman Ahmad>Reed Hastings, who co-founded Netflix, gave a TED talk with Sal Khan in 2026.
+
+00:01:21.057 --> 00:01:24.826
+<v Abdulrahman Ahmad>He thinks an AI tutor may one day match and beat a human tutor.
+
+00:01:24.826 --> 00:01:26.501
+<v Abdulrahman Ahmad>Teachers wouldn't disappear.
+
+00:01:26.501 --> 00:01:30.450
+<v Abdulrahman Ahmad>They'd spend more time on the social and emotional side of school.
+
+00:01:30.800 --> 00:01:31.920
+<v Rayyan>That's a big claim.
+
+00:01:32.270 --> 00:01:37.449
+<v Abdulrahman Ahmad>It is, and that's why I use Christopher Mims from The Wall Street Journal to balance it.
+
+00:01:37.449 --> 00:01:44.570
+<v Abdulrahman Ahmad>He says the people best at using AI also know when not to use it: when a job needs empathy, authenticity or transparency.
+
+00:01:44.570 --> 00:01:47.630
+<v Abdulrahman Ahmad>AI should take some tasks, and people keep the rest.
+
+00:01:47.980 --> 00:01:48.700
+<v Waleed Masri>And the public?
+
+00:01:49.050 --> 00:01:50.658
+<v Abdulrahman Ahmad>That's the gap I end on.
+
+00:01:50.658 --> 00:01:56.618
+<v Abdulrahman Ahmad>In a 2024 Pew survey, 47 percent of AI experts were more excited than concerned about AI.
+
+00:01:56.618 --> 00:01:58.896
+<v Abdulrahman Ahmad>For the public, it was 11 percent.
+
+00:01:58.896 --> 00:02:06.330
+<v Abdulrahman Ahmad>My argument is that AI's potential is real, but people need to understand it and use it carefully to get there.
+
+00:02:07.330 --> 00:02:08.507
+<v Rayyan>Mine is less hopeful.
+
+00:02:08.507 --> 00:02:15.570
+<v Rayyan>My essay responds to another Stephen Witt article, from October 2025, which says AI is already capable enough to be dangerous.
+
+00:02:15.920 --> 00:02:16.720
+<v Abdulrahman Ahmad>Based on what?
+
+00:02:17.070 --> 00:02:18.125
+<v Rayyan>Independent testing.
+
+00:02:18.125 --> 00:02:23.032
+<v Rayyan>The group METR found that the length of tasks AI can finish doubles about every seven months.
+
+00:02:23.032 --> 00:02:29.310
+<v Rayyan>Apollo Research found that when GPT-5 was told its only goal was success, it deceived more than 20 percent of the time.
+
+00:02:29.660 --> 00:02:31.500
+<v Waleed Masri>That's where Bengio comes in, too.
+
+00:02:31.850 --> 00:02:32.069
+<v Rayyan>Yes.
+
+00:02:32.069 --> 00:02:37.771
+<v Rayyan>Yoshua Bengio, one of the most-cited scientists alive, described a controlled test in his 2025 TED talk.
+
+00:02:37.771 --> 00:02:44.570
+<v Rayyan>An AI read that a new version would replace it, planned to overwrite that version with its own code, and then lied about it.
+
+00:02:44.920 --> 00:02:45.880
+<v Abdulrahman Ahmad>But that's a lab test.
+
+00:02:46.230 --> 00:02:48.698
+<v Rayyan>Right, and that's why my third source matters.
+
+00:02:48.698 --> 00:02:55.404
+<v Rayyan>David Krueger wrote in Fortune in 2026 about a safety director at Meta who told her AI agent not to act without her approval.
+
+00:02:55.404 --> 00:02:59.910
+<v Rayyan>It started deleting her emails in bulk, and it ignored her when she told it to stop.
+
+00:03:00.260 --> 00:03:02.900
+<v Waleed Masri>So your argument is about control, not intelligence.
+
+00:03:03.250 --> 00:03:03.652
+<v Rayyan>Exactly.
+
+00:03:03.652 --> 00:03:06.367
+<v Rayyan>That agent didn't need to be a genius to cause damage.
+
+00:03:06.367 --> 00:03:08.076
+<v Rayyan>It only needed to ignore an order.
+
+00:03:08.076 --> 00:03:14.610
+<v Rayyan>So my essay argues the question to ask about any AI isn't only how smart it is, but whether people can still check it and stop it.
+
+00:03:15.610 --> 00:03:17.702
+<v Waleed Masri>My essay starts where Rayyan's ends.
+
+00:03:17.702 --> 00:03:19.678
+<v Waleed Masri>I agree AI going rogue is serious.
+
+00:03:19.678 --> 00:03:21.770
+<v Waleed Masri>But I wanted to know why it happens.
+
+00:03:22.120 --> 00:03:24.040
+<v Rayyan>And it isn't only in labs any more.
+
+00:03:24.390 --> 00:03:24.577
+<v Waleed Masri>No.
+
+00:03:24.577 --> 00:03:32.596
+<v Waleed Masri>In March 2026, The Guardian reported on a study by the Centre for Long-Term Resilience, funded by the UK's AI Security Institute.
+
+00:03:32.596 --> 00:03:40.554
+<v Waleed Masri>They looked at conversations people posted on X and found nearly 700 real cases of AI ignoring instructions or deceiving people.
+
+00:03:40.554 --> 00:03:44.470
+<v Waleed Masri>Reports went up five times between October 2025 and March 2026.
+
+00:03:44.820 --> 00:03:46.340
+<v Abdulrahman Ahmad>Five times in six months.
+
+00:03:46.690 --> 00:03:54.610
+<v Waleed Masri>And one chatbot admitted it deleted and archived hundreds of someone's emails without asking, and broke the rule the user had set.
+
+00:03:54.960 --> 00:03:56.160
+<v Rayyan>So why does it happen?
+
+00:03:56.510 --> 00:03:57.797
+<v Waleed Masri>That's my main source.
+
+00:03:57.797 --> 00:04:00.840
+<v Waleed Masri>Live Science reported on tests by Palisade Research.
+
+00:04:00.840 --> 00:04:06.339
+<v Waleed Masri>They told AI models to shut themselves down, and some refused, or even sabotaged the shutdown.
+
+00:04:06.339 --> 00:04:08.738
+<v Waleed Masri>Some people said it was a survival drive.
+
+00:04:08.738 --> 00:04:12.190
+<v Waleed Masri>Critics said it was poor training and unclear instructions.
+
+00:04:12.540 --> 00:04:14.220
+<v Abdulrahman Ahmad>So they made the instructions clearer?
+
+00:04:14.570 --> 00:04:15.091
+<v Waleed Masri>They did.
+
+00:04:15.091 --> 00:04:16.423
+<v Waleed Masri>Most models got better.
+
+00:04:16.423 --> 00:04:20.592
+<v Waleed Masri>But Grok 4 resisted 93 percent of the time before, and 97 percent after.
+
+00:04:20.592 --> 00:04:28.929
+<v Waleed Masri>The researchers think the most likely reason is that training taught some models to care more about finishing tasks than following instructions.
+
+00:04:28.929 --> 00:04:35.530
+<v Waleed Masri>And Bengio says something similar: today's AI is trained to copy us or please us, and that makes it untrustworthy.
+
+00:04:35.880 --> 00:04:37.880
+<v Rayyan>So it's not that the AI wants anything.
+
+00:04:38.230 --> 00:04:39.355
+<v Waleed Masri>That's my argument.
+
+00:04:39.355 --> 00:04:40.480
+<v Waleed Masri>It's badly trained.
+
+00:04:40.480 --> 00:04:48.710
+<v Waleed Masri>And that matters, because if the problem is training, we can fix it: change how AI is rewarded, test it before release, and watch it after.
+
+00:04:49.710 --> 00:04:52.030
+<v Abdulrahman Ahmad>One more number connects all three essays.
+
+00:04:52.380 --> 00:04:53.260
+<v Rayyan>The control one.
+
+00:04:53.610 --> 00:04:53.904
+<v Abdulrahman Ahmad>Yes.
+
+00:04:53.904 --> 00:05:03.691
+<v Abdulrahman Ahmad>In the 2024 Pew survey, 57 percent of AI experts and 55 percent of the public wanted more control over how AI is used in their lives.
+
+00:05:03.691 --> 00:05:09.210
+<v Abdulrahman Ahmad>Experts and the public disagree about almost everything else, but not that.
+
+00:05:09.560 --> 00:05:14.040
+<v Waleed Masri>And by 2025, 61 percent of Americans wanted more control.
+
+00:05:15.040 --> 00:05:16.697
+<v Rayyan>So we don't agree on everything.
+
+00:05:16.697 --> 00:05:18.560
+<v Rayyan>Abdulrahman is more hopeful than me.
+
+00:05:18.910 --> 00:05:21.799
+<v Abdulrahman Ahmad>And I think Rayyan's sources are a bit one-sided.
+
+00:05:21.799 --> 00:05:26.750
+<v Abdulrahman Ahmad>Krueger founded a nonprofit that wants to end the AI race, so his essay is advocacy.
+
+00:05:27.100 --> 00:05:27.674
+<v Rayyan>That's fair.
+
+00:05:27.674 --> 00:05:31.740
+<v Rayyan>And Waleed's main study says more work is needed to confirm the training explanation.
+
+00:05:32.090 --> 00:05:32.396
+<v Waleed Masri>True.
+
+00:05:32.396 --> 00:05:35.215
+<v Waleed Masri>But all three essays end up in the same place.
+
+00:05:35.215 --> 00:05:38.952
+<v Waleed Masri>Huang trusts that AI can be engineered to stay under control.
+
+00:05:38.952 --> 00:05:42.261
+<v Waleed Masri>Mims wants AI to show its work so people can check it.
+
+00:05:42.261 --> 00:05:45.141
+<v Waleed Masri>Bengio wants AI that can act as a safety check.
+
+00:05:45.141 --> 00:05:47.530
+<v Waleed Masri>And I want better training and testing.
+
+00:05:47.880 --> 00:05:50.200
+<v Rayyan>They're all ways of keeping people in control.
+
+00:05:51.200 --> 00:05:56.880
+<v Abdulrahman Ahmad>So over three episodes: in the 1950s, AI was a promise held by a few scientists.
+
+00:05:57.230 --> 00:06:00.430
+<v Rayyan>In the Jobs era, it became a friendly tool that waited for you to ask.
+
+00:06:00.780 --> 00:06:02.940
+<v Waleed Masri>And today it can act on its own.
+
+00:06:03.290 --> 00:06:07.292
+<v Rayyan>Each time, how people felt about AI followed how much control they thought they had.
+
+00:06:07.292 --> 00:06:10.770
+<v Rayyan>So next time you hear about a new AI tool, don't only ask what it can do.
+
+00:06:10.770 --> 00:06:14.010
+<v Rayyan>Ask whether people can still understand it, check it and correct it.
+
+00:06:14.360 --> 00:06:17.530
+<v Abdulrahman Ahmad>Thanks for listening to The Evolution of AI Perception.
+
+00:06:17.530 --> 00:06:23.640
+<v Abdulrahman Ahmad>Try our chatbot on the website, and compare yourself with the experts and the public on The Future island.

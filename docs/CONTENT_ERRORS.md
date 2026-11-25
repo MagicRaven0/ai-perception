@@ -31,3 +31,14 @@ Logged by Claude Code. Text, numbers, quotes and citations in `content/` are not
 ## Requests
 - **AI voices disclosure (round 7).** Not needed yet: no AI audio has been generated. When it is, `site.ts` needs a
   sentence saying the hosts' voices were generated with [model name] from our own recordings, with our permission.
+
+## Round 9 (25 Nov 2026): building text length, for the project Claude
+- **Needs writing.** The `long` text of `era-1-podcast`, `era-2-podcast` and `era-3-podcast` in `content/buildings.ts`
+  is still a `TODO:` that says the episode is "not recorded yet". The episodes are now published, so the code hides that
+  note and shows each building's `short` text instead, until you write the `long` text.
+- **Longest `long` texts** (trim if they feel heavy): `ai-potential-lab` 202 words, `era-2-then-and-now` 195,
+  `training-lab` 193.
+- **Thinnest:** no `long` text is under 130 words (shortest: `predictions-arcade` 133, `bicycle-archive` 134).
+  `era-2-podcast`'s `short` is only 16 words.
+- **Stored summaries.** 33 of the 54 were rewritten from their section text on 25 Nov (several were cut off
+  mid-sentence, "key statistics" listed page numbers and citation years, a few misstated the source).

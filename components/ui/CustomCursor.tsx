@@ -20,6 +20,7 @@ function modeFor(target: EventTarget | null): Mode {
   if (!(target instanceof Element)) return "idle";
   if (target.closest('input[type="range"], [data-cursor="drag"]')) return "drag";
   if (target.closest("a, button, [role='button'], label, select, summary")) return "link";
+  if (target.closest("canvas[data-hover-target]")) return "link";
   if (target.closest("canvas")) return "world";
   return "idle";
 }

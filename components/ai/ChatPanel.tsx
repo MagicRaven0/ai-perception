@@ -301,8 +301,8 @@ function Answer({
           {meta?.stored && (
             <Label tone="muted">
               {meta.checked === true
-                ? "Pre-written answer · checked by our group"
-                : "Pre-written AI answer · not yet checked"}
+                ? "Pre-written answer · Checked against our notes"
+                : "Pre-written answer · not yet checked"}
             </Label>
           )}
         </>

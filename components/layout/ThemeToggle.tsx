@@ -17,10 +17,15 @@ function readTheme(): Theme {
   return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
 }
 
+/** The site's theme, following data-theme on <html>; null during server render. */
+export function useTheme(): Theme | null {
+  return useSyncExternalStore(subscribe, readTheme, () => null);
+}
+
 /** Round light/dark switch, same shape as the logo button. Remembers the choice in this browser only. */
 export function ThemeToggle() {
-  // Follows data-theme on <html>; null during server render (the icon appears after hydration).
-  const theme = useSyncExternalStore(subscribe, readTheme, () => null);
+  // Null during server render: the icon appears after hydration.
+  const theme = useTheme();
 
   const toggle = () => {
     const next: Theme = readTheme() === "dark" ? "light" : "dark";

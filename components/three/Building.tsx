@@ -5,14 +5,14 @@ import { useFrame } from "@react-three/fiber";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import { useStore } from "@/lib/store";
-import { SOURCE_BOARD, type FigureLookInput, type PlacedBuilding } from "@/lib/three/layout";
+import type { FigureLookInput, PlacedBuilding } from "@/lib/three/layout";
 import { motion } from "@/lib/three/motion";
 import { ERA_PALETTE, SHARED, type EraPalette } from "@/lib/three/palette";
 import { BUILDING_MODELS, MODEL_HEIGHT, type BuildingModel } from "./buildings/registry";
 import { BuildingSensor } from "./BuildingSensor";
 import { StaticMerge } from "./kit/StaticMerge";
 import { FacelessFigure } from "./Figure";
-import { SourcesBoards } from "./SourcesBoards";
+import { SourcesSpot } from "./SourcesSpot";
 import { VideoScreen } from "./VideoScreen";
 
 /**
@@ -43,13 +43,29 @@ export function Building({
   const { plot } = placed;
   const top = height ?? MODEL_HEIGHT[placed.kind];
 
-  // The References building: boards in the island's centre instead of a house on the ring road.
+  // The References building: a ground spot in the island's centre instead of a house on the ring road.
   if (placed.sources) {
     return (
       <>
-        <SourcesBoards placed={placed} rows={placed.sources} accent={pal.accent} />
+        <SourcesSpot placed={placed} accent={pal.accent} />
         <group position={placed.position}>
-          <Beacon id={placed.id} y={SOURCE_BOARD.height + 2.6} accent={pal.accent} />
+          <Beacon id={placed.id} y={4.2} accent={pal.accent} />
+        </group>
+        <BuildingSensor id={placed.id} position={placed.sensor.position} radius={placed.sensor.radius} />
+      </>
+    );
+  }
+
+  // Our interview, held inside the campus: no house, just the two of them at their table.
+  if (placed.venue === "campus") {
+    return (
+      <>
+        <group position={placed.position} rotation-y={placed.rotationY}>
+          <RigidBody type="fixed" colliders={false}>
+            <CuboidCollider args={[1.8, 1, 0.7]} position={[0, 1, 0]} />
+          </RigidBody>
+          <InterviewScene id={placed.id} looks={placed.hosts} />
+          <Beacon id={placed.id} y={4.4} accent={pal.accent} />
         </group>
         <BuildingSensor id={placed.id} position={placed.sensor.position} radius={placed.sensor.radius} />
       </>
@@ -112,6 +128,57 @@ function Hosts({ id, looks, plot }: { id: string; looks: FigureLookInput[]; plot
           <FacelessFigure position={[0, 0, 0]} look={look} />
         </group>
       ))}
+    </StaticMerge>
+  );
+}
+
+/**
+ * An interview's two people (the guest first, then the interviewer), face to face across a small round table, as if
+ * mid-interview. Faceless figures in each speaker's look (no names, no likeness), on a pale platform in the campus
+ * courtyard. Local X runs side to side as the default camera sees it, so neither hides the other. Static, so the
+ * group merges into one draw call.
+ */
+function InterviewScene({ id, looks }: { id: string; looks: FigureLookInput[] }) {
+  // Development only: lets the e2e tests count the figures at each studio.
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    const w = window as unknown as { __hostCounts?: Record<string, number> };
+    (w.__hostCounts ??= {})[id] = looks.length;
+  }, [id, looks.length]);
+  const apart = 1.35;
+  return (
+    <StaticMerge>
+      <group>
+        <mesh position={[0, 0.06, 0]} receiveShadow>
+          <cylinderGeometry args={[2.5, 2.6, 0.12, 14]} />
+          <meshLambertMaterial color={SHARED.creamShade} flatShading />
+        </mesh>
+        <group position={[0, 0.12, 0]} scale={1.15}>
+          {/* Round table: top, stem, foot */}
+          <mesh position={[0, 0.82, 0]}>
+            <cylinderGeometry args={[0.62, 0.62, 0.07, 8]} />
+            <meshLambertMaterial color={SHARED.orange} flatShading />
+          </mesh>
+          <mesh position={[0, 0.41, 0]}>
+            <cylinderGeometry args={[0.07, 0.07, 0.82, 6]} />
+            <meshLambertMaterial color={SHARED.figureDark} />
+          </mesh>
+          <mesh position={[0, 0.03, 0]}>
+            <cylinderGeometry args={[0.32, 0.32, 0.06, 8]} />
+            <meshLambertMaterial color={SHARED.figureDark} />
+          </mesh>
+          {/* The two people, looking at each other across the table (local X is side to side for the camera) */}
+          {looks.slice(0, 2).map((look, i) => (
+            <group
+              key={i}
+              position={[i === 0 ? -apart : apart, 0, 0]}
+              rotation-y={i === 0 ? Math.PI / 2 : -Math.PI / 2}
+            >
+              <FacelessFigure position={[0, 0, 0]} look={look} />
+            </group>
+          ))}
+        </group>
+      </group>
     </StaticMerge>
   );
 }

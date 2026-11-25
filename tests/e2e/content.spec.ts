@@ -135,7 +135,8 @@ test("videos in the long-read: controls, loop, credited, and nothing downloads b
     await expect(video).toHaveAttribute("preload", "none");
     await expect(video).toHaveAttribute("controls", "");
     await expect(video).toHaveAttribute("loop", "");
-    await expect(figure).toContainText("AI-generated animation and music");
+    // How the videos were made is stated in the About credits only.
+    await expect(figure).not.toContainText("AI-generated");
   }
   expect(asked).toEqual([]);
   await page.goto("/about");

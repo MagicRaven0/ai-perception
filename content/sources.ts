@@ -14,7 +14,7 @@ import type { Source } from "@/lib/content/schema";
  *   mccarthy-1955, dartmouth-nd, simon-newell-1958, williams-2024, steve-jobs-archive-2024,
  *   popova-2011, ibm-nd, apple-2011. Keep only if the professor allows sources beyond the essay.
  * - New polls for era 3 (Prompt 6): pew-2025-us, pew-2025-global.
- * - Placeholder: aqeel-interview (until the interview is recorded).
+ * - aqeel-interview: our own recorded interview.
  */
 export const sources: z.input<typeof Source>[] = [
   // ---- Era 1: the 1950s ----
@@ -207,11 +207,11 @@ export const sources: z.input<typeof Source>[] = [
     origin: "essay",
   },
 
-  // ---- Era 3: our own interview (placeholder until recorded) ----
+  // ---- Era 3: our own interview (recorded 24 Nov 2026) ----
   {
     id: "aqeel-interview",
-    apa: "TODO: APA reference for our recorded interview with Professor Aqeel (name, date, our site as publisher)",
-    url: "TODO: link to the interview page on our site once it is published",
+    apa: "Taher, A. (2026, November 24). Interview by R. Ahmad [Audio recording]. The Evolution of AI Perception. https://ai-perception.vercel.app/listen",
+    url: "https://ai-perception.vercel.app/listen",
     eraIds: ["era-3"],
     type: "interview",
     origin: "added",

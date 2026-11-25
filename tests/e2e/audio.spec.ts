@@ -34,7 +34,8 @@ test("audio keeps playing across route changes and the transcript seeks", async 
     return m * 60 + s;
   };
 
-  for (const route of ["/read", "/about", "/explore", "/listen"]) {
+  // /explore comes last: the 3D page has its own HUD instead of the site menu.
+  for (const route of ["/read", "/about", "/listen", "/explore"]) {
     const before = await seconds();
     await page.getByRole("navigation", { name: "Main" }).locator(`a[href^="${route}"]`).click();
     await page.waitForURL(`**${route}*`);

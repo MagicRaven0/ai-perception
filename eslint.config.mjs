@@ -14,6 +14,10 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Test output (Playwright screenshots, one-off probe scripts left by verification runs).
     "screenshots/**",
+    // The local voice-cloning environment and its working files (never committed).
+    "tools/voices/.venv/**",
+    "tools/voices/work/**",
+    "tools/interview/**",
   ]),
 ]);
 

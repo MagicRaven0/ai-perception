@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { motion } from "@/lib/three/motion";
+import { useTheme } from "@/components/layout/ThemeToggle";
 import { useStore } from "@/lib/store";
 import { player } from "@/lib/three/transient";
 import { ERA_PALETTE, TIME_OF_DAY, type TimeOfDay } from "@/lib/three/palette";
@@ -80,6 +81,12 @@ export function Atmosphere() {
   const hemi = useRef<THREE.HemisphereLight>(null);
 
   const time = useStore((s) => s.timeOfDay);
+  // The sky follows the site's theme: light mode is daytime, dark mode is evening. The HUD clock button can still
+  // change it until the theme changes or the visitor comes back.
+  const theme = useTheme();
+  useEffect(() => {
+    if (theme) useStore.getState().setTimeOfDay(theme === "dark" ? "sunset" : "day");
+  }, [theme]);
   const target = useMemo(() => coloursFor(era, time), [era, time]);
   // Start on the right colours (no fade on first load).
   const [initialEra] = useState(era);

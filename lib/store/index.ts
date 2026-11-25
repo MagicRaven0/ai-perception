@@ -59,7 +59,7 @@ type State = {
   videoSound: boolean;
   /** True while the car is a plane (set on take-off / landing; the HUD shows Land). Not persisted. */
   flying: boolean;
-  /** Time of day in the 3D world (HUD button). Persisted. */
+  /** Time of day in the 3D world: set by the site theme, changed by the HUD button. Not persisted. */
   timeOfDay: "day" | "sunset" | "night";
   /** Camera: high isometric overview (default) or the driver's seat. Not persisted. */
   cameraMode: "iso" | "driver";
@@ -96,6 +96,7 @@ type Actions = {
   toggleCameraMode: () => void;
   setFreeLook: (freeLook: boolean) => void;
   cycleTimeOfDay: () => void;
+  setTimeOfDay: (timeOfDay: State["timeOfDay"]) => void;
   setFlying: (flying: boolean) => void;
   showToast: (message: string) => void;
   clearToast: (id: number) => void;
@@ -159,6 +160,7 @@ export const useStore = create<State & Actions>()(
       setAmbienceOn: (ambienceOn) => set({ ambienceOn }),
       setVideoSound: (videoSound) => set({ videoSound }),
       setFlying: (flying) => set((s) => (s.flying === flying ? s : { flying })),
+      setTimeOfDay: (timeOfDay) => set((s) => (s.timeOfDay === timeOfDay ? s : { timeOfDay })),
       cycleTimeOfDay: () =>
         set((s) => ({ timeOfDay: s.timeOfDay === "day" ? "sunset" : s.timeOfDay === "sunset" ? "night" : "day" })),
       toggleCameraMode: () => set((s) => ({ cameraMode: s.cameraMode === "iso" ? "driver" : "iso" })),
@@ -179,11 +181,11 @@ export const useStore = create<State & Actions>()(
         visitedBuildingIds: s.visitedBuildingIds,
         quality: s.quality,
         ambienceOn: s.ambienceOn,
-        timeOfDay: s.timeOfDay,
       }),
       // Rehydration can run after a deep link already opened a building: keep both lists of visited ids.
       merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<State>;
+        const p = { ...((persisted ?? {}) as Partial<State>) };
+        delete p.timeOfDay; // saved by an earlier version: the theme decides now
         const visited = Array.isArray(p.visitedBuildingIds) ? p.visitedBuildingIds : [];
         return {
           ...current,

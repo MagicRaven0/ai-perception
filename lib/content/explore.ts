@@ -15,6 +15,12 @@ function hostLooks(episodeId: string | undefined) {
   return (episode?.speakers ?? []).flatMap((s) => (s.look ? [s.look] : []));
 }
 
+/** Still "coming soon": the long text is a placeholder and there is no recording to play instead. */
+function pending(b: (typeof buildings)[number]) {
+  const episode = b.media.episodeId ? getEpisode(b.media.episodeId) : undefined;
+  return isPlaceholder(b.long) && !(episode && toTrack(episode, eras));
+}
+
 /**
  * Everything /explore needs, computed on the server from content/ (no coordinates in content files):
  * the world layout from lib/three/layout.ts and the HUD text. Serialisable.
@@ -36,9 +42,10 @@ export function buildExploreData(): ExploreData {
         eraId: b.eraId,
         order: b.order,
         kind: b.kind,
-        comingSoon: isPlaceholder(b.long),
-        // Podcast studios show their speakers as faceless figures by the door (one per speaker look).
-        hosts: b.kind === "podcast" ? hostLooks(b.media.episodeId) : [],
+        comingSoon: pending(b),
+        // Podcast studios show their speakers as faceless figures by the door (one per speaker look); an interview
+        // building shows its two speakers face to face across a table.
+        hosts: b.kind === "podcast" || b.kind === "interview" ? hostLooks(b.media.episodeId) : [],
         videoSrc: buildingVideo(b)?.src,
         sources: undefined as SourceRow[] | undefined,
       }))
@@ -52,7 +59,7 @@ export function buildExploreData(): ExploreData {
           comingSoon: false,
           hosts: [],
           videoSrc: undefined,
-          // Listed on boards in the centre of the island.
+          // Marks the sources spot in the centre of the island.
           sources: referencesForEra(e.id).map((s) => sourceRow(s)),
         })),
       ),
@@ -83,7 +90,7 @@ export function buildExploreData(): ExploreData {
       kindLabel: BUILDING_LABEL[b.kind],
       title: b.title,
       short: b.short,
-      comingSoon: isPlaceholder(b.long),
+      comingSoon: pending(b),
       track: episode ? toTrack(episode, eras) : null,
       episodeId: b.media.episodeId,
       startAt: b.media.startAt,

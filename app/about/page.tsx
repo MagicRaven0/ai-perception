@@ -112,7 +112,7 @@ export default function AboutPage() {
                       <span>
                         <span className="font-medium">{c.title}</span>
                         <span className="text-muted">{c.creditLine ? `. ${c.creditLine}` : ` by ${c.author}`}</span>
-                        {c.aiTool && <span className="text-muted"> · AI-generated with {c.aiTool}</span>}
+                        {c.aiTool && !c.author.includes("AI-generated") && <span className="text-muted"> · AI-generated</span>}
                       </span>
                       <span className="text-muted">
                         {/^https?:\/\//.test(c.url) ? (

@@ -1,4 +1,6 @@
+import { AXIS_SKEW, DESIGN_RADIUS } from "@/components/three/campus/config";
 import type { BuildingKind, EraId } from "@/lib/content/schema";
+import { CAMERA_AZIMUTH } from "./camera";
 
 /**
  * World layout for /explore (docs/VISION.md: three separate islands joined by bridges).
@@ -86,7 +88,7 @@ const BRIDGE_PAIRS: [EraId, EraId][] = [
 const TEAM = { host: "era-2" as EraId, angle: (Math.PI * 3) / 2, radius: 17, gap: 22 };
 
 /**
- * Where each island's Sources boards stand: inside the ring road, clear of the centre landmark (and of the AUS
+ * Where each island's sources spot is: inside the ring road, clear of the centre landmark (and of the AUS
  * campus), facing `face` (an angle from the island centre).
  */
 const SOURCES_SPOT: Record<EraId, { angle: number; r: number; face: number }> = {
@@ -94,11 +96,18 @@ const SOURCES_SPOT: Record<EraId, { angle: number; r: number; face: number }> = 
   "era-2": { angle: 1.36, r: 16.5, face: 2.0 },
   "era-3": { angle: 0.92, r: 25, face: 1.8 },
 };
-/** Sources board size (m) and how many rows fit on one. */
-export const SOURCE_BOARD = { width: 7.4, height: 6.4, gap: 0.7, rows: 6 };
+/**
+ * The sources spot: a flat round marker (radius, m). The "Open" prompt shows only while the car is on or beside it
+ * (sensor radius), so visitors press E in the middle, not from across the lawn.
+ */
+export const SOURCES_PAD = { radius: 3, sensorRadius: 4 };
 
-/** How many boards a list needs. */
-export const sourceBoardCount = (rows: number) => Math.max(1, Math.ceil(rows / SOURCE_BOARD.rows));
+/**
+ * Where an interview is held on the island that has the campus: the entrance courtyard, between the reflecting pool
+ * and the name on the floor. `z` is metres along the campus axis (campus frame); `beside` is where the car stops,
+ * to the side of the table.
+ */
+export const CAMPUS_INTERVIEW = { z: 14.5, radius: 2.5, sensorRadius: 6.5, beside: 4.6, arrive: 4.8 };
 
 /* --------------------------------------------------------------- types */
 
@@ -169,11 +178,13 @@ export type PlacedBuilding = {
   hosts: FigureLookInput[];
   /** The building's own video, shown muted on a screen above it while the car is close. */
   videoSrc?: string;
-  /** The island's Sources boards (its References building): one row per source. Stands in the island's centre. */
+  /** Set on an island's References building (one row per source): a ground spot in the centre area, no house. */
   sources?: SourceRow[];
+  /** Held inside the campus: no house of its own, just the people (an interview in the courtyard). */
+  venue?: "campus";
 };
 
-/** One line on a Sources board, taken from the source's APA entry (lib/content/references.ts). */
+/** One source in short form, taken from its APA entry (lib/content/references.ts). */
 export type SourceRow = { who: string; title: string };
 
 export type PlacedInsight = {
@@ -203,7 +214,12 @@ export type PlacedFigure = {
   sensorRadius: number;
 };
 
-export type FigureLookInput = { top: string; bottom: string; prop: string };
+export type FigureLookInput = {
+  top: string;
+  bottom: string;
+  prop: string;
+  hair?: { style: "none" | "short" | "wild"; color: string };
+};
 
 export type EdgeWall = { position: Vec3; rotationY: number; length: number };
 
@@ -227,8 +243,11 @@ export type IslandLayout = {
 /** One background NPC: where it stands, which way it faces, and a stable seed for outfit and idle timing. */
 export type PlacedNpc = { position: Vec3; rotationY: number; seed: number };
 
-/** NPCs per island (the low quality tier draws every other one). */
-export const NPCS_PER_ISLAND = 9;
+/**
+ * NPCs per island (the low quality tier draws every other one). Scaled to each island's area so no lawn feels
+ * empty (round 9): The Past 14, The Jobs Era 11, The Future 20.
+ */
+export const NPCS_PER_ISLAND: Record<EraId, number> = { "era-1": 14, "era-2": 11, "era-3": 20 };
 
 /** What a team member's statue sits with (content/site.ts `statue`). */
 export type StatueSymbol = "stop-button" | "light-bulb" | "robot" | "book";
@@ -434,7 +453,11 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
   const reserveCentre = SPECS[eraId].reserveCentre;
 
   // Buildings: outer ring first, then the inner ring (not on The Future, whose centre is the campus).
-  const own = input.buildings.filter((b) => b.eraId === eraId && !b.sources).sort((a, b) => a.order - b.order);
+  // An interview on the campus island is held inside the campus (below), not on a plot by the road.
+  const inCampus = (b: LayoutInput["buildings"][number]) => reserveCentre && b.kind === "interview";
+  const own = input.buildings
+    .filter((b) => b.eraId === eraId && !b.sources && !inCampus(b))
+    .sort((a, b) => a.order - b.order);
   const spacing = plot.width + 4;
   const rOuter = rr + rw / 2 + 1.5 + plot.depth / 2;
   const rInner = rr - rw / 2 - 1.5 - plot.depth / 2;
@@ -491,17 +514,13 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
     };
   });
 
-  // Sources boards: the island's References building, in the centre area instead of on the ring.
+  // Sources spot: the island's References building, in the centre area instead of on the ring.
   for (const b of input.buildings) {
     if (b.eraId !== eraId || !b.sources) continue;
     const spot = SOURCES_SPOT[eraId];
     const position = polar(center, spot.angle, spot.r);
     const fx = Math.cos(spot.face);
     const fz = Math.sin(spot.face);
-    const n = sourceBoardCount(b.sources.length);
-    const width = n * SOURCE_BOARD.width + (n - 1) * SOURCE_BOARD.gap;
-    const at = (d: number): Vec3 => [position[0] + fx * d, 1.2, position[2] + fz * d];
-    const stop = at(9.5);
     buildings.push({
       id: b.id,
       eraId,
@@ -513,11 +532,49 @@ export function layoutIsland(eraId: EraId, input: LayoutInput): IslandLayout {
       angle: spot.angle,
       position,
       rotationY: headingOf(fx, fz),
-      plot: { width, depth: 4 },
-      sensor: { position: at(5), radius: 7.5 },
-      approach: { x: stop[0], y: 1.2, z: stop[2], heading: headingOf(-fx, -fz) },
+      plot: { width: SOURCES_PAD.radius * 2, depth: SOURCES_PAD.radius * 2 },
+      sensor: { position: [position[0], 1.2, position[2]], radius: SOURCES_PAD.sensorRadius },
+      // A deep link or fast travel parks the car on the spot, facing across it.
+      approach: { x: position[0] + fx * 1.5, y: 1.2, z: position[2] + fz * 1.5, heading: headingOf(-fx, -fz) },
       hosts: [],
       sources: b.sources,
+    });
+  }
+
+  // The interview in the campus courtyard: same campus frame and scale as components/three/campus/AusCampus.tsx.
+  for (const b of input.buildings) {
+    if (b.eraId !== eraId || !inCampus(b)) continue;
+    const turn = CAMERA_AZIMUTH + AXIS_SKEW;
+    const k = Math.min(1, (rr - rw / 2 - 6) / DESIGN_RADIUS);
+    const at = (x: number, z: number, y = 0): Vec3 => [
+      center[0] + (x * Math.cos(turn) + z * Math.sin(turn)) * k,
+      y,
+      center[1] + (z * Math.cos(turn) - x * Math.sin(turn)) * k,
+    ];
+    const position = at(0, CAMPUS_INTERVIEW.z);
+    const beside = at(CAMPUS_INTERVIEW.beside, CAMPUS_INTERVIEW.z, 1.2);
+    buildings.push({
+      id: b.id,
+      eraId,
+      order: b.order,
+      kind: b.kind,
+      comingSoon: b.comingSoon,
+      colourIndex: buildings.length,
+      ring: "inner",
+      angle: Math.atan2(position[2] - center[1], position[0] - center[0]),
+      position,
+      // Side by side as the default camera sees them.
+      rotationY: CAMERA_AZIMUTH,
+      plot: { width: CAMPUS_INTERVIEW.radius * 2, depth: CAMPUS_INTERVIEW.radius * 2 },
+      sensor: { position: [position[0], 1.2, position[2]], radius: CAMPUS_INTERVIEW.sensorRadius },
+      approach: {
+        x: beside[0],
+        y: beside[1],
+        z: beside[2],
+        heading: headingOf(position[0] - beside[0], position[2] - beside[2]),
+      },
+      hosts: b.hosts ?? [],
+      venue: "campus",
     });
   }
 
@@ -637,7 +694,15 @@ function placeNpcs(island: IslandLayout): PlacedNpc[] {
   const g = island.geometry;
   const { center, roadRadius: rr, roadWidth: rw, radius } = g;
   const salt = ERA_ORDER.indexOf(island.eraId) + 1;
+  // Rings of candidate spots: just inside the road, near the rim, and (round 9) the wide empty bands: between the
+  // road and the campus on The Future, and between the outer plots and the rim.
   const rings = [rr - rw / 2 - 3.2, radius - 5];
+  if (island.campus) {
+    const mid = (island.campus.radius + (rr - rw / 2)) / 2;
+    if (rr - rw / 2 - island.campus.radius > 12) rings.push(mid);
+  }
+  const outerEdge = rr + rw / 2 + 1.5 + g.plot.depth + 3;
+  if (radius - 5 - outerEdge > 8) rings.push((outerEdge + radius - 5) / 2);
   const candidates: { angle: number; r: number; k: number }[] = [];
   let k = 0;
   for (const r of rings) {
@@ -659,13 +724,15 @@ function placeNpcs(island: IslandLayout): PlacedNpc[] {
     if (dist(p, [island.spawn.x, 0, island.spawn.z]) < 8) return false;
     return true;
   };
-  // Shuffle deterministically, then take the first free spots, keeping NPCs at least 4 m apart.
+  // Shuffle deterministically, then take the first free spots. Groups of two or three chat together (companions
+  // stand 1.3 m from the first and face it); separate groups stay at least 6 m apart.
+  const target = NPCS_PER_ISLAND[island.eraId];
   const order = [...candidates].sort((a, b) => hash01(a.k, salt) - hash01(b.k, salt));
   const out: PlacedNpc[] = [];
   for (const c of order) {
-    if (out.length >= NPCS_PER_ISLAND) break;
+    if (out.length >= target) break;
     const position = polar(center, c.angle, c.r);
-    if (!ok(position, c.angle, c.r) || out.some((n) => dist(n.position, position) < 4)) continue;
+    if (!ok(position, c.angle, c.r) || out.some((n) => dist(n.position, position) < 6)) continue;
     // Inner lawn: face the road (outwards). Edge lawn: face the island centre, with a little variety.
     const out_ = c.r < rr ? 1 : -1;
     const jitter = (hash01(c.k, salt + 7) - 0.5) * 1.2;
@@ -674,6 +741,17 @@ function placeNpcs(island: IslandLayout): PlacedNpc[] {
       rotationY: headingOf(Math.cos(c.angle) * out_, Math.sin(c.angle) * out_) + jitter,
       seed: c.k,
     });
+    const mates = hash01(c.k, salt + 3) < 0.4 ? 1 : 2;
+    for (let m = 0; m < mates && out.length < target; m++) {
+      const a = hash01(c.k, salt + 11 + m) * TAU;
+      const mate: Vec3 = [position[0] + Math.cos(a) * 1.3, position[1], position[2] + Math.sin(a) * 1.3];
+      if (!ok(mate, c.angle, c.r)) continue;
+      out.push({
+        position: mate,
+        rotationY: headingOf(position[0] - mate[0], position[2] - mate[2]) + (hash01(c.k, salt + 17 + m) - 0.5) * 0.5,
+        seed: c.k * 3 + m + 1,
+      });
+    }
   }
   return out;
 }

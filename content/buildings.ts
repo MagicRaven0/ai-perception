@@ -261,8 +261,8 @@ export const buildings: z.input<typeof Building>[] = [
     kind: "interview",
     title: "Interview: Professor Aqeel at AUS",
     short:
-      "Our interview with Professor Aqeel of the American University of Sharjah on how views of AI have changed, at AUS and beyond.",
-    long: "TODO: what the interview covers, written after it is recorded (questions in docs/RECORDING_PLAN.md).",
+      "We asked Professor Aqeel Taher, a civil engineering professor at AUS, about the benefits and risks of AI and what it means for the young generation.",
+    long: "We asked Professor Aqeel Taher, a civil engineering professor at our university, about the benefits of AI in daily life. He told us AI is \"gradually becoming an invisible partner in our daily lives\" (0:28), already at work when we navigate roads, communicate or receive medical advice. As an engineer, he asked us to imagine a bridge that watches its own structural health and alerts engineers before a serious problem develops.\n\nWhen we asked about risks, one major concern he named was that people may become overly dependent on AI. If we let machines make every decision for us, he said, we may gradually weaken our own ability to question, reason and solve problems. He also pointed to dangers when AI is used \"without proper human oversight, ethical guidelines and accountability\" (2:26). Human oversight is the part of his answer closest to our argument about checking and correcting AI.\n\nHe told us he is very enthusiastic about AI and does not see it replacing engineers, educators or professionals. For young people he sees both an opportunity and a challenge: a student who simply copies an AI's solution may \"complete the assignment but miss the learning\" (4:14). He wants them to develop critical thinking, creativity and human intelligence.",
     media: { episodeId: "interview-aqeel" },
     sourceIds: ["aqeel-interview"],
   },

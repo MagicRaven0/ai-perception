@@ -36,7 +36,7 @@ export const PERSONAS: Record<
   "researcher-1956": {
     name: "1956 Workshop Researcher",
     short: "1956",
-    description: "A fictional researcher from 1956. AI roleplay, not a real person.",
+    description: "A fictional researcher from 1956. Roleplay, not a real person.",
     roleplay: true,
     focus: "era-1",
     prompt:

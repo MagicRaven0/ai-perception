@@ -38,7 +38,6 @@ export const Site = z.object({
   /** One sentence. Rendered on the landing hero, the 2D intro, the chatbot base prompt and the About page. */
   thesis: z.string().min(1),
   team: z.array(TeamMember),
-  aiDisclosure: z.string().min(1),
 });
 export type Site = z.infer<typeof Site>;
 

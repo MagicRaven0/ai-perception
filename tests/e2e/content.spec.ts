@@ -140,7 +140,7 @@ test("videos in the long-read: controls, loop, credited, and nothing downloads b
   }
   expect(asked).toEqual([]);
   await page.goto("/about");
-  await expect(page.getByText("AI-generated animation and music")).toHaveCount(
+  await expect(page.getByText("(animation and music)")).toHaveCount(
     credits.filter((c) => c.kind === "video").length,
   );
 });

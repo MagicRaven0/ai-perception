@@ -3,7 +3,6 @@ import type { Credit, Image } from "@/lib/content/schema";
 
 /**
  * Credits for every image, 3D model, sound, font and video used on the site (class rule).
- * AI-generated assets set aiTool to "AI-generated" (the site names no AI product).
  */
 export const credits: z.input<typeof Credit>[] = [
   {
@@ -34,28 +33,25 @@ export const credits: z.input<typeof Credit>[] = [
     id: "video-interface-gallery",
     kind: "video",
     title: "A computer for the rest of us (animation)",
-    author: "Our group (AI-generated animation and music)",
+    author: "Our group (animation and music)",
     licence: "All rights reserved by the authors (class project)",
     url: "/videos/interface-gallery.mp4",
-    aiTool: "AI-generated",
   },
   {
     id: "video-perceptron-cinema",
     kind: "video",
     title: "The machine that would walk, talk, see (animation)",
-    author: "Our group (AI-generated animation and music)",
+    author: "Our group (animation and music)",
     licence: "All rights reserved by the authors (class project)",
     url: "/videos/perceptron-cinema.mp4",
-    aiTool: "AI-generated",
   },
   {
     id: "video-agents-cinema",
     kind: "video",
     title: "When an agent will not stop (animation)",
-    author: "Our group (AI-generated animation and music)",
+    author: "Our group (animation and music)",
     licence: "All rights reserved by the authors (class project)",
     url: "/videos/agents-cinema.mp4",
-    aiTool: "AI-generated",
   },
   {
     id: "img-mccarthy",
@@ -124,28 +120,25 @@ export const credits: z.input<typeof Credit>[] = [
     id: "audio-episode-1",
     kind: "audio",
     title: "Episode 1: A summer to build a mind",
-    author: "Our group (AI-generated voices from our own recordings)",
+    author: "Our group (podcast hosts)",
     licence: "All rights reserved by the authors (class project)",
     url: "/audio/ep-1.mp3",
-    aiTool: "AI-generated",
   },
   {
     id: "audio-episode-2",
     kind: "audio",
     title: "Episode 2: A computer for the rest of us",
-    author: "Our group (AI-generated voices from our own recordings)",
+    author: "Our group (podcast hosts)",
     licence: "All rights reserved by the authors (class project)",
     url: "/audio/ep-2.mp3",
-    aiTool: "AI-generated",
   },
   {
     id: "audio-episode-3",
     kind: "audio",
     title: "Episode 3: Three essays, one question",
-    author: "Our group (AI-generated voices from our own recordings)",
+    author: "Our group (podcast hosts)",
     licence: "All rights reserved by the authors (class project)",
     url: "/audio/ep-3.mp3",
-    aiTool: "AI-generated",
   },
   {
     id: "audio-interview-aqeel",

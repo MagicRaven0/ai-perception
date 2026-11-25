@@ -11,7 +11,7 @@ export const about: z.input<typeof About> = {
     {
       element: "Author",
       answer:
-        "A group of three WRI-101 students at the American University of Sharjah, adapting our three research essays: Rayyan's on why the ability to correct AI matters more than its intelligence, Abdulrahman Ahmad's on AI's potential, and Waleed Masri's on whether AI is out of control or badly trained. We are not AI experts, so our credibility comes from cited sources, a recorded interview with a local expert, and clear labels on everything AI produced for the site.",
+        "A group of three WRI-101 students at the American University of Sharjah, adapting our three research essays: Rayyan's on why the ability to correct AI matters more than its intelligence, Abdulrahman Ahmad's on AI's potential, and Waleed Masri's on whether AI is out of control or badly trained. We are not AI experts, so our credibility comes from cited sources and a recorded interview with a local expert.",
     },
     {
       element: "Audience",
@@ -36,7 +36,7 @@ export const about: z.input<typeof About> = {
     {
       element: "Content and form",
       answer:
-        "Each era has its own island, colours and car, so the visitor feels the change of period before reading about it. Short texts in the 3D world link to the full paragraphs in the reading view, every claim carries an APA citation, and numbers appear as charts with their sources underneath. Our shared argument about control shapes the design: the visitor drives and chooses where to go, and every AI feature is labelled with how far it can be trusted.",
+        "Each era has its own island, colours and car, so the visitor feels the change of period before reading about it. Short texts in the 3D world link to the full paragraphs in the reading view, every claim carries an APA citation, and numbers appear as charts with their sources underneath. Our shared argument about control shapes the design: the visitor drives and chooses where to go.",
     },
   ],
   genreRationale:
